@@ -1,0 +1,166 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 90s CRT/Pixel Effect Styles */
+@layer base {
+  :root {
+    --pixel-size: 2px;
+  }
+
+  html {
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+  }
+
+  body {
+    background: linear-gradient(180deg, #0d0d0d 0%, #1a1a2e 100%);
+    min-height: 100vh;
+  }
+
+  /* CRT scanline overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.1),
+      rgba(0, 0, 0, 0.1) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* CRT screen glow */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+      ellipse at center,
+      transparent 0%,
+      rgba(0, 0, 0, 0.3) 100%
+    );
+    pointer-events: none;
+    z-index: 999;
+  }
+}
+
+@layer components {
+  /* Pixel button style */
+  .pixel-btn {
+    @apply relative px-6 py-3 font-pixel text-pixel-black bg-pixel-green
+           border-4 border-pixel-black shadow-pixel
+           hover:translate-x-1 hover:translate-y-1 hover:shadow-none
+           active:translate-x-1 active:translate-y-1 active:shadow-none
+           transition-all duration-75 uppercase tracking-wider;
+  }
+
+  .pixel-btn-secondary {
+    @apply pixel-btn bg-pixel-cyan;
+  }
+
+  .pixel-btn-danger {
+    @apply pixel-btn bg-pixel-red text-pixel-white;
+  }
+
+  .pixel-btn-gold {
+    @apply pixel-btn bg-pixel-gold;
+  }
+
+  /* Pixel card/panel */
+  .pixel-panel {
+    @apply bg-pixel-black/90 border-4 border-pixel-green p-4 shadow-pixel-lg;
+  }
+
+  .pixel-panel-white {
+    @apply bg-pixel-white border-4 border-pixel-black p-4 shadow-pixel-lg;
+  }
+
+  /* Pixel text glow */
+  .text-glow {
+    text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor;
+  }
+
+  /* Tier cards */
+  .tier-bronze {
+    @apply border-orange-600 bg-gradient-to-b from-orange-900/50 to-orange-800/30;
+  }
+
+  .tier-silver {
+    @apply border-pixel-silver bg-gradient-to-b from-gray-600/50 to-gray-700/30;
+  }
+
+  .tier-gold {
+    @apply border-pixel-gold bg-gradient-to-b from-yellow-600/50 to-yellow-700/30;
+  }
+
+  /* Countdown digit box */
+  .countdown-digit {
+    @apply bg-pixel-black border-4 border-pixel-green px-4 py-2
+           font-pixel text-4xl md:text-6xl text-pixel-green text-glow
+           min-w-[80px] text-center;
+  }
+
+  /* Team flag button */
+  .team-flag {
+    @apply relative w-16 h-12 md:w-20 md:h-14 border-4 border-pixel-black
+           shadow-pixel hover:scale-110 hover:z-10
+           transition-transform duration-150 cursor-pointer
+           flex items-center justify-center text-2xl;
+  }
+
+  .team-flag.selected {
+    @apply border-pixel-gold shadow-pixel-glow;
+  }
+}
+
+/* Pixel font placeholder - will use Google Fonts Press Start 2P */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+  --font-pixel: 'Press Start 2P', monospace;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d0d0d;
+  border: 2px solid #00ff00;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #00ff00;
+  border: 2px solid #0d0d0d;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00ffff;
+}
+
+/* Marquee animation for announcements */
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 20s linear infinite;
+}
