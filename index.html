@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vector Grid // 32×32</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; overflow: hidden; font-family: 'JetBrains Mono', monospace; cursor: crosshair; }
+        #fluid-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #canvas-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 1; }
+        .top-right-controls { position: fixed; top: 24px; right: 24px; z-index: 100; display: flex; align-items: center; gap: 10px; }
+        .top-left-controls { position: fixed; top: 24px; left: 24px; z-index: 100; }
+        .top-left-controls button { background: rgba(0,0,0,0.7); border: 1px solid #333; color: #666; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; }
+        .top-left-controls button:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.1); }
+        .icon-btn { background: rgba(0,0,0,0.7); border: 1px solid #333; color: #666; width: 36px; height: 36px; font-size: 18px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
+        .icon-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.1); }
+        .toggle-switch { position: relative; width: 44px; height: 24px; background: #333; border-radius: 12px; cursor: pointer; transition: background 0.3s; }
+        .toggle-switch.active { background: #fff; }
+        .toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: #888; border-radius: 50%; transition: transform 0.3s, background 0.3s; }
+        .toggle-switch.active::after { transform: translateX(20px); background: #333; }
+        .toggle-label { color: #666; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+        .side-slider { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: 15px; }
+        .side-slider input[type="range"] { width: 150px; height: 8px; -webkit-appearance: none; appearance: none; background: #333; border-radius: 4px; outline: none; cursor: pointer; }
+        .side-slider input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #888; border-radius: 50%; cursor: pointer; transition: background 0.2s; }
+        .side-slider input[type="range"]::-webkit-slider-thumb:hover { background: #fff; }
+        .side-slider input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; background: #888; border-radius: 50%; cursor: pointer; border: none; }
+        .side-slider .slider-label { color: #666; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+        .controls { position: fixed; bottom: 24px; left: 24px; display: flex; gap: 12px; z-index: 100; flex-wrap: wrap; }
+        .controls button { background: rgba(0,0,0,0.7); border: 1px solid #333; color: #666; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; }
+        .controls button:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.1); }
+        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; z-index: 1000; animation: pulse 1s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <canvas id="fluid-canvas"></canvas>
+    <div class="loading" id="loading">Initializing Grid...</div>
+
+    <div class="top-left-controls">
+        <button id="teams-btn-top">Teams</button>
+    </div>
+    <div class="top-right-controls">
+        <button id="refresh-btn" class="icon-btn">↻</button>
+        <span class="toggle-label">Dark</span>
+        <div class="toggle-switch" id="mode-toggle"></div>
+        <span class="toggle-label">Light</span>
+    </div>
+    <div class="side-slider">
+        <span class="slider-label">−</span>
+        <input type="range" id="scale-slider" min="0.3" max="1.5" step="0.01" value="1">
+        <span class="slider-label">+</span>
+        <span class="slider-label" style="margin-left: 20px;">↺</span>
+        <input type="range" id="rotate-slider" min="0" max="360" step="1" value="0">
+        <span class="slider-label">↻</span>
+    </div>
+    <div class="controls">
+        <button id="shape-btn">Spheres</button>
+        <button id="wave-btn">VFX</button>
+    </div>
+    <div id="canvas-container"></div>
+
+    <script>
+    'use strict';
+
+    // ============== FLUID SIMULATION ==============
+    const fluidCanvas = document.getElementById('fluid-canvas');
+    fluidCanvas.width = fluidCanvas.clientWidth;
+    fluidCanvas.height = fluidCanvas.clientHeight;
+
+    let fluidConfig = { TEXTURE_DOWNSAMPLE: 1, DENSITY_DISSIPATION: 0.98, VELOCITY_DISSIPATION: 0.98, PRESSURE_DISSIPATION: 0.8, PRESSURE_ITERATIONS: 25, CURL: 30, SPLAT_RADIUS: 0.005 };
+    let fluidPointers = [];
+
+    const { gl: fluidGl, ext: fluidExt } = getFluidWebGLContext(fluidCanvas);
+
+    function getFluidWebGLContext(canvas) {
+        const params = { alpha: false, depth: false, stencil: false, antialias: false };
+        let gl = canvas.getContext('webgl2', params);
+        const isWebGL2 = !!gl;
+        if (!isWebGL2) gl = canvas.getContext('webgl', params) || canvas.getContext('experimental-webgl', params);
+        let halfFloat, supportLinearFiltering;
+        if (isWebGL2) { gl.getExtension('EXT_color_buffer_float'); supportLinearFiltering = gl.getExtension('OES_texture_float_linear'); }
+        else { halfFloat = gl.getExtension('OES_texture_half_float'); supportLinearFiltering = gl.getExtension('OES_texture_half_float_linear'); }
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        const halfFloatTexType = isWebGL2 ? gl.HALF_FLOAT : halfFloat.HALF_FLOAT_OES;
+        let formatRGBA, formatRG, formatR;
+        if (isWebGL2) { formatRGBA = getFluidSupportedFormat(gl, gl.RGBA16F, gl.RGBA, halfFloatTexType); formatRG = getFluidSupportedFormat(gl, gl.RG16F, gl.RG, halfFloatTexType); formatR = getFluidSupportedFormat(gl, gl.R16F, gl.RED, halfFloatTexType); }
+        else { formatRGBA = formatRG = formatR = getFluidSupportedFormat(gl, gl.RGBA, gl.RGBA, halfFloatTexType); }
+        return { gl, ext: { formatRGBA, formatRG, formatR, halfFloatTexType, supportLinearFiltering } };
+    }
+
+    function getFluidSupportedFormat(gl, internalFormat, format, type) {
+        if (!supportFluidRenderTextureFormat(gl, internalFormat, format, type)) {
+            if (internalFormat === gl.R16F) return getFluidSupportedFormat(gl, gl.RG16F, gl.RG, type);
+            if (internalFormat === gl.RG16F) return getFluidSupportedFormat(gl, gl.RGBA16F, gl.RGBA, type);
+            return null;
+        }
+        return { internalFormat, format };
+    }
+
+    function supportFluidRenderTextureFormat(gl, internalFormat, format, type) {
+        let texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, 4, 4, 0, format, type, null);
+        let fbo = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+        return gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    }
+
+    function fluidPointerPrototype() { this.id = -1; this.x = 0; this.y = 0; this.dx = 0; this.dy = 0; this.down = false; this.moved = false; this.color = [30, 0, 300]; }
+    fluidPointers.push(new fluidPointerPrototype());
+
+    class FluidGLProgram {
+        constructor(vs, fs) {
+            this.uniforms = {};
+            this.program = fluidGl.createProgram();
+            fluidGl.attachShader(this.program, vs);
+            fluidGl.attachShader(this.program, fs);
+            fluidGl.linkProgram(this.program);
+            const uc = fluidGl.getProgramParameter(this.program, fluidGl.ACTIVE_UNIFORMS);
+            for (let i = 0; i < uc; i++) { const n = fluidGl.getActiveUniform(this.program, i).name; this.uniforms[n] = fluidGl.getUniformLocation(this.program, n); }
+        }
+        bind() { fluidGl.useProgram(this.program); }
+    }
+
+    function compileFluidShader(type, source) {
+        const shader = fluidGl.createShader(type);
+        fluidGl.shaderSource(shader, source);
+        fluidGl.compileShader(shader);
+        return shader;
+    }
+
+    const fluidBaseVS = compileFluidShader(fluidGl.VERTEX_SHADER, `precision highp float; attribute vec2 aPosition; varying vec2 vUv, vL, vR, vT, vB; uniform vec2 texelSize; void main() { vUv = aPosition * 0.5 + 0.5; vL = vUv - vec2(texelSize.x, 0.0); vR = vUv + vec2(texelSize.x, 0.0); vT = vUv + vec2(0.0, texelSize.y); vB = vUv - vec2(0.0, texelSize.y); gl_Position = vec4(aPosition, 0.0, 1.0); }`);
+    const fluidClearFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv; uniform sampler2D uTexture; uniform float value; void main() { gl_FragColor = value * texture2D(uTexture, vUv); }`);
+    const fluidDisplayFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv; uniform sampler2D uTexture; void main() { vec3 c = texture2D(uTexture, vUv).rgb; float lum = dot(c, vec3(0.299, 0.587, 0.114)); vec3 darkChrome = vec3(0.15, 0.17, 0.2); vec3 midChrome = vec3(0.5, 0.53, 0.58); vec3 brightChrome = vec3(0.85, 0.88, 0.92); vec3 highlight = vec3(1.0, 1.0, 1.0); float angle = lum * 10.0 + vUv.x * 4.0 + vUv.y * 3.0; float irid = sin(angle) * 0.03; vec3 color = mix(darkChrome, midChrome, smoothstep(0.0, 0.4, lum)); color = mix(color, brightChrome, smoothstep(0.3, 0.7, lum)); color = mix(color, highlight, smoothstep(0.75, 1.0, lum) * 0.5); color += vec3(irid, irid * 0.5, -irid); color *= lum * 1.4 + 0.1; gl_FragColor = vec4(color, 1.0); }`);
+    const fluidSplatFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv; uniform sampler2D uTarget; uniform float aspectRatio; uniform vec3 color; uniform vec2 point; uniform float radius; void main() { vec2 p = vUv - point.xy; p.x *= aspectRatio; vec3 splat = exp(-dot(p, p) / radius) * color; vec3 base = texture2D(uTarget, vUv).xyz; gl_FragColor = vec4(base + splat, 1.0); }`);
+    const fluidAdvectionFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv; uniform sampler2D uVelocity, uSource; uniform vec2 texelSize; uniform float dt, dissipation; void main() { vec2 coord = vUv - dt * texture2D(uVelocity, vUv).xy * texelSize; gl_FragColor = dissipation * texture2D(uSource, coord); gl_FragColor.a = 1.0; }`);
+    const fluidDivergenceFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv, vL, vR, vT, vB; uniform sampler2D uVelocity; vec2 sampleV(vec2 uv) { vec2 m = vec2(1.0); if(uv.x<0.0){uv.x=0.0;m.x=-1.0;} if(uv.x>1.0){uv.x=1.0;m.x=-1.0;} if(uv.y<0.0){uv.y=0.0;m.y=-1.0;} if(uv.y>1.0){uv.y=1.0;m.y=-1.0;} return m*texture2D(uVelocity,uv).xy; } void main() { float L=sampleV(vL).x, R=sampleV(vR).x, T=sampleV(vT).y, B=sampleV(vB).y; gl_FragColor = vec4(0.5*(R-L+T-B), 0.0, 0.0, 1.0); }`);
+    const fluidCurlFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv, vL, vR, vT, vB; uniform sampler2D uVelocity; void main() { float L=texture2D(uVelocity,vL).y, R=texture2D(uVelocity,vR).y, T=texture2D(uVelocity,vT).x, B=texture2D(uVelocity,vB).x; gl_FragColor = vec4(R-L-T+B, 0.0, 0.0, 1.0); }`);
+    const fluidVorticityFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv, vT, vB; uniform sampler2D uVelocity, uCurl; uniform float curl, dt; void main() { float T=texture2D(uCurl,vT).x, B=texture2D(uCurl,vB).x, C=texture2D(uCurl,vUv).x; vec2 force=vec2(abs(T)-abs(B),0.0); force*=1.0/length(force+0.00001)*curl*C; vec2 vel=texture2D(uVelocity,vUv).xy; gl_FragColor=vec4(vel+force*dt,0.0,1.0); }`);
+    const fluidPressureFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv, vL, vR, vT, vB; uniform sampler2D uPressure, uDivergence; vec2 b(vec2 uv){return min(max(uv,0.0),1.0);} void main() { float L=texture2D(uPressure,b(vL)).x, R=texture2D(uPressure,b(vR)).x, T=texture2D(uPressure,b(vT)).x, B=texture2D(uPressure,b(vB)).x, div=texture2D(uDivergence,vUv).x; gl_FragColor=vec4((L+R+B+T-div)*0.25,0.0,0.0,1.0); }`);
+    const fluidGradSubFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv, vL, vR, vT, vB; uniform sampler2D uPressure, uVelocity; vec2 b(vec2 uv){return min(max(uv,0.0),1.0);} void main() { float L=texture2D(uPressure,b(vL)).x, R=texture2D(uPressure,b(vR)).x, T=texture2D(uPressure,b(vT)).x, B=texture2D(uPressure,b(vB)).x; vec2 vel=texture2D(uVelocity,vUv).xy; vel.xy-=vec2(R-L,T-B); gl_FragColor=vec4(vel,0.0,1.0); }`);
+
+    let fluidTextureWidth, fluidTextureHeight, fluidDensity, fluidVelocity, fluidDivergence, fluidCurl, fluidPressure;
+    initFluidFramebuffers();
+
+    const fluidClearProg = new FluidGLProgram(fluidBaseVS, fluidClearFS);
+    const fluidDisplayProg = new FluidGLProgram(fluidBaseVS, fluidDisplayFS);
+    const fluidSplatProg = new FluidGLProgram(fluidBaseVS, fluidSplatFS);
+    const fluidAdvectionProg = new FluidGLProgram(fluidBaseVS, fluidAdvectionFS);
+    const fluidDivergenceProg = new FluidGLProgram(fluidBaseVS, fluidDivergenceFS);
+    const fluidCurlProg = new FluidGLProgram(fluidBaseVS, fluidCurlFS);
+    const fluidVorticityProg = new FluidGLProgram(fluidBaseVS, fluidVorticityFS);
+    const fluidPressureProg = new FluidGLProgram(fluidBaseVS, fluidPressureFS);
+    const fluidGradSubProg = new FluidGLProgram(fluidBaseVS, fluidGradSubFS);
+
+    function initFluidFramebuffers() {
+        fluidTextureWidth = fluidGl.drawingBufferWidth >> fluidConfig.TEXTURE_DOWNSAMPLE;
+        fluidTextureHeight = fluidGl.drawingBufferHeight >> fluidConfig.TEXTURE_DOWNSAMPLE;
+        const texType = fluidExt.halfFloatTexType, rgba = fluidExt.formatRGBA, rg = fluidExt.formatRG, r = fluidExt.formatR;
+        const filtering = fluidExt.supportLinearFiltering ? fluidGl.LINEAR : fluidGl.NEAREST;
+        fluidDensity = createFluidDoubleFBO(2, fluidTextureWidth, fluidTextureHeight, rgba.internalFormat, rgba.format, texType, filtering);
+        fluidVelocity = createFluidDoubleFBO(0, fluidTextureWidth, fluidTextureHeight, rg.internalFormat, rg.format, texType, filtering);
+        fluidDivergence = createFluidFBO(4, fluidTextureWidth, fluidTextureHeight, r.internalFormat, r.format, texType, fluidGl.NEAREST);
+        fluidCurl = createFluidFBO(5, fluidTextureWidth, fluidTextureHeight, r.internalFormat, r.format, texType, fluidGl.NEAREST);
+        fluidPressure = createFluidDoubleFBO(6, fluidTextureWidth, fluidTextureHeight, r.internalFormat, r.format, texType, fluidGl.NEAREST);
+    }
+
+    function createFluidFBO(texId, w, h, internalFormat, format, type, param) {
+        fluidGl.activeTexture(fluidGl.TEXTURE0 + texId);
+        let texture = fluidGl.createTexture();
+        fluidGl.bindTexture(fluidGl.TEXTURE_2D, texture);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_MIN_FILTER, param);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_MAG_FILTER, param);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_WRAP_S, fluidGl.CLAMP_TO_EDGE);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_WRAP_T, fluidGl.CLAMP_TO_EDGE);
+        fluidGl.texImage2D(fluidGl.TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, null);
+        let fbo = fluidGl.createFramebuffer();
+        fluidGl.bindFramebuffer(fluidGl.FRAMEBUFFER, fbo);
+        fluidGl.framebufferTexture2D(fluidGl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, fluidGl.TEXTURE_2D, texture, 0);
+        fluidGl.viewport(0, 0, w, h);
+        fluidGl.clear(fluidGl.COLOR_BUFFER_BIT);
+        return [texture, fbo, texId];
+    }
+
+    function createFluidDoubleFBO(texId, w, h, internalFormat, format, type, param) {
+        let fbo1 = createFluidFBO(texId, w, h, internalFormat, format, type, param);
+        let fbo2 = createFluidFBO(texId + 1, w, h, internalFormat, format, type, param);
+        return { get read() { return fbo1; }, get write() { return fbo2; }, swap() { [fbo1, fbo2] = [fbo2, fbo1]; } };
+    }
+
+    const fluidBlit = (() => {
+        fluidGl.bindBuffer(fluidGl.ARRAY_BUFFER, fluidGl.createBuffer());
+        fluidGl.bufferData(fluidGl.ARRAY_BUFFER, new Float32Array([-1,-1,-1,1,1,1,1,-1]), fluidGl.STATIC_DRAW);
+        fluidGl.bindBuffer(fluidGl.ELEMENT_ARRAY_BUFFER, fluidGl.createBuffer());
+        fluidGl.bufferData(fluidGl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0,1,2,0,2,3]), fluidGl.STATIC_DRAW);
+        fluidGl.vertexAttribPointer(0, 2, fluidGl.FLOAT, false, 0, 0);
+        fluidGl.enableVertexAttribArray(0);
+        return (dest) => { fluidGl.bindFramebuffer(fluidGl.FRAMEBUFFER, dest); fluidGl.drawElements(fluidGl.TRIANGLES, 6, fluidGl.UNSIGNED_SHORT, 0); };
+    })();
+
+    let fluidLastTime = Date.now();
+    // Only create splats on user interaction, no auto-splats
+
+    function fluidStep() {
+        fluidResizeCanvas();
+        const dt = Math.min((Date.now() - fluidLastTime) / 1000, 0.016);
+        fluidLastTime = Date.now();
+        fluidGl.viewport(0, 0, fluidTextureWidth, fluidTextureHeight);
+
+        fluidAdvectionProg.bind();
+        fluidGl.uniform2f(fluidAdvectionProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidAdvectionProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidGl.uniform1i(fluidAdvectionProg.uniforms.uSource, fluidVelocity.read[2]);
+        fluidGl.uniform1f(fluidAdvectionProg.uniforms.dt, dt);
+        fluidGl.uniform1f(fluidAdvectionProg.uniforms.dissipation, fluidConfig.VELOCITY_DISSIPATION);
+        fluidBlit(fluidVelocity.write[1]); fluidVelocity.swap();
+
+        fluidGl.uniform1i(fluidAdvectionProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidGl.uniform1i(fluidAdvectionProg.uniforms.uSource, fluidDensity.read[2]);
+        fluidGl.uniform1f(fluidAdvectionProg.uniforms.dissipation, fluidConfig.DENSITY_DISSIPATION);
+        fluidBlit(fluidDensity.write[1]); fluidDensity.swap();
+
+        for (let p of fluidPointers) { if (p.moved) { fluidSplat(p.x, p.y, p.dx, p.dy, p.color); p.moved = false; } }
+
+        fluidCurlProg.bind();
+        fluidGl.uniform2f(fluidCurlProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidCurlProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidBlit(fluidCurl[1]);
+
+        fluidVorticityProg.bind();
+        fluidGl.uniform2f(fluidVorticityProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidVorticityProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidGl.uniform1i(fluidVorticityProg.uniforms.uCurl, fluidCurl[2]);
+        fluidGl.uniform1f(fluidVorticityProg.uniforms.curl, fluidConfig.CURL);
+        fluidGl.uniform1f(fluidVorticityProg.uniforms.dt, dt);
+        fluidBlit(fluidVelocity.write[1]); fluidVelocity.swap();
+
+        fluidDivergenceProg.bind();
+        fluidGl.uniform2f(fluidDivergenceProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidDivergenceProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidBlit(fluidDivergence[1]);
+
+        fluidClearProg.bind();
+        let pTexId = fluidPressure.read[2];
+        fluidGl.activeTexture(fluidGl.TEXTURE0 + pTexId);
+        fluidGl.bindTexture(fluidGl.TEXTURE_2D, fluidPressure.read[0]);
+        fluidGl.uniform1i(fluidClearProg.uniforms.uTexture, pTexId);
+        fluidGl.uniform1f(fluidClearProg.uniforms.value, fluidConfig.PRESSURE_DISSIPATION);
+        fluidBlit(fluidPressure.write[1]); fluidPressure.swap();
+
+        fluidPressureProg.bind();
+        fluidGl.uniform2f(fluidPressureProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidPressureProg.uniforms.uDivergence, fluidDivergence[2]);
+        pTexId = fluidPressure.read[2];
+        fluidGl.uniform1i(fluidPressureProg.uniforms.uPressure, pTexId);
+        fluidGl.activeTexture(fluidGl.TEXTURE0 + pTexId);
+        for (let i = 0; i < fluidConfig.PRESSURE_ITERATIONS; i++) { fluidGl.bindTexture(fluidGl.TEXTURE_2D, fluidPressure.read[0]); fluidBlit(fluidPressure.write[1]); fluidPressure.swap(); }
+
+        fluidGradSubProg.bind();
+        fluidGl.uniform2f(fluidGradSubProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidGradSubProg.uniforms.uPressure, fluidPressure.read[2]);
+        fluidGl.uniform1i(fluidGradSubProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidBlit(fluidVelocity.write[1]); fluidVelocity.swap();
+
+        fluidGl.viewport(0, 0, fluidGl.drawingBufferWidth, fluidGl.drawingBufferHeight);
+        fluidDisplayProg.bind();
+        fluidGl.uniform1i(fluidDisplayProg.uniforms.uTexture, fluidDensity.read[2]);
+        fluidBlit(null);
+    }
+
+    function fluidSplat(x, y, dx, dy, color) {
+        fluidSplatProg.bind();
+        fluidGl.uniform1i(fluidSplatProg.uniforms.uTarget, fluidVelocity.read[2]);
+        fluidGl.uniform1f(fluidSplatProg.uniforms.aspectRatio, fluidCanvas.width / fluidCanvas.height);
+        fluidGl.uniform2f(fluidSplatProg.uniforms.point, x / fluidCanvas.width, 1.0 - y / fluidCanvas.height);
+        fluidGl.uniform3f(fluidSplatProg.uniforms.color, dx, -dy, 1.0);
+        fluidGl.uniform1f(fluidSplatProg.uniforms.radius, fluidConfig.SPLAT_RADIUS);
+        fluidBlit(fluidVelocity.write[1]); fluidVelocity.swap();
+        fluidGl.uniform1i(fluidSplatProg.uniforms.uTarget, fluidDensity.read[2]);
+        fluidGl.uniform3f(fluidSplatProg.uniforms.color, color[0]*0.3, color[1]*0.3, color[2]*0.3);
+        fluidBlit(fluidDensity.write[1]); fluidDensity.swap();
+    }
+
+    function fluidMultipleSplats(amount) {
+        for (let i = 0; i < amount; i++) {
+            const color = [Math.random()*10, Math.random()*10, Math.random()*10];
+            const x = fluidCanvas.width * Math.random(), y = fluidCanvas.height * Math.random();
+            const dx = 1000 * (Math.random() - 0.5), dy = 1000 * (Math.random() - 0.5);
+            fluidSplat(x, y, dx, dy, color);
+        }
+    }
+
+    function fluidResizeCanvas() {
+        if (fluidCanvas.width !== fluidCanvas.clientWidth || fluidCanvas.height !== fluidCanvas.clientHeight) {
+            fluidCanvas.width = fluidCanvas.clientWidth; fluidCanvas.height = fluidCanvas.clientHeight;
+            initFluidFramebuffers();
+        }
+    }
+
+    // Mouse and touch handlers - only splat on actual movement
+    let lastMouseX = 0, lastMouseY = 0;
+    let colorPhase = 0; // For continuously varying colors
+
+    function getNextColor() {
+        colorPhase += 0.15;
+        // Varying brightness for nice fluid dynamics
+        const base = 0.6 + Math.random() * 0.4;
+        return [base, base, base];
+    }
+
+    window.addEventListener('mousemove', e => {
+        const dx = e.clientX - lastMouseX;
+        const dy = e.clientY - lastMouseY;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+
+        if (fluidPointers[0].down && (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5)) {
+            fluidPointers[0].moved = true;
+            fluidPointers[0].dx = dx * 10;
+            fluidPointers[0].dy = dy * 10;
+            fluidPointers[0].x = e.clientX;
+            fluidPointers[0].y = e.clientY;
+            fluidPointers[0].color = getNextColor(); // Change color on every move
+        }
+    });
+
+    window.addEventListener('mousedown', e => {
+        fluidPointers[0].down = true;
+        fluidPointers[0].color = getNextColor();
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    });
+
+    window.addEventListener('mouseup', () => {
+        fluidPointers[0].down = false;
+    });
+
+    // Touch handlers
+    window.addEventListener('touchstart', e => {
+        const touches = e.targetTouches;
+        for (let i = 0; i < touches.length; i++) {
+            if (i >= fluidPointers.length) {
+                fluidPointers.push(new fluidPointerPrototype());
+            }
+            fluidPointers[i].down = true;
+            fluidPointers[i].x = touches[i].clientX;
+            fluidPointers[i].y = touches[i].clientY;
+            fluidPointers[i].color = getNextColor();
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', e => {
+        const touches = e.targetTouches;
+        for (let i = 0; i < touches.length; i++) {
+            if (i >= fluidPointers.length) continue;
+            const dx = touches[i].clientX - fluidPointers[i].x;
+            const dy = touches[i].clientY - fluidPointers[i].y;
+            if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+                fluidPointers[i].moved = true;
+                fluidPointers[i].dx = dx * 10;
+                fluidPointers[i].dy = dy * 10;
+                fluidPointers[i].x = touches[i].clientX;
+                fluidPointers[i].y = touches[i].clientY;
+                fluidPointers[i].color = getNextColor(); // Change color on every move
+            }
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchend', e => {
+        const touches = e.changedTouches;
+        for (let i = 0; i < touches.length; i++) {
+            for (let j = 0; j < fluidPointers.length; j++) {
+                if (touches[i].identifier === fluidPointers[j].id) {
+                    fluidPointers[j].down = false;
+                }
+            }
+        }
+        // Also reset first pointer on any touch end
+        if (e.targetTouches.length === 0) {
+            fluidPointers[0].down = false;
+        }
+    }, { passive: true });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+    // ============== THREE.JS GRID WITH MASK ==============
+    const GRID_SIZE = 32, CELL_SIZE = 1.3, GAP = 0.02;
+
+    const scene = new THREE.Scene();
+    scene.background = null;
+
+    const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 1000);
+    camera.position.set(0, 80, 0);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.VSMShadowMap;
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+    const dLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    dLight.position.set(15, 50, 15);
+    dLight.castShadow = true;
+    dLight.shadow.mapSize.width = 2048;
+    dLight.shadow.mapSize.height = 2048;
+    dLight.shadow.camera.near = 1;
+    dLight.shadow.camera.far = 150;
+    dLight.shadow.camera.left = -60;
+    dLight.shadow.camera.right = 60;
+    dLight.shadow.camera.top = 60;
+    dLight.shadow.camera.bottom = -60;
+    dLight.shadow.radius = 30;
+    dLight.shadow.blurSamples = 50;
+    dLight.shadow.bias = -0.0005;
+    scene.add(dLight);
+    const rLight = new THREE.DirectionalLight(0x4488ff, 0.3);
+    rLight.position.set(-50, 20, -50);
+    scene.add(rLight);
+    // Extra fill lights for chrome reflections
+    const fillLight1 = new THREE.DirectionalLight(0xffffff, 0.4);
+    fillLight1.position.set(-30, 40, 30);
+    scene.add(fillLight1);
+    const fillLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+    fillLight2.position.set(30, 30, -30);
+    scene.add(fillLight2);
+
+    // Shadow-receiving plane (invisible, just catches shadows)
+    const shadowPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(200, 200),
+        new THREE.ShadowMaterial({ opacity: 0.35 })
+    );
+    shadowPlane.rotation.x = -Math.PI / 2;
+    shadowPlane.position.y = -1.0;
+    shadowPlane.receiveShadow = true;
+    scene.add(shadowPlane);
+
+    // White opaque material - blocks the fluid
+    const whiteMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        metalness: 0.1,
+        roughness: 0.3
+    });
+
+    // Fully transparent material - shows fluid through
+    const transparentMat = new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide
+    });
+
+    // Geometries
+    const cubeGeometry = new THREE.BoxGeometry(CELL_SIZE, CELL_SIZE, CELL_SIZE);
+    const sphereGeometry = new THREE.SphereGeometry(CELL_SIZE * 0.55, 24, 24);
+    let currentGeometry = cubeGeometry;
+    let isSpheres = false;
+
+    const gridGroup = new THREE.Group();
+    scene.add(gridGroup);
+
+    const vectors = [], vectorStates = [], animatingVectors = new Set();
+    const offset = (GRID_SIZE * (CELL_SIZE + GAP)) / 2 - (CELL_SIZE + GAP) / 2;
+
+    let pixelNum = 1;
+    for (let j = 0; j < GRID_SIZE; j++) {
+        for (let i = 0; i < GRID_SIZE; i++) {
+            if (!vectors[i]) { vectors[i] = []; vectorStates[i] = []; }
+            const g = new THREE.Group();
+            const cube = new THREE.Mesh(
+                currentGeometry,
+                transparentMat.clone()
+            );
+            cube.position.y = CELL_SIZE / 2;
+            cube.castShadow = true;
+            cube.receiveShadow = true;
+            cube.visible = false; // Start invisible
+            g.add(cube);
+            g.position.x = i * (CELL_SIZE + GAP) - offset;
+            g.position.z = j * (CELL_SIZE + GAP) - offset;
+            g.userData = { row: i, col: j, pixelId: pixelNum++, phase: Math.random() * Math.PI * 2, speed: 0.5 + Math.random() * 0.5 };
+            gridGroup.add(g);
+            vectors[i][j] = g;
+            vectorStates[i][j] = false; // Start as transparent
+        }
+    }
+    document.getElementById('loading').style.display = 'none';
+
+    const teamLogos = {
+        germany: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,149,150,151,152,168,169,170,174,175,176,177,178,179,183,184,185,199,200,204,205,206,211,212,213,217,218,230,231,234,235,236,245,246,247,250,251,261,262,265,266,279,280,283,284,293,294,296,297,304,305,306,312,313,315,316,324,325,328,335,336,337,345,348,349,356,357,359,360,368,369,377,378,380,381,388,391,397,398,400,401,403,404,410,413,419,420,422,423,428,429,430,432,433,435,436,437,442,443,445,446,451,452,454,460,461,462,463,464,465,466,467,468,469,475,477,478,483,484,486,491,493,494,495,496,497,498,499,500,502,507,509,510,515,516,518,522,524,526,527,528,529,530,531,533,535,539,541,542,547,548,550,555,557,559,560,561,562,564,566,571,573,574,579,580,582,583,586,588,590,592,593,595,597,599,602,603,605,606,612,615,619,621,623,624,625,626,628,630,634,637,644,645,647,648,655,656,657,658,665,666,668,669,676,677,680,687,690,697,700,701,709,710,712,713,718,720,721,723,728,729,731,732,741,742,745,746,747,758,759,760,763,764,779,780,789,790,807,808,809,812,813,814,819,820,821,824,825,826,840,841,842,846,847,848,849,850,851,855,856,857,873,874,875,876,885,886,887,888,907,908,910,911,912,913,914,915,917,918,942,943,944,945,946,947],
+        amsterdam: [72,74,79,81,87,89,105,112,120,136,138,143,145,151,153,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,294,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,328,329,330,331,332,333,334,335,336,337,338,339,340,341,342,343,344,345,360,361,362,363,364,375,376,377,392,393,394,395,396,397,398,406,407,408,409,424,425,426,427,428,429,430,433,434,435,436,437,438,439,440,441,456,457,458,460,461,462,465,466,467,468,469,471,472,473,488,489,491,493,494,499,500,502,504,505,520,522,523,526,531,533,534,537,552,554,555,558,561,562,563,565,566,569,584,590,593,594,595,601,616,618,619,622,625,626,627,629,630,633,645,648,650,651,654,657,658,659,661,662,665,668,676,677,680,682,683,686,689,690,691,693,694,697,700,701,712,713,714,715,716,717,718,721,722,723,724,725,726,727,728,729,742,745,746,747,748,749,750,753,754,755,756,757,758,759,760,763,773,774,778,779,780,781,787,788,789,790,791,795,796,808,811,812,813,814,815,816,817,818,819,820,821,822,825,839,840,845,846,847,848,849,850,851,852,857,858,874,879,880,881,882,887,905,906,909,916,919,920,940,941,943,944,945,946,948,949],
+        france: [77,79,82,84,110,115,141,143,146,148,203,235,236,238,265,266,267,268,269,270,298,300,301,309,310,311,312,313,328,329,330,331,332,333,334,340,341,344,345,346,361,362,363,364,365,366,371,372,373,374,375,377,378,394,395,396,397,398,402,403,406,407,408,410,425,426,427,428,429,430,433,434,435,436,437,439,440,441,456,457,458,459,460,461,462,463,464,465,466,467,468,469,470,472,473,488,489,490,491,492,493,494,495,496,497,500,501,502,503,505,520,521,522,523,524,525,526,527,528,529,530,531,533,534,535,537,553,554,555,556,557,558,559,560,561,562,563,564,566,567,586,587,588,589,590,591,592,593,594,595,596,597,599,619,620,621,622,623,624,625,626,627,628,629,631,652,653,654,655,656,657,658,659,660,661,685,686,687,691,692,693,718,724,750,756,780,781,782,786,787,788,844,845,848,849,852,853,876,880,884,908,909,912,913,916,917,940,944,948]
+    };
+    const teamNames = Object.keys(teamLogos);
+    let currentTeamIdx = 0, currentTrans = 0;
+    const transitions = ['wave', 'spiral', 'random', 'rows', 'columns', 'diagonal'];
+
+    function getDelay(pid, type) {
+        const idx = pid - 1, row = Math.floor(idx / GRID_SIZE), col = idx % GRID_SIZE, cr = GRID_SIZE/2;
+        if (type === 'wave') return Math.sqrt((row-cr)**2 + (col-cr)**2) * 25;
+        if (type === 'spiral') return (Math.atan2(row-cr, col-cr) + Math.PI) * 50 + Math.sqrt((row-cr)**2 + (col-cr)**2) * 30;
+        if (type === 'random') return Math.random() * 800;
+        if (type === 'rows') return row * 60 + Math.random() * 20;
+        if (type === 'columns') return col * 60 + Math.random() * 20;
+        if (type === 'diagonal') return (row + col) * 30;
+        return 0;
+    }
+
+    function showLogo(name, trans) {
+        const logoSet = new Set(teamLogos[name]);
+        for (let pid = 1; pid <= 1024; pid++) {
+            const idx = pid - 1, row = Math.floor(idx / GRID_SIZE), col = idx % GRID_SIZE;
+            // Logo pixels should be WHITE (solid), rest should be transparent (show fluid)
+            const shouldBeWhite = logoSet.has(pid);
+            const isWhite = vectorStates[col][row];
+            if (shouldBeWhite !== isWhite)
+                setTimeout(() => flipVector(col, row, shouldBeWhite), getDelay(pid, trans));
+        }
+    }
+
+    document.getElementById('teams-btn-top').onclick = () => {
+        currentTeamIdx = (currentTeamIdx + 1) % teamNames.length;
+        currentTrans = (currentTrans + 1) % transitions.length;
+        showLogo(teamNames[currentTeamIdx], transitions[currentTrans]);
+    };
+    showLogo(teamNames[currentTeamIdx], 'wave');
+
+    function flipVector(i, j, forceState = null) {
+        if (animatingVectors.has(`${i}-${j}`)) return;
+        const v = vectors[i][j], cur = vectorStates[i][j], next = forceState !== null ? forceState : !cur;
+        if (next === cur && forceState === null) return;
+        vectorStates[i][j] = next;
+        animatingVectors.add(`${i}-${j}`);
+
+        const target = next ? 0 : Math.PI, start = v.rotation.x, t0 = performance.now();
+        const cube = v.children[0];
+
+        // Solid cube = opaque blocks fluid, Flipped = transparent shows fluid
+        if (next) {
+            cube.material = whiteMat.clone();
+            cube.visible = true;
+        } else {
+            cube.material = transparentMat.clone();
+            cube.visible = false; // Hide completely to show fluid
+        }
+
+        (function anim() {
+            const p = Math.min((performance.now() - t0) / 400, 1), e = 1 - (1 - p) ** 3;
+            v.rotation.x = start + (target - start) * e;
+            v.position.y = Math.sin(p * Math.PI) * 0.5;
+
+            // Fade visibility during animation
+            if (!next) {
+                cube.visible = p < 0.5;
+            } else {
+                cube.visible = p > 0.5;
+            }
+
+            if (p < 1) requestAnimationFrame(anim);
+            else {
+                v.rotation.x = target;
+                v.position.y = 0;
+                cube.visible = next; // Final state: visible if white, invisible if black
+                animatingVectors.delete(`${i}-${j}`);
+            }
+        })();
+    }
+
+    const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
+
+    // We need invisible collision meshes for clicking on "empty" spaces
+    const collisionGroup = new THREE.Group();
+    scene.add(collisionGroup);
+
+    for (let j = 0; j < GRID_SIZE; j++) {
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const collider = new THREE.Mesh(
+                new THREE.BoxGeometry(CELL_SIZE, CELL_SIZE * 2, CELL_SIZE),
+                new THREE.MeshBasicMaterial({ visible: false })
+            );
+            collider.position.x = i * (CELL_SIZE + GAP) - offset;
+            collider.position.z = j * (CELL_SIZE + GAP) - offset;
+            collider.position.y = CELL_SIZE / 2;
+            collider.userData = { row: i, col: j, pixelId: j * GRID_SIZE + i + 1 };
+            collisionGroup.add(collider);
+        }
+    }
+
+    renderer.domElement.onclick = e => {
+        mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+        raycaster.setFromCamera(mouse, camera);
+
+        const hits = raycaster.intersectObjects(collisionGroup.children);
+        if (hits.length > 0) {
+            const u = hits[0].object.userData;
+            flipVector(u.row, u.col);
+        }
+    };
+
+    let camH = 80;
+    renderer.domElement.onwheel = e => {
+        camH = Math.max(40, Math.min(150, camH + e.deltaY * 0.08));
+        camera.position.y = camH;
+    };
+
+    document.getElementById('refresh-btn').onclick = () => {
+        location.reload();
+    };
+
+    // Shape toggle - switch between cubes and spheres
+    const shapeBtn = document.getElementById('shape-btn');
+    shapeBtn.onclick = () => {
+        isSpheres = !isSpheres;
+        currentGeometry = isSpheres ? sphereGeometry : cubeGeometry;
+        shapeBtn.textContent = isSpheres ? 'Cubes' : 'Spheres';
+
+        // Update all meshes with new geometry
+        for (let i = 0; i < GRID_SIZE; i++) {
+            for (let j = 0; j < GRID_SIZE; j++) {
+                const mesh = vectors[i][j].children[0];
+                mesh.geometry = currentGeometry;
+            }
+        }
+    };
+
+    // Dark/Light toggle - flips all cube states
+    let isDarkMode = true;
+    const modeToggle = document.getElementById('mode-toggle');
+    modeToggle.onclick = () => {
+        isDarkMode = !isDarkMode;
+        modeToggle.classList.toggle('active', !isDarkMode);
+
+        // Invert all cubes with animation
+        for (let i = 0; i < GRID_SIZE; i++) {
+            for (let j = 0; j < GRID_SIZE; j++) {
+                setTimeout(() => flipVector(i, j), (i + j) * 3);
+            }
+        }
+    };
+
+    // Scale slider - resize the grid
+    const scaleSlider = document.getElementById('scale-slider');
+    scaleSlider.oninput = () => {
+        const scale = parseFloat(scaleSlider.value);
+        gridGroup.scale.set(scale, scale, scale);
+        collisionGroup.scale.set(scale, scale, scale);
+        shadowPlane.scale.set(scale, scale, scale);
+    };
+
+    // Rotation slider - rotate the grid 360 degrees
+    const rotateSlider = document.getElementById('rotate-slider');
+    rotateSlider.oninput = () => {
+        const rotation = parseFloat(rotateSlider.value) * Math.PI / 180;
+        gridGroup.rotation.y = rotation;
+        collisionGroup.rotation.y = rotation;
+    };
+    document.getElementById('wave-btn').onclick = () => {
+        const c = GRID_SIZE/2;
+        for (let i = 0; i < GRID_SIZE; i++)
+            for (let j = 0; j < GRID_SIZE; j++)
+                setTimeout(() => flipVector(i, j), Math.sqrt((i-c)**2+(j-c)**2)*30);
+    };
+
+    // Animation loop
+    (function animate() {
+        requestAnimationFrame(animate);
+        fluidStep();
+        renderer.render(scene, camera);
+    })();
+
+    onresize = () => {
+        camera.aspect = innerWidth/innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth, innerHeight);
+    };
+    </script>
+</body>
+</html>
