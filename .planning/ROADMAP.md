@@ -47,10 +47,10 @@ Plans:
 **Plans:** 4/4 plans complete
 
 Plans:
-- [ ] 02-01-PLAN.md — Three.js grid engine extraction (PixelGrid, FluidSim, GridMesh, transitions) + 48-team data with logo pixel arrays
-- [ ] 02-02-PLAN.md — Team pages with interactive 3D pixel logo, team-filtered merch closet, routing and navigation
-- [ ] 02-03-PLAN.md — Match detail pages with dual-logo grid, result display, prediction outcome, generative parameter mapping
-- [ ] 02-04-PLAN.md — Generative design pipeline: high-res export, admin preview page, backend design endpoint
+- [x] 02-01-PLAN.md — Three.js grid engine extraction (PixelGrid, FluidSim, GridMesh, transitions) + 48-team data with logo pixel arrays
+- [x] 02-02-PLAN.md — Team pages with interactive 3D pixel logo, team-filtered merch closet, routing and navigation
+- [x] 02-03-PLAN.md — Match detail pages with dual-logo grid, result display, prediction outcome, generative parameter mapping
+- [x] 02-04-PLAN.md — Generative design pipeline: high-res export, admin preview page, backend design endpoint
 
 ### Phase 3: Fulfillment Pipeline
 **Goal**: Generative match designs flow automatically from creation to print-ready files to Printful, and orders are fulfilled without manual intervention
@@ -60,10 +60,10 @@ Plans:
   1. Generative match designs are automatically uploaded to Printful as print-ready files (correct resolution for the product type)
   2. When a user purchases generative merch, a print-on-demand order is created automatically in Printful via the Shopify-Printful integration
   3. The end-to-end pipeline works: match ends, design generates, product appears in store, user buys, order routes to Printful for production and shipping
-**Plans**: TBD
+**Plans:** 1 plan
 
 Plans:
-- [ ] 03-01: Printful integration (design upload, product sync, automated order fulfillment)
+- [ ] 03-01-PLAN.md — R2 image storage + Printful API product creation + designs endpoint refactor (replaces D1 base64 + Shopify direct)
 
 ## Progress
 
