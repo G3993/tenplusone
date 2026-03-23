@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS designs (
   match_id TEXT NOT NULL,
   image_url TEXT,
   shopify_product_id TEXT,
+  printful_product_id TEXT,
+  printful_sync_status TEXT DEFAULT 'pending',
   created_at TEXT DEFAULT (datetime('now'))
 );
 

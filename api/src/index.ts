@@ -6,6 +6,9 @@ import { designRoutes } from './routes/designs';
 
 type Bindings = {
   DB: D1Database;
+  DESIGNS_BUCKET: R2Bucket;
+  PRINTFUL_API_TOKEN: string;
+  R2_PUBLIC_URL: string;
   SHOPIFY_ADMIN_TOKEN: string;
   SHOPIFY_STORE_DOMAIN: string;
   FOOTBALL_API_KEY: string;

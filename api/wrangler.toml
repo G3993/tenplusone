@@ -10,6 +10,10 @@ database_id = "local"
 [triggers]
 crons = ["*/5 * * * *"]
 
+[[r2_buckets]]
+binding = "DESIGNS_BUCKET"
+bucket_name = "tenplusone-designs"
+
 [vars]
 FOOTBALL_API_HOST = "v3.football.api-sports.io"
 FRONTEND_ORIGIN = "http://localhost:5173"
