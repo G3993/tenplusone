@@ -138,6 +138,10 @@ export class GridMesh {
     return this.cellStates[index] === 1;
   }
 
+  getIsSpheres(): boolean {
+    return this.isSpheres;
+  }
+
   toggleShape(): void {
     this.isSpheres = !this.isSpheres;
     const geometry = this.isSpheres ? this.sphereGeometry : this.cubeGeometry;

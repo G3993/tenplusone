@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { FluidSimulation } from './FluidSimulation.ts';
 import { GridMesh } from './GridMesh.ts';
 import { getDelay, type TransitionType } from './transitions.ts';
+import type { GenerativeConfig } from '../../lib/generative.ts';
 
 export interface GridConfig {
   gridSize?: number;
@@ -249,6 +250,57 @@ export class PixelGridController {
   setZoom(height: number): void {
     this.camH = Math.max(40, Math.min(150, height));
     this.camera.position.y = this.camH;
+  }
+
+  // -- Accessors for high-res export --
+
+  getRenderer(): THREE.WebGLRenderer {
+    return this.renderer;
+  }
+
+  getScene(): THREE.Scene {
+    return this.scene;
+  }
+
+  getCamera(): THREE.PerspectiveCamera {
+    return this.camera;
+  }
+
+  /**
+   * Apply a generative config to the grid for design export.
+   * Configures scale, rotation, shape, fluid splats, and transition style.
+   */
+  applyGenerativeConfig(
+    config: GenerativeConfig,
+    homePixels: number[],
+    awayPixels: number[]
+  ): void {
+    // Grid scale and rotation
+    this.setScale(config.gridScale);
+    this.setRotation(config.gridRotation);
+
+    // Shape mode: toggle to sphere if needed
+    const isSphere = this.gridMesh.getIsSpheres();
+    if ((config.shapeMode === 'sphere') !== isSphere) {
+      this.toggleShape();
+    }
+
+    // Logo blend: show home logo if blend > 0.5, away if <= 0.5
+    const pixels = config.logoBlend > 0.5 ? homePixels : awayPixels;
+    this.showLogo(pixels, config.transitionStyle);
+
+    // Trigger fluid splats based on config
+    const color: [number, number, number] = config.fluidColor;
+    for (let i = 0; i < config.splatCount; i++) {
+      // FluidSimulation.splat expects pixel coordinates
+      const w = this.container.clientWidth;
+      const h = this.container.clientHeight;
+      const x = Math.random() * w;
+      const y = Math.random() * h;
+      const dx = (Math.random() - 0.5) * 200;
+      const dy = (Math.random() - 0.5) * 200;
+      this.fluidSim.splat(x, y, dx, dy, color);
+    }
   }
 
   resize(): void {
