@@ -77,7 +77,9 @@ export function MatchList() {
                 })()}
               </Line>
               <Line n={nextLn()}>
-                <span className="dim">{m.t} &middot; {m.v} &middot; grp {m.grp}</span>
+                <Link to={`/match/${m.id}`} className={styles.teamLink}>
+                  <span className="dim">{m.t} &middot; {m.v} &middot; grp {m.grp}</span>
+                </Link>
               </Line>
               <Line n={nextLn()}>
                 <span className={styles.oddsRow}>

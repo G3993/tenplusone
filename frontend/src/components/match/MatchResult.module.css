@@ -1,0 +1,45 @@
+.result {
+  margin: 16px 0;
+}
+
+.scoreLine {
+  font-size: 18px;
+  font-family: var(--font);
+  letter-spacing: 0.05em;
+}
+
+.outcomeWon {
+  border-left: 2px solid var(--green);
+  padding-left: 8px;
+  margin-left: 2px;
+}
+
+.outcomeLost {
+  border-left: 2px solid var(--dim);
+  padding-left: 8px;
+  margin-left: 2px;
+}
+
+.outcomePending {
+  border-left: 2px solid var(--white);
+  padding-left: 8px;
+  margin-left: 2px;
+}
+
+.outcomeNone {
+  border-left: 2px solid var(--faint);
+  padding-left: 8px;
+  margin-left: 2px;
+}
+
+.discountCode {
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--green);
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.2);
+  padding: 4px 12px;
+  display: inline-block;
+  margin-top: 4px;
+  letter-spacing: 0.1em;
+}

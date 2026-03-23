@@ -1,0 +1,29 @@
+.matchOverlay {
+  text-align: center;
+  padding: 12px 0;
+  font-family: var(--font);
+  font-size: 16px;
+  color: var(--bright);
+  background: rgba(0, 0, 0, 0.6);
+  margin: -4px 0 16px;
+}
+
+.matchOverlay .vs {
+  color: var(--dim);
+  margin: 0 8px;
+}
+
+.flag {
+  margin: 0 4px;
+}
+
+.predictionLink {
+  color: var(--dim);
+  text-decoration: none;
+  transition: color 0.1s;
+  font-family: var(--font);
+}
+
+.predictionLink:hover {
+  color: var(--green);
+}
