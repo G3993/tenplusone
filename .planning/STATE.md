@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-03-PLAN.md (Backend API)
-last_updated: "2026-03-23T00:56:30Z"
+status: completed
+stopped_at: Completed 01-02-PLAN.md (Shopify integration SUMMARY backfill)
+last_updated: "2026-03-23T01:00:25.066Z"
 last_activity: 2026-03-23 -- Completed 01-03-PLAN.md (Backend API with Hono, D1, Shopify Admin)
 progress:
   total_phases: 3
@@ -68,6 +68,8 @@ Recent decisions affecting current work:
 - [01-03]: Seed endpoint with all 24 matches for dev without API-Football key
 - [01-03]: Email-based user identification (no accounts for v1)
 - [01-03]: CORS with dynamic origin check (env var + production domain)
+- [Phase 01-02]: Mock data fallback when no Shopify token -- app works without Shopify store configured
+- [Phase 01-02]: Cart persistence via localStorage cart ID only -- Shopify is source of truth on restore
 
 ### Pending Todos
 
@@ -81,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23
-Stopped at: Completed 01-03-PLAN.md (Phase 1 complete)
-Resume file: .planning/phases/01-commerce-foundation/01-03-SUMMARY.md
+Last session: 2026-03-23T01:00:25.062Z
+Stopped at: Completed 01-02-PLAN.md (Shopify integration SUMMARY backfill)
+Resume file: None

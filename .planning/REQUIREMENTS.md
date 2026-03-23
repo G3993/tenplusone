@@ -11,11 +11,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **COMM-01**: User can browse World Cup 2026 matches with odds in a terminal-style UI
 - [x] **COMM-02**: User can add match predictions to a bet slip (tap odds → add to slip)
-- [ ] **COMM-03**: User can select merch to wager on each prediction
-- [ ] **COMM-04**: User can browse merch catalog organized by team
-- [ ] **COMM-05**: User can view product details (mockup images, sizing, materials)
-- [ ] **COMM-06**: User can add merch to cart and checkout via Shopify
-- [ ] **COMM-07**: User receives order confirmation and tracking via Shopify emails
+- [x] **COMM-03**: User can select merch to wager on each prediction
+- [x] **COMM-04**: User can browse merch catalog organized by team
+- [x] **COMM-05**: User can view product details (mockup images, sizing, materials)
+- [x] **COMM-06**: User can add merch to cart and checkout via Shopify
+- [x] **COMM-07**: User receives order confirmation and tracking via Shopify emails
 - [x] **COMM-08**: Winning prediction unlocks 50% discount code applied at checkout
 - [x] **COMM-09**: Losing prediction unlocks consolation reward (store credit or reduced discount)
 - [x] **COMM-10**: Discount codes are dynamically generated via Shopify Admin API after match resolution
@@ -51,7 +51,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Infrastructure
 
-- [ ] **INFR-01**: Shopify store set up with products, collections, and Storefront API access
+- [x] **INFR-01**: Shopify store set up with products, collections, and Storefront API access
 - [x] **INFR-02**: Backend API (Cloudflare Workers) for discount code generation, match resolution, and design pipeline
 - [x] **INFR-03**: Football data API integration (API-Football) for match schedules, odds, and results
 - [x] **INFR-04**: Wager database tracking user predictions, match outcomes, and discount codes
@@ -97,11 +97,11 @@ Deferred to future release. Tracked but not in current roadmap.
 |-------------|-------|--------|
 | COMM-01 | Phase 1 | Complete |
 | COMM-02 | Phase 1 | Complete |
-| COMM-03 | Phase 1 | Pending |
-| COMM-04 | Phase 1 | Pending |
-| COMM-05 | Phase 1 | Pending |
-| COMM-06 | Phase 1 | Pending |
-| COMM-07 | Phase 1 | Pending |
+| COMM-03 | Phase 1 | Complete |
+| COMM-04 | Phase 1 | Complete |
+| COMM-05 | Phase 1 | Complete |
+| COMM-06 | Phase 1 | Complete |
+| COMM-07 | Phase 1 | Complete |
 | COMM-08 | Phase 1 | Complete |
 | COMM-09 | Phase 1 | Complete |
 | COMM-10 | Phase 1 | Complete |
@@ -122,7 +122,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | FRNT-02 | Phase 1 | Complete |
 | FRNT-03 | Phase 1 | Complete |
 | FRNT-04 | Phase 1 | Complete |
-| INFR-01 | Phase 1 | Pending |
+| INFR-01 | Phase 1 | Complete |
 | INFR-02 | Phase 1 | Complete |
 | INFR-03 | Phase 1 | Complete |
 | INFR-04 | Phase 1 | Complete |
