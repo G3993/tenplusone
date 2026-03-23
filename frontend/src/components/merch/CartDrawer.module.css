@@ -1,0 +1,61 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 100;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer {
+  width: 400px;
+  max-width: 90vw;
+  background: var(--bg);
+  border-left: 1px solid var(--faint);
+  padding: 24px 16px;
+  overflow-y: auto;
+  height: 100vh;
+}
+
+.closeBtn {
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 12px;
+}
+
+.closeBtn:hover {
+  color: var(--green);
+}
+
+.cmdBtn {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--bright);
+  border: none;
+  padding: 4px 16px;
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+
+.cmdBtn:hover {
+  opacity: 0.8;
+}
+
+.clearBtn {
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.clearBtn:hover {
+  color: var(--green);
+}

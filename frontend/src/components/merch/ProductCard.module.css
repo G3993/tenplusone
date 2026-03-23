@@ -1,0 +1,15 @@
+.card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  padding: 2px 0;
+}
+
+.card:hover .title {
+  color: var(--green);
+}
+
+.title {
+  color: var(--bright);
+  transition: color 0.1s;
+}

@@ -1,0 +1,72 @@
+.backLink {
+  font-family: var(--font);
+  font-size: var(--font-size);
+  color: var(--dim);
+  text-decoration: none;
+}
+
+.backLink:hover {
+  color: var(--green);
+}
+
+.imageGrid {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px 0 8px 48px;
+}
+
+.productImage {
+  max-width: 240px;
+  max-height: 240px;
+  object-fit: cover;
+  border: 1px solid var(--faint);
+}
+
+.slipSelect {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--bright);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--faint);
+  padding: 2px 0;
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  min-width: 200px;
+}
+
+.slipSelect:focus {
+  border-color: var(--bright);
+}
+
+.slipSelect option {
+  background: #0a0a0a;
+  color: var(--bright);
+}
+
+.inputLine {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.cmdBtn {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--bright);
+  border: none;
+  padding: 4px 16px;
+  cursor: pointer;
+  transition: opacity 0.1s;
+}
+
+.cmdBtn:hover {
+  opacity: 0.8;
+}
+
+.cmdBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

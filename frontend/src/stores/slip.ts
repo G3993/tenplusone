@@ -7,7 +7,7 @@ export interface Bet {
   odds: number;
   homeTeam: string;
   awayTeam: string;
-  wager: string;
+  wager: string; // Shopify product variant ID (e.g. gid://shopify/ProductVariant/...)
 }
 
 interface SlipStore {

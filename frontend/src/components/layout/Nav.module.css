@@ -41,6 +41,11 @@
   font-weight: 600;
 }
 
+.cartBtn {
+  font-family: var(--font);
+  font-weight: 600;
+}
+
 .navBadge {
   display: inline-block;
   background: var(--bright);
