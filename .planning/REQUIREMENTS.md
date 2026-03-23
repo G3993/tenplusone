@@ -30,10 +30,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Match Experience
 
-- [ ] **MTCH-01**: User can see match result after a game finishes
-- [ ] **MTCH-02**: User is notified whether their prediction won or lost
-- [ ] **MTCH-03**: Match detail view shows both team logos in the 3D grid
-- [ ] **MTCH-04**: Each match generates a one-of-one merch design driven by match data (score, stats, events)
+- [x] **MTCH-01**: User can see match result after a game finishes
+- [x] **MTCH-02**: User is notified whether their prediction won or lost
+- [x] **MTCH-03**: Match detail view shows both team logos in the 3D grid
+- [x] **MTCH-04**: Each match generates a one-of-one merch design driven by match data (score, stats, events)
 - [ ] **MTCH-05**: Generative designs are finalized post-match and become purchasable as unique prints
 
 ### Fulfillment
@@ -110,10 +110,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | TEAM-03 | Phase 2 | Complete |
 | TEAM-04 | Phase 2 | Complete |
 | TEAM-05 | Phase 2 | Complete |
-| MTCH-01 | Phase 2 | Pending |
-| MTCH-02 | Phase 2 | Pending |
-| MTCH-03 | Phase 2 | Pending |
-| MTCH-04 | Phase 2 | Pending |
+| MTCH-01 | Phase 2 | Complete |
+| MTCH-02 | Phase 2 | Complete |
+| MTCH-03 | Phase 2 | Complete |
+| MTCH-04 | Phase 2 | Complete |
 | MTCH-05 | Phase 2 | Pending |
 | FULF-01 | Phase 3 | Pending |
 | FULF-02 | Phase 3 | Pending |

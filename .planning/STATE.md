@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 02-02-PLAN.md (Team pages + routing)
-last_updated: "2026-03-23T02:14:00.000Z"
-last_activity: 2026-03-23 -- Completed 02-02-PLAN.md (Team pages + routing)
+status: in-progress
+stopped_at: Completed 02-03-PLAN.md (Match detail + generative mapping)
+last_updated: "2026-03-23T02:13:05Z"
+last_activity: 2026-03-23 -- Completed 02-03-PLAN.md (Match detail + generative mapping)
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 7
-  completed_plans: 5
-  percent: 71
+  completed_plans: 6
+  percent: 86
 ---
 
 # Project State
@@ -26,28 +26,28 @@ See: .planning/PROJECT.md (updated 2026-03-22)
 ## Current Position
 
 Phase: 2 of 3 (Team & Match Visuals)
-Plan: 2 of 4 in current phase -- COMPLETE
+Plan: 3 of 4 in current phase -- COMPLETE
 Status: In Progress
-Last activity: 2026-03-23 -- Completed 02-02-PLAN.md (Team pages + routing)
+Last activity: 2026-03-23 -- Completed 02-03-PLAN.md (Match detail + generative mapping)
 
-Progress: [███████░░░] 71%
+Progress: [████████░░] 86%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: ~14min
-- Total execution time: ~1h 11min
+- Total plans completed: 6
+- Average duration: ~12min
+- Total execution time: ~1h 14min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-commerce-foundation | 3 | ~1h | ~20min |
-| 02-team-match-visuals | 2 | ~11min | ~5.5min |
+| 02-team-match-visuals | 3 | ~14min | ~4.7min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (~10min), 01-03 (~5min), 02-01 (~6min), 02-02 (~5min)
+- Last 5 plans: 01-03 (~5min), 02-01 (~6min), 02-02 (~5min), 02-03 (~3min)
 - Trend: accelerating
 
 *Updated after each plan completion*
@@ -76,6 +76,9 @@ Recent decisions affecting current work:
 - [02-01]: Team data keyed by slug for URL routing, with helpers for lookup by name/code/group
 - [02-02]: TeamCloset uses fetchProductsByCollection for server-scoped queries rather than client-side filtering
 - [02-02]: TBD teams render as plain text in match list (no broken links)
+- [02-03]: Email from localStorage key tenplusone-email (matches BetSlip convention)
+- [02-03]: API fetch with null fallback -- match detail works without backend running
+- [02-03]: Generative config is a pure function with no side effects for testability
 
 ### Pending Todos
 
@@ -89,6 +92,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T02:14:00Z
-Stopped at: Completed 02-02-PLAN.md (Team pages + routing)
+Last session: 2026-03-23T02:13:05Z
+Stopped at: Completed 02-03-PLAN.md (Match detail + generative mapping)
 Resume file: None
