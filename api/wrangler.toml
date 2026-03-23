@@ -1,0 +1,15 @@
+name = "tenplusone-api"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tenplusone-db"
+database_id = "local"
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[vars]
+FOOTBALL_API_HOST = "v3.football.api-sports.io"
+FRONTEND_ORIGIN = "http://localhost:5173"
