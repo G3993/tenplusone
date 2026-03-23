@@ -9,6 +9,7 @@ import { Merch } from './pages/Merch';
 import ProductDetail from './pages/ProductDetail';
 import { Team } from './pages/Team';
 import { MatchDetail } from './pages/MatchDetail';
+import { AdminGenerate } from './pages/AdminGenerate';
 import { useCartStore } from './stores/cart';
 
 export function App() {
@@ -29,6 +30,7 @@ export function App() {
           <Route path="/merch/:handle" element={<ProductDetail />} />
           <Route path="/team/:slug" element={<Team />} />
           <Route path="/match/:id" element={<MatchDetail />} />
+          <Route path="/admin/generate/:matchId" element={<AdminGenerate />} />
         </Routes>
       </Editor>
     </BrowserRouter>

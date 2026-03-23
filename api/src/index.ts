@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { matchesRoute } from './routes/matches';
 import { wagersRoute } from './routes/wagers';
+import { designRoutes } from './routes/designs';
 
 type Bindings = {
   DB: D1Database;
@@ -23,6 +24,7 @@ app.use('/*', cors({
 
 app.route('/api/matches', matchesRoute);
 app.route('/api/wagers', wagersRoute);
+app.route('/api/designs', designRoutes);
 
 app.get('/api/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISOString() }));
 

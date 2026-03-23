@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, type MutableRefObject } from 'react';
 import { PixelGridController } from './PixelGridController.ts';
 import styles from './PixelGrid.module.css';
 
@@ -7,9 +7,11 @@ export interface PixelGridProps {
   matchMode?: { awayPixels: number[]; switchInterval?: number };
   height?: string;
   className?: string;
+  /** Ref to receive the PixelGridController instance once mounted */
+  ref?: MutableRefObject<PixelGridController | null>;
 }
 
-export function PixelGrid({ logoPixels, matchMode, height, className }: PixelGridProps) {
+export function PixelGrid({ logoPixels, matchMode, height, className, ref }: PixelGridProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const controllerRef = useRef<PixelGridController | null>(null);
 
@@ -20,6 +22,7 @@ export function PixelGrid({ logoPixels, matchMode, height, className }: PixelGri
 
     const controller = new PixelGridController(containerRef.current);
     controllerRef.current = controller;
+    if (ref) ref.current = controller;
 
     const onResize = () => controller.resize();
     window.addEventListener('resize', onResize);
@@ -28,6 +31,7 @@ export function PixelGrid({ logoPixels, matchMode, height, className }: PixelGri
       window.removeEventListener('resize', onResize);
       controller.dispose();
       controllerRef.current = null;
+      if (ref) ref.current = null;
     };
   }, []);
 

@@ -31,3 +31,13 @@ CREATE TABLE IF NOT EXISTS wagers (
 CREATE INDEX IF NOT EXISTS idx_wagers_match ON wagers(match_id);
 CREATE INDEX IF NOT EXISTS idx_wagers_email ON wagers(user_email);
 CREATE INDEX IF NOT EXISTS idx_wagers_status ON wagers(status);
+
+CREATE TABLE IF NOT EXISTS designs (
+  id TEXT PRIMARY KEY,
+  match_id TEXT NOT NULL,
+  image_url TEXT,
+  shopify_product_id TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_designs_match ON designs(match_id);
