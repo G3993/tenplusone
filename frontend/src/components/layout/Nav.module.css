@@ -1,0 +1,74 @@
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 24px;
+  background: #0a0a0a;
+  border-bottom: 1px solid #1a1a1a;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  flex-wrap: wrap;
+}
+
+.navBrand {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--bright);
+  cursor: pointer;
+  letter-spacing: -0.3px;
+  text-decoration: none;
+}
+
+.navLink {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.12s;
+  text-decoration: none;
+}
+
+.navLink:hover { color: var(--green); }
+.navLink.active, .active { color: var(--bright); }
+
+.navSlip {
+  margin-left: auto;
+  color: var(--bright) !important;
+  font-weight: 600;
+}
+
+.navBadge {
+  display: inline-block;
+  background: var(--bright);
+  color: var(--bg);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 0 5px;
+  border-radius: 2px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.navGridLink {
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--bg);
+  background: var(--bright);
+  border: none;
+  padding: 4px 12px;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  transition: opacity 0.12s;
+}
+
+.navGridLink:hover { opacity: 0.8; }
+
+@media (max-width: 560px) {
+  .nav { gap: 12px; padding: 10px 14px; }
+}

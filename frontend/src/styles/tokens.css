@@ -1,0 +1,13 @@
+:root {
+  --bg: #000000;
+  --white: #a0a0a0;
+  --bright: #ffffff;
+  --dim: #555555;
+  --faint: #222222;
+  --line-num: #333333;
+  --green: #4ade80;
+  --font: 'Geist Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  --font-size: 14px;
+  --line-height: 1.85;
+  --letter-spacing: 0.01em;
+}

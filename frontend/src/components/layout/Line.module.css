@@ -1,0 +1,29 @@
+.L {
+  display: flex;
+  align-items: flex-start;
+  min-height: 26px;
+  padding: 0 24px;
+}
+
+.Ln {
+  width: 36px;
+  flex-shrink: 0;
+  text-align: right;
+  padding-right: 20px;
+  color: var(--line-num);
+  font-size: 14px;
+  user-select: none;
+  line-height: 1.85;
+}
+
+.Lc {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.85;
+}
+
+@media (max-width: 560px) {
+  .L { padding: 0 12px; }
+  .Ln { width: 28px; padding-right: 12px; font-size: 12px; }
+  .Lc { font-size: 12px; }
+}

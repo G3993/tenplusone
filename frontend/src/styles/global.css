@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@300;400;500;600;700;800;900&display=swap');
+@import './tokens.css';
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { background: var(--bg); color: var(--white); }
+
+body {
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.85;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.01em;
+}
+
+::selection { background: var(--bright); color: var(--bg); }
+
+/* text utilities */
+.comment { color: var(--dim); }
+.bold { color: var(--bright); font-weight: 700; }
+.bright { color: var(--bright); }
+.dim { color: var(--dim); }
+.faint { color: var(--faint); }
+
+/* cursor */
+.cursor-line { background: rgba(255,255,255,0.03); }
+
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 18px;
+  background: var(--bright);
+  vertical-align: middle;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+/* toast */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(60px);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bright);
+  color: var(--bg);
+  padding: 8px 20px;
+  z-index: 999;
+  opacity: 0;
+  transition: all 0.2s ease;
+  pointer-events: none;
+}
+
+.toast.on { transform: translateX(-50%) translateY(0); opacity: 1; }
