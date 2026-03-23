@@ -1,1 +1,58 @@
-/* placeholder - populated in Task 2 */
+.slipSelect {
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--bright);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--faint);
+  padding: 2px 0;
+  appearance: none;
+  cursor: pointer;
+  outline: none;
+  min-width: 200px;
+}
+
+.slipSelect:focus {
+  border-color: var(--bright);
+}
+
+.slipSelect option {
+  background: #0a0a0a;
+  color: var(--bright);
+}
+
+.rmBtn {
+  font-family: var(--font);
+  font-size: 11px;
+  color: var(--dim);
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.rmBtn:hover {
+  color: var(--green);
+}
+
+.cmdBtn {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--bright);
+  border: none;
+  padding: 4px 16px;
+  cursor: pointer;
+  transition: opacity 0.1s;
+  display: inline-block;
+  margin-top: 4px;
+}
+
+.cmdBtn:hover {
+  opacity: 0.8;
+}
+
+.inputLine {
+  background: rgba(255,255,255,0.03);
+}
