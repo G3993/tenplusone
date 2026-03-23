@@ -95,43 +95,43 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| COMM-01 | — | Pending |
-| COMM-02 | — | Pending |
-| COMM-03 | — | Pending |
-| COMM-04 | — | Pending |
-| COMM-05 | — | Pending |
-| COMM-06 | — | Pending |
-| COMM-07 | — | Pending |
-| COMM-08 | — | Pending |
-| COMM-09 | — | Pending |
-| COMM-10 | — | Pending |
-| TEAM-01 | — | Pending |
-| TEAM-02 | — | Pending |
-| TEAM-03 | — | Pending |
-| TEAM-04 | — | Pending |
-| TEAM-05 | — | Pending |
-| MTCH-01 | — | Pending |
-| MTCH-02 | — | Pending |
-| MTCH-03 | — | Pending |
-| MTCH-04 | — | Pending |
-| MTCH-05 | — | Pending |
-| FULF-01 | — | Pending |
-| FULF-02 | — | Pending |
-| FULF-03 | — | Pending |
-| FRNT-01 | — | Pending |
-| FRNT-02 | — | Pending |
-| FRNT-03 | — | Pending |
-| FRNT-04 | — | Pending |
-| INFR-01 | — | Pending |
-| INFR-02 | — | Pending |
-| INFR-03 | — | Pending |
-| INFR-04 | — | Pending |
+| COMM-01 | Phase 1 | Pending |
+| COMM-02 | Phase 1 | Pending |
+| COMM-03 | Phase 1 | Pending |
+| COMM-04 | Phase 1 | Pending |
+| COMM-05 | Phase 1 | Pending |
+| COMM-06 | Phase 1 | Pending |
+| COMM-07 | Phase 1 | Pending |
+| COMM-08 | Phase 1 | Pending |
+| COMM-09 | Phase 1 | Pending |
+| COMM-10 | Phase 1 | Pending |
+| TEAM-01 | Phase 2 | Pending |
+| TEAM-02 | Phase 2 | Pending |
+| TEAM-03 | Phase 2 | Pending |
+| TEAM-04 | Phase 2 | Pending |
+| TEAM-05 | Phase 2 | Pending |
+| MTCH-01 | Phase 2 | Pending |
+| MTCH-02 | Phase 2 | Pending |
+| MTCH-03 | Phase 2 | Pending |
+| MTCH-04 | Phase 2 | Pending |
+| MTCH-05 | Phase 2 | Pending |
+| FULF-01 | Phase 3 | Pending |
+| FULF-02 | Phase 3 | Pending |
+| FULF-03 | Phase 3 | Pending |
+| FRNT-01 | Phase 1 | Pending |
+| FRNT-02 | Phase 1 | Pending |
+| FRNT-03 | Phase 1 | Pending |
+| FRNT-04 | Phase 1 | Pending |
+| INFR-01 | Phase 1 | Pending |
+| INFR-02 | Phase 1 | Pending |
+| INFR-03 | Phase 1 | Pending |
+| INFR-04 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 31 total
-- Mapped to phases: 0
-- Unmapped: 31 ⚠️
+- Mapped to phases: 31
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-22*
-*Last updated: 2026-03-22 after initial definition*
+*Last updated: 2026-03-22 after roadmap creation*
