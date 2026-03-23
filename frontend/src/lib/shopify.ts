@@ -225,7 +225,38 @@ function buildMockCart(variantId: string, quantity: number): ShopifyCart {
 // Mutable mock cart state for accumulation
 let mockCartState: ShopifyCart | null = null;
 
+// --- Collection Query ---
+
+const COLLECTION_PRODUCTS_QUERY = `#graphql
+  query CollectionProducts($handle: String!, $first: Int!) {
+    collection(handle: $handle) {
+      products(first: $first) {
+        edges {
+          node {
+            id
+            title
+            handle
+            description
+            priceRange { minVariantPrice { amount currencyCode } }
+            images(first: 1) { edges { node { url altText } } }
+            variants(first: 10) { edges { node { id title price { amount } } } }
+          }
+        }
+      }
+    }
+  }
+`;
+
 // --- API Functions ---
+
+export async function fetchProductsByCollection(collectionHandle: string): Promise<ShopifyProduct[]> {
+  if (isMockMode) return buildMockProducts();
+
+  const { data } = await shopifyClient!.request(COLLECTION_PRODUCTS_QUERY, {
+    variables: { handle: collectionHandle, first: 20 },
+  });
+  return data.collection?.products.edges.map((e: { node: ShopifyProduct }) => e.node) ?? [];
+}
 
 export async function fetchProducts(): Promise<ShopifyProduct[]> {
   if (isMockMode) return buildMockProducts();

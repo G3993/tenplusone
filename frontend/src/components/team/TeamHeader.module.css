@@ -1,0 +1,15 @@
+.header {
+  margin-bottom: 1rem;
+}
+
+.teamName {
+  color: var(--white);
+}
+
+.teamCode {
+  color: var(--dim);
+}
+
+.group {
+  color: var(--dim);
+}
