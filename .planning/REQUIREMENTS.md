@@ -23,10 +23,10 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Team Experience
 
 - [ ] **TEAM-01**: Each of the 48 World Cup teams has a dedicated team page
-- [ ] **TEAM-02**: Team page displays interactive 3D pixel logo (32x32 grid) at the top
+- [x] **TEAM-02**: Team page displays interactive 3D pixel logo (32x32 grid) at the top
 - [ ] **TEAM-03**: Team page displays full merch collection ("closet") below the logo
-- [ ] **TEAM-04**: User can interact with the 3D pixel logo (rotate, zoom, fluid sim behind it)
-- [ ] **TEAM-05**: 48 pixelated team logos are available as pixel data for the grid
+- [x] **TEAM-04**: User can interact with the 3D pixel logo (rotate, zoom, fluid sim behind it)
+- [x] **TEAM-05**: 48 pixelated team logos are available as pixel data for the grid
 
 ### Match Experience
 
@@ -106,10 +106,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | COMM-09 | Phase 1 | Complete |
 | COMM-10 | Phase 1 | Complete |
 | TEAM-01 | Phase 2 | Pending |
-| TEAM-02 | Phase 2 | Pending |
+| TEAM-02 | Phase 2 | Complete |
 | TEAM-03 | Phase 2 | Pending |
-| TEAM-04 | Phase 2 | Pending |
-| TEAM-05 | Phase 2 | Pending |
+| TEAM-04 | Phase 2 | Complete |
+| TEAM-05 | Phase 2 | Complete |
 | MTCH-01 | Phase 2 | Pending |
 | MTCH-02 | Phase 2 | Pending |
 | MTCH-03 | Phase 2 | Pending |

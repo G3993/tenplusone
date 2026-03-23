@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Completed 01-02-PLAN.md (Shopify integration SUMMARY backfill)
-last_updated: "2026-03-23T01:30:31.821Z"
-last_activity: 2026-03-23 -- Completed 01-03-PLAN.md (Backend API with Hono, D1, Shopify Admin)
+status: in-progress
+stopped_at: Completed 02-01-PLAN.md (Grid engine + team data)
+last_updated: "2026-03-23T02:06:53.205Z"
+last_activity: 2026-03-23 -- Completed 02-01-PLAN.md (Grid engine + team data)
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 100
+  total_plans: 7
+  completed_plans: 4
+  percent: 57
 ---
 
 # Project State
@@ -21,32 +21,33 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-22)
 
 **Core value:** Always-winning gambling -- bet on a match to unlock merch at 50% off. Win or lose, you always walk away with something.
-**Current focus:** Phase 1: Commerce Foundation
+**Current focus:** Phase 2: Team & Match Visuals
 
 ## Current Position
 
-Phase: 1 of 3 (Commerce Foundation) -- COMPLETE
-Plan: 3 of 3 in current phase -- ALL PLANS DONE
-Status: Phase 1 Complete
-Last activity: 2026-03-23 -- Completed 01-03-PLAN.md (Backend API with Hono, D1, Shopify Admin)
+Phase: 2 of 3 (Team & Match Visuals)
+Plan: 1 of 4 in current phase -- COMPLETE
+Status: In Progress
+Last activity: 2026-03-23 -- Completed 02-01-PLAN.md (Grid engine + team data)
 
-Progress: [██████████] 100%
+Progress: [██████░░░░] 57%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
-- Average duration: ~20min
-- Total execution time: ~1 hour
+- Total plans completed: 4
+- Average duration: ~17min
+- Total execution time: ~1h 6min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-commerce-foundation | 3 | ~1h | ~20min |
+| 02-team-match-visuals | 1 | ~6min | ~6min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (~45min), 01-02 (~10min), 01-03 (~5min)
+- Last 5 plans: 01-01 (~45min), 01-02 (~10min), 01-03 (~5min), 02-01 (~6min)
 - Trend: accelerating
 
 *Updated after each plan completion*
@@ -70,6 +71,9 @@ Recent decisions affecting current work:
 - [01-03]: CORS with dynamic origin check (env var + production domain)
 - [Phase 01-02]: Mock data fallback when no Shopify token -- app works without Shopify store configured
 - [Phase 01-02]: Cart persistence via localStorage cart ID only -- Shopify is source of truth on restore
+- [02-01]: InstancedMesh with per-cell scale animation instead of 1024 individual meshes -- 1 draw call
+- [02-01]: Controller pattern: Three.js state in class, React only holds ref
+- [02-01]: Team data keyed by slug for URL routing, with helpers for lookup by name/code/group
 
 ### Pending Todos
 
@@ -83,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T01:00:25.062Z
-Stopped at: Completed 01-02-PLAN.md (Shopify integration SUMMARY backfill)
+Last session: 2026-03-23T02:06:00Z
+Stopped at: Completed 02-01-PLAN.md (Grid engine + team data)
 Resume file: None
