@@ -16,9 +16,9 @@ Requirements for initial release. Each maps to roadmap phases.
 - [ ] **COMM-05**: User can view product details (mockup images, sizing, materials)
 - [ ] **COMM-06**: User can add merch to cart and checkout via Shopify
 - [ ] **COMM-07**: User receives order confirmation and tracking via Shopify emails
-- [ ] **COMM-08**: Winning prediction unlocks 50% discount code applied at checkout
-- [ ] **COMM-09**: Losing prediction unlocks consolation reward (store credit or reduced discount)
-- [ ] **COMM-10**: Discount codes are dynamically generated via Shopify Admin API after match resolution
+- [x] **COMM-08**: Winning prediction unlocks 50% discount code applied at checkout
+- [x] **COMM-09**: Losing prediction unlocks consolation reward (store credit or reduced discount)
+- [x] **COMM-10**: Discount codes are dynamically generated via Shopify Admin API after match resolution
 
 ### Team Experience
 
@@ -52,9 +52,9 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Infrastructure
 
 - [ ] **INFR-01**: Shopify store set up with products, collections, and Storefront API access
-- [ ] **INFR-02**: Backend API (Cloudflare Workers) for discount code generation, match resolution, and design pipeline
-- [ ] **INFR-03**: Football data API integration (API-Football) for match schedules, odds, and results
-- [ ] **INFR-04**: Wager database tracking user predictions, match outcomes, and discount codes
+- [x] **INFR-02**: Backend API (Cloudflare Workers) for discount code generation, match resolution, and design pipeline
+- [x] **INFR-03**: Football data API integration (API-Football) for match schedules, odds, and results
+- [x] **INFR-04**: Wager database tracking user predictions, match outcomes, and discount codes
 
 ## v2 Requirements
 
@@ -102,9 +102,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | COMM-05 | Phase 1 | Pending |
 | COMM-06 | Phase 1 | Pending |
 | COMM-07 | Phase 1 | Pending |
-| COMM-08 | Phase 1 | Pending |
-| COMM-09 | Phase 1 | Pending |
-| COMM-10 | Phase 1 | Pending |
+| COMM-08 | Phase 1 | Complete |
+| COMM-09 | Phase 1 | Complete |
+| COMM-10 | Phase 1 | Complete |
 | TEAM-01 | Phase 2 | Pending |
 | TEAM-02 | Phase 2 | Pending |
 | TEAM-03 | Phase 2 | Pending |
@@ -123,9 +123,9 @@ Deferred to future release. Tracked but not in current roadmap.
 | FRNT-03 | Phase 1 | Complete |
 | FRNT-04 | Phase 1 | Complete |
 | INFR-01 | Phase 1 | Pending |
-| INFR-02 | Phase 1 | Pending |
-| INFR-03 | Phase 1 | Pending |
-| INFR-04 | Phase 1 | Pending |
+| INFR-02 | Phase 1 | Complete |
+| INFR-03 | Phase 1 | Complete |
+| INFR-04 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 31 total

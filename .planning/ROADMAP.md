@@ -12,7 +12,7 @@ ten+1 ships in three phases: first a working terminal-aesthetic merch store with
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Commerce Foundation** - Terminal merch store with Shopify integration, prediction wagering, and discount delivery
+- [x] **Phase 1: Commerce Foundation** - Terminal merch store with Shopify integration, prediction wagering, and discount delivery
 - [ ] **Phase 2: Team & Match Visuals** - Interactive 3D pixel grid team pages, match experience, and generative match-driven designs
 - [ ] **Phase 3: Fulfillment Pipeline** - Print-on-demand integration to produce and ship one-of-one generative merch
 
@@ -28,12 +28,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User receives a discount code after a match resolves -- 50% off for correct predictions, consolation reward for incorrect ones
   4. The entire experience maintains terminal/code-editor aesthetic (Geist Mono, line numbers, monochrome with green hover states) and works on mobile
   5. Backend API handles match data polling, wager tracking, and discount code generation via Shopify Admin API
-**Plans:** 1/3 plans executed
+**Plans:** 3/3 plans executed
 
 Plans:
-- [ ] 01-01-PLAN.md — Vite + React + TypeScript SPA scaffold with terminal UI system (layout, nav, typography, responsive, match browser, bet slip)
-- [ ] 01-02-PLAN.md — Shopify Storefront API integration for product browsing, cart, checkout, and merch selection in bet slip
-- [ ] 01-03-PLAN.md — Cloudflare Workers backend API with wagering engine, match data, and Shopify Admin API discount code generation
+- [x] 01-01-PLAN.md — Vite + React + TypeScript SPA scaffold with terminal UI system (layout, nav, typography, responsive, match browser, bet slip)
+- [x] 01-02-PLAN.md — Shopify Storefront API integration for product browsing, cart, checkout, and merch selection in bet slip
+- [x] 01-03-PLAN.md — Cloudflare Workers backend API with wagering engine, match data, and Shopify Admin API discount code generation
 
 ### Phase 2: Team & Match Visuals
 **Goal**: Each team has an interactive 3D pixel logo page, match detail views show both teams with visual effects, and post-match generative designs create one-of-one merch artwork from match data
@@ -70,6 +70,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Commerce Foundation | 1/3 | In Progress|  |
+| 1. Commerce Foundation | 3/3 | Complete | 2026-03-23 |
 | 2. Team & Match Visuals | 0/2 | Not started | - |
 | 3. Fulfillment Pipeline | 0/1 | Not started | - |
