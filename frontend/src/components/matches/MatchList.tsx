@@ -4,6 +4,7 @@ import { useMatchesStore } from '../../stores/matches';
 import { MATCHES } from '../../data/matches';
 import { GROUPS } from '../../data/groups';
 import { OddsButton } from './OddsButton';
+import { getTeamByName } from '../../data/teams';
 import styles from './MatchList.module.css';
 
 const PICK_MAP: Record<string, 'home' | 'draw' | 'away'> = {
@@ -11,10 +12,6 @@ const PICK_MAP: Record<string, 'home' | 'draw' | 'away'> = {
   'X': 'draw',
   '2': 'away',
 };
-
-function teamSlug(name: string) {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-}
 
 export function MatchList() {
   const nextLn = useLineCounter();
@@ -65,9 +62,19 @@ export function MatchList() {
           {ms.map((m) => (
             <div key={m.id}>
               <Line n={nextLn()}>
-                <Link to={`/teams/${teamSlug(m.h)}`} className={styles.teamLink}>{m.h}</Link>
+                {(() => {
+                  const homeTeam = getTeamByName(m.h);
+                  return homeTeam && homeTeam.code !== 'TBD'
+                    ? <Link to={`/team/${homeTeam.slug}`} className={styles.teamLink}>{m.h}</Link>
+                    : <span className={styles.teamLink}>{m.h}</span>;
+                })()}
                 <span className="dim"> vs </span>
-                <Link to={`/teams/${teamSlug(m.a)}`} className={styles.teamLink}>{m.a}</Link>
+                {(() => {
+                  const awayTeam = getTeamByName(m.a);
+                  return awayTeam && awayTeam.code !== 'TBD'
+                    ? <Link to={`/team/${awayTeam.slug}`} className={styles.teamLink}>{m.a}</Link>
+                    : <span className={styles.teamLink}>{m.a}</span>;
+                })()}
               </Line>
               <Line n={nextLn()}>
                 <span className="dim">{m.t} &middot; {m.v} &middot; grp {m.grp}</span>

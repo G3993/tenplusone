@@ -1,16 +1,26 @@
 import { useState, useEffect } from 'react';
-import { fetchProducts, type ShopifyProduct } from '../../lib/shopify';
+import { fetchProducts, fetchProductsByCollection, type ShopifyProduct } from '../../lib/shopify';
 import { Line, Blank, useLineCounter } from '../layout/Line';
 import { ProductCard } from './ProductCard';
 
-export function ProductGrid() {
+interface ProductGridProps {
+  teamFilter?: string;
+}
+
+export function ProductGrid({ teamFilter }: ProductGridProps = {}) {
   const nextLn = useLineCounter();
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchProducts()
+    setLoading(true);
+    setError(null);
+    const fetcher = teamFilter
+      ? fetchProductsByCollection(teamFilter)
+      : fetchProducts();
+
+    fetcher
       .then((p) => {
         setProducts(p);
         setLoading(false);
@@ -20,12 +30,16 @@ export function ProductGrid() {
         setError('error loading products');
         setLoading(false);
       });
-  }, []);
+  }, [teamFilter]);
+
+  const heading = teamFilter
+    ? `// ${teamFilter.toUpperCase()} MERCH`
+    : '// MERCH';
 
   return (
     <>
       <Line n={nextLn()}>
-        <span className="comment">{'// MERCH'}</span>
+        <span className="comment">{heading}</span>
       </Line>
       <Blank n={nextLn()} />
 

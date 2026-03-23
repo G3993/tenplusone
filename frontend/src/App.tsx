@@ -7,6 +7,7 @@ import { Groups } from './pages/Groups';
 import { BetSlipPage } from './pages/BetSlipPage';
 import { Merch } from './pages/Merch';
 import ProductDetail from './pages/ProductDetail';
+import { Team } from './pages/Team';
 import { useCartStore } from './stores/cart';
 
 export function App() {
@@ -25,6 +26,7 @@ export function App() {
           <Route path="/slip" element={<BetSlipPage />} />
           <Route path="/merch" element={<Merch />} />
           <Route path="/merch/:handle" element={<ProductDetail />} />
+          <Route path="/team/:slug" element={<Team />} />
         </Routes>
       </Editor>
     </BrowserRouter>
