@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 
-type Bindings = { DB: D1Database; FOOTBALL_API_KEY: string; FOOTBALL_API_HOST: string };
+type Bindings = { DB: D1Database; FOOTBALL_API_KEY: string; FOOTBALL_API_HOST: string; SHOPIFY_ADMIN_TOKEN: string; SHOPIFY_STORE_DOMAIN: string };
 const app = new Hono<{ Bindings: Bindings }>();
 
 // GET /api/matches - list all matches (cached in D1)
@@ -62,6 +62,18 @@ app.post('/seed', async (c) => {
     `).bind(m.id, m.home_team, m.away_team, m.kickoff, m.group_id, m.venue, m.odds_home, m.odds_draw, m.odds_away).run();
   }
   return c.json({ seeded: matches.length });
+});
+
+// POST /api/matches/:id/resolve - resolve a finished match (admin)
+app.post('/:id/resolve', async (c) => {
+  const { resolveMatch } = await import('../services/resolver');
+  const id = c.req.param('id');
+  try {
+    const result = await resolveMatch(c.env.DB, id, c.env.SHOPIFY_STORE_DOMAIN, c.env.SHOPIFY_ADMIN_TOKEN);
+    return c.json(result);
+  } catch (e) {
+    return c.json({ error: (e as Error).message }, 400);
+  }
 });
 
 export { app as matchesRoute };

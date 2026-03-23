@@ -29,7 +29,29 @@ app.get('/api/health', (c) => c.json({ status: 'ok', timestamp: new Date().toISO
 export default {
   fetch: app.fetch,
   async scheduled(event: ScheduledEvent, env: Bindings, ctx: ExecutionContext) {
-    // TODO: Poll API-Football for live match updates
-    // TODO: Resolve finished matches
+    const { fetchAndSyncMatches } = await import('./services/football');
+    const { resolveMatch } = await import('./services/resolver');
+
+    // Sync matches from API-Football
+    try {
+      await fetchAndSyncMatches(env.DB, env.FOOTBALL_API_KEY, env.FOOTBALL_API_HOST);
+    } catch (e) {
+      console.error('Match sync failed:', e);
+    }
+
+    // Check for newly finished matches with unresolved wagers
+    const { results: finishedMatches } = await env.DB.prepare(`
+      SELECT DISTINCT m.id FROM matches m
+      JOIN wagers w ON w.match_id = m.id
+      WHERE m.status = 'FINISHED' AND w.status = 'PENDING'
+    `).all();
+
+    for (const match of finishedMatches) {
+      try {
+        await resolveMatch(env.DB, match.id as string, env.SHOPIFY_STORE_DOMAIN, env.SHOPIFY_ADMIN_TOKEN);
+      } catch (e) {
+        console.error(`Resolution failed for match ${match.id}:`, e);
+      }
+    }
   },
 };

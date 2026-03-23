@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSlipStore } from '../../stores/slip';
 import { fetchProducts, type ShopifyProduct } from '../../lib/shopify';
+import { placeWager } from '../../lib/api';
 import { Line, Blank, useLineCounter } from '../layout/Line';
 import styles from './BetSlip.module.css';
 
@@ -26,6 +27,48 @@ export function BetSlip() {
         // Products will remain empty; wager dropdown shows no options
       });
   }, []);
+
+  const [email, setEmail] = useState(() => localStorage.getItem('tenplusone-email') || '');
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    if (email) localStorage.setItem('tenplusone-email', email);
+  }, [email]);
+
+  async function handleSubmit() {
+    if (!email || bets.length === 0) return;
+    setSubmitting(true);
+    setMessage(null);
+
+    const errors: string[] = [];
+    let placed = 0;
+
+    for (const bet of bets) {
+      try {
+        await placeWager({
+          email,
+          matchId: bet.matchId,
+          pick: bet.pick,
+          productId: bet.wager || undefined,
+        });
+        placed++;
+      } catch (e) {
+        errors.push(`${bet.homeTeam} vs ${bet.awayTeam}: ${(e as Error).message}`);
+      }
+    }
+
+    setSubmitting(false);
+
+    if (errors.length === 0) {
+      setMessage({ type: 'success', text: `Predictions placed! (${placed})` });
+      clear();
+    } else if (placed > 0) {
+      setMessage({ type: 'error', text: `${placed} placed, ${errors.length} failed: ${errors.join('; ')}` });
+    } else {
+      setMessage({ type: 'error', text: errors.join('; ') });
+    }
+  }
 
   return (
     <>
@@ -96,11 +139,37 @@ export function BetSlip() {
             <span className="bright">{bets.filter((b) => b.wager).length}</span>
           </Line>
           <Blank n={nextLn()} />
+
+          <Line n={nextLn()} className={styles.inputLine}>
+            <span className="dim">email: </span>
+            <input
+              type="email"
+              className={styles.slipSelect}
+              placeholder="your@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </Line>
+          <Blank n={nextLn()} />
+
           <Line n={nextLn()}>
-            <button className={styles.cmdBtn} disabled>
-              place {bets.length} bet{bets.length > 1 ? 's' : ''}
+            <button
+              className={styles.cmdBtn}
+              disabled={submitting || !email}
+              onClick={handleSubmit}
+            >
+              {submitting ? 'placing...' : `place ${bets.length} prediction${bets.length > 1 ? 's' : ''}`}
             </button>
           </Line>
+
+          {message && (
+            <Line n={nextLn()}>
+              <span className={message.type === 'success' ? 'bright' : 'dim'}>
+                {message.text}
+              </span>
+            </Line>
+          )}
+
           <Blank n={nextLn()} />
           <Line n={nextLn()}>
             <button className={styles.rmBtn} onClick={clear}>[clear all]</button>
