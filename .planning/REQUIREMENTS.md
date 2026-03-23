@@ -38,9 +38,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Fulfillment
 
-- [ ] **FULF-01**: Print-on-demand integration (Printful) handles merch production
-- [ ] **FULF-02**: Generative match designs are automatically uploaded to Printful as print-ready files
-- [ ] **FULF-03**: POD orders are created automatically when a user purchases generative merch
+- [x] **FULF-01**: Print-on-demand integration (Printful) handles merch production
+- [x] **FULF-02**: Generative match designs are automatically uploaded to Printful as print-ready files
+- [x] **FULF-03**: POD orders are created automatically when a user purchases generative merch
 
 ### Frontend
 

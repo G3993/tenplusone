@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Commerce Foundation** - Terminal merch store with Shopify integration, prediction wagering, and discount delivery
 - [x] **Phase 2: Team & Match Visuals** - Interactive 3D pixel grid team pages, match experience, and generative match-driven designs (completed 2026-03-23)
-- [ ] **Phase 3: Fulfillment Pipeline** - Print-on-demand integration to produce and ship one-of-one generative merch
+- [x] **Phase 3: Fulfillment Pipeline** - Print-on-demand integration to produce and ship one-of-one generative merch (completed 2026-03-22)
 
 ## Phase Details
 
@@ -60,10 +60,10 @@ Plans:
   1. Generative match designs are automatically uploaded to Printful as print-ready files (correct resolution for the product type)
   2. When a user purchases generative merch, a print-on-demand order is created automatically in Printful via the Shopify-Printful integration
   3. The end-to-end pipeline works: match ends, design generates, product appears in store, user buys, order routes to Printful for production and shipping
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 
 Plans:
-- [ ] 03-01-PLAN.md — R2 image storage + Printful API product creation + designs endpoint refactor (replaces D1 base64 + Shopify direct)
+- [x] 03-01-PLAN.md — R2 image storage + Printful API product creation + designs endpoint refactor (replaces D1 base64 + Shopify direct)
 
 ## Progress
 
@@ -74,4 +74,4 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Commerce Foundation | 3/3 | Complete | 2026-03-23 |
 | 2. Team & Match Visuals | 4/4 | Complete   | 2026-03-23 |
-| 3. Fulfillment Pipeline | 0/1 | Not started | - |
+| 3. Fulfillment Pipeline | 1/1 | Complete | 2026-03-22 |
