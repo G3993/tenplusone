@@ -44,11 +44,13 @@ Plans:
   2. User can view a match detail page showing both team logos rendered in the 3D grid with match result and prediction outcome
   3. After a match finishes, a unique merch design is generated from match data (score, stats, events) and appears as a purchasable product
   4. 48 pixelated team logos are available and render correctly in the 32x32 grid
-**Plans**: TBD
+**Plans:** 4 plans
 
 Plans:
-- [ ] 02-01: Team pages with interactive 3D pixel grid, 48-team logo library, and merch closet integration
-- [ ] 02-02: Match experience and generative design pipeline (match views, result tracking, data-driven artwork generation)
+- [ ] 02-01-PLAN.md — Three.js grid engine extraction (PixelGrid, FluidSim, GridMesh, transitions) + 48-team data with logo pixel arrays
+- [ ] 02-02-PLAN.md — Team pages with interactive 3D pixel logo, team-filtered merch closet, routing and navigation
+- [ ] 02-03-PLAN.md — Match detail pages with dual-logo grid, result display, prediction outcome, generative parameter mapping
+- [ ] 02-04-PLAN.md — Generative design pipeline: high-res export, admin preview page, backend design endpoint
 
 ### Phase 3: Fulfillment Pipeline
 **Goal**: Generative match designs flow automatically from creation to print-ready files to Printful, and orders are fulfilled without manual intervention
@@ -66,10 +68,10 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3
+Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Commerce Foundation | 3/3 | Complete | 2026-03-23 |
-| 2. Team & Match Visuals | 0/2 | Not started | - |
+| 2. Team & Match Visuals | 0/4 | Not started | - |
 | 3. Fulfillment Pipeline | 0/1 | Not started | - |
