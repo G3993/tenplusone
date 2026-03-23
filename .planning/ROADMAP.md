@@ -28,7 +28,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User receives a discount code after a match resolves -- 50% off for correct predictions, consolation reward for incorrect ones
   4. The entire experience maintains terminal/code-editor aesthetic (Geist Mono, line numbers, monochrome with green hover states) and works on mobile
   5. Backend API handles match data polling, wager tracking, and discount code generation via Shopify Admin API
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
 - [ ] 01-01-PLAN.md — Vite + React + TypeScript SPA scaffold with terminal UI system (layout, nav, typography, responsive, match browser, bet slip)
@@ -70,6 +70,6 @@ Phases execute in numeric order: 1 → 2 → 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Commerce Foundation | 0/3 | Not started | - |
+| 1. Commerce Foundation | 1/3 | In Progress|  |
 | 2. Team & Match Visuals | 0/2 | Not started | - |
 | 3. Fulfillment Pipeline | 0/1 | Not started | - |

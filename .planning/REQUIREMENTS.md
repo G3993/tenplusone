@@ -9,8 +9,8 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Commerce
 
-- [ ] **COMM-01**: User can browse World Cup 2026 matches with odds in a terminal-style UI
-- [ ] **COMM-02**: User can add match predictions to a bet slip (tap odds → add to slip)
+- [x] **COMM-01**: User can browse World Cup 2026 matches with odds in a terminal-style UI
+- [x] **COMM-02**: User can add match predictions to a bet slip (tap odds → add to slip)
 - [ ] **COMM-03**: User can select merch to wager on each prediction
 - [ ] **COMM-04**: User can browse merch catalog organized by team
 - [ ] **COMM-05**: User can view product details (mockup images, sizing, materials)
@@ -44,10 +44,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Frontend
 
-- [ ] **FRNT-01**: Terminal/code-editor aesthetic across all pages (Geist Mono, line numbers, black/white)
-- [ ] **FRNT-02**: Green reserved for hover states only — monochrome default
-- [ ] **FRNT-03**: Mobile-responsive layout that maintains terminal aesthetic
-- [ ] **FRNT-04**: Consistent nav bar across terminal and grid pages
+- [x] **FRNT-01**: Terminal/code-editor aesthetic across all pages (Geist Mono, line numbers, black/white)
+- [x] **FRNT-02**: Green reserved for hover states only — monochrome default
+- [x] **FRNT-03**: Mobile-responsive layout that maintains terminal aesthetic
+- [x] **FRNT-04**: Consistent nav bar across terminal and grid pages
 
 ### Infrastructure
 
@@ -95,8 +95,8 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| COMM-01 | Phase 1 | Pending |
-| COMM-02 | Phase 1 | Pending |
+| COMM-01 | Phase 1 | Complete |
+| COMM-02 | Phase 1 | Complete |
 | COMM-03 | Phase 1 | Pending |
 | COMM-04 | Phase 1 | Pending |
 | COMM-05 | Phase 1 | Pending |
@@ -118,10 +118,10 @@ Deferred to future release. Tracked but not in current roadmap.
 | FULF-01 | Phase 3 | Pending |
 | FULF-02 | Phase 3 | Pending |
 | FULF-03 | Phase 3 | Pending |
-| FRNT-01 | Phase 1 | Pending |
-| FRNT-02 | Phase 1 | Pending |
-| FRNT-03 | Phase 1 | Pending |
-| FRNT-04 | Phase 1 | Pending |
+| FRNT-01 | Phase 1 | Complete |
+| FRNT-02 | Phase 1 | Complete |
+| FRNT-03 | Phase 1 | Complete |
+| FRNT-04 | Phase 1 | Complete |
 | INFR-01 | Phase 1 | Pending |
 | INFR-02 | Phase 1 | Pending |
 | INFR-03 | Phase 1 | Pending |
