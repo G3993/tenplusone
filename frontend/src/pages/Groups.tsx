@@ -1,5 +1,7 @@
 import { GROUPS } from '../data/groups';
 import { Line, Blank, useLineCounter } from '../components/layout/Line';
+import { getTeamByName } from '../data/teams';
+import { TeamLogo } from '../components/team/TeamLogo';
 
 export function Groups() {
   const nextLn = useLineCounter();
@@ -13,13 +15,18 @@ export function Groups() {
       {GROUPS.map((g) => (
         <div key={g.id}>
           <Line n={nextLn()}><span className="bright">group {g.id}</span></Line>
-          {g.teams.map((team, i) => (
-            <Line key={team} n={nextLn()}>
-              <span className="dim">{g.flags[i]}  </span>
-              <span className="bright">{team}</span>
-              <span className="faint">  pot {i + 1}</span>
-            </Line>
-          ))}
+          {g.teams.map((teamName, i) => {
+            const team = getTeamByName(teamName);
+            return (
+              <Line key={teamName} n={nextLn()}>
+                {team
+                  ? <TeamLogo team={team} variant="white" size={18} />
+                  : <span className="dim">{g.flags[i]}</span>}
+                <span className="bright" style={{ marginLeft: 8 }}>{teamName}</span>
+                <span className="faint">  pot {i + 1}</span>
+              </Line>
+            );
+          })}
           <Blank n={nextLn()} />
         </div>
       ))}

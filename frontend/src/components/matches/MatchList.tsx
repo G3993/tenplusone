@@ -5,6 +5,7 @@ import { MATCHES } from '../../data/matches';
 import { GROUPS } from '../../data/groups';
 import { OddsButton } from './OddsButton';
 import { getTeamByName } from '../../data/teams';
+import { TeamLogo } from '../team/TeamLogo';
 import styles from './MatchList.module.css';
 
 const PICK_MAP: Record<string, 'home' | 'draw' | 'away'> = {
@@ -64,16 +65,28 @@ export function MatchList() {
               <Line n={nextLn()}>
                 {(() => {
                   const homeTeam = getTeamByName(m.h);
-                  return homeTeam && homeTeam.code !== 'TBD'
-                    ? <Link to={`/team/${homeTeam.slug}`} className={styles.teamLink}>{m.h}</Link>
-                    : <span className={styles.teamLink}>{m.h}</span>;
+                  const linkable = homeTeam && homeTeam.code !== 'TBD';
+                  return linkable ? (
+                    <Link to={`/team/${homeTeam.slug}`} className={styles.teamLink}>
+                      <TeamLogo team={homeTeam} variant="white" size={18} className={styles.teamLogo} />
+                      {m.h}
+                    </Link>
+                  ) : (
+                    <span className={styles.teamLink}>{m.h}</span>
+                  );
                 })()}
                 <span className="dim"> vs </span>
                 {(() => {
                   const awayTeam = getTeamByName(m.a);
-                  return awayTeam && awayTeam.code !== 'TBD'
-                    ? <Link to={`/team/${awayTeam.slug}`} className={styles.teamLink}>{m.a}</Link>
-                    : <span className={styles.teamLink}>{m.a}</span>;
+                  const linkable = awayTeam && awayTeam.code !== 'TBD';
+                  return linkable ? (
+                    <Link to={`/team/${awayTeam.slug}`} className={styles.teamLink}>
+                      <TeamLogo team={awayTeam} variant="white" size={18} className={styles.teamLogo} />
+                      {m.a}
+                    </Link>
+                  ) : (
+                    <span className={styles.teamLink}>{m.a}</span>
+                  );
                 })()}
               </Line>
               <Line n={nextLn()}>

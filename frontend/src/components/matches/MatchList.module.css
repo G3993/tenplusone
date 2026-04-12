@@ -38,6 +38,13 @@
   cursor: pointer;
   transition: color 0.1s;
   text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.teamLogo {
+  flex-shrink: 0;
 }
 
 .teamLink:hover {
