@@ -57,40 +57,48 @@ function slugToExportName(slug) {
   return slug.toUpperCase().replace(/-/g, '_') + '_PIXELS';
 }
 
-// Parse <style> block → which classes have a non-none fill (the "filled/logo" classes)
-function getFilledClasses(svg) {
+// Parse <style> block → set of classes that render WHITE (fill:#fff or similar)
+// Everything else (unclassed, or class with no fill / fill:#000) is the BLACK logo.
+function getWhiteClasses(svg) {
   const styleBlock = /<style[^>]*>([\s\S]*?)<\/style>/i.exec(svg);
   if (!styleBlock) return new Set();
   const css = styleBlock[1];
-  const filled = new Set();
-  // Match `.cls-N, .cls-M { ... fill: #xxx ... }` or `.cls-N { fill: #xxx }`
-  const ruleRe = /\.([a-zA-Z0-9_-]+(?:\s*,\s*\.[a-zA-Z0-9_-]+)*)\s*\{([^}]*)\}/g;
+  const white = new Set();
+  const ruleRe = /\.([a-zA-Z0-9_,.\s-]+?)\s*\{([^}]*)\}/g;
   let m;
   while ((m = ruleRe.exec(css)) !== null) {
     const selectors = m[1].split(',').map(s => s.trim().replace(/^\./, ''));
     const body = m[2];
     const fillMatch = /fill\s*:\s*([^;]+?)(?:;|$)/i.exec(body);
-    if (fillMatch) {
-      const val = fillMatch[1].trim().toLowerCase();
-      if (val !== 'none' && val !== 'transparent') {
-        for (const s of selectors) filled.add(s);
-      }
+    if (!fillMatch) continue;
+    const val = fillMatch[1].trim().toLowerCase();
+    // Treat #fff, #ffffff, white as white
+    if (val === '#fff' || val === '#ffffff' || val === 'white' || /^#f[ef]f[ef]f[ef]$/i.test(val)) {
+      for (const s of selectors) white.add(s);
     }
   }
-  return filled;
+  return white;
 }
 
-// Parse logo rects: any rect whose class is in filledClasses
-function parseLogoRects(svg, filledClasses) {
+// Parse logo rects: keep any rect whose resolved fill is NOT white.
+// (unclassed rects default to black, classes without fill:#fff default to black)
+function parseLogoRects(svg, whiteClasses) {
   const rects = [];
   const re = /<rect\b[^>]*\/?>/g;
   let m;
   while ((m = re.exec(svg)) !== null) {
     const tag = m[0];
+    // Inline fill attribute or style
+    const inlineFill = /fill\s*=\s*"([^"]+)"/.exec(tag) || /style\s*=\s*"[^"]*fill\s*:\s*([^;"]+)/.exec(tag);
+    if (inlineFill) {
+      const val = inlineFill[1].trim().toLowerCase();
+      if (val === '#fff' || val === '#ffffff' || val === 'white') continue;
+    }
     const classMatch = /class\s*=\s*"([^"]+)"/.exec(tag);
-    if (!classMatch) continue;
-    const classes = classMatch[1].split(/\s+/);
-    if (!classes.some(c => filledClasses.has(c))) continue;
+    if (classMatch) {
+      const classes = classMatch[1].split(/\s+/);
+      if (classes.some(c => whiteClasses.has(c))) continue; // skip white → bg
+    }
     const getAttr = (name) => {
       const r = new RegExp(`${name}\\s*=\\s*"([-0-9.]+)"`).exec(tag);
       return r ? parseFloat(r[1]) : 0;
@@ -196,8 +204,8 @@ async function process(filename) {
   const srcPath = path.join(SRC_DIR, filename);
   const svg = fs.readFileSync(srcPath, 'utf-8');
 
-  const filledClasses = getFilledClasses(svg);
-  const rects = parseLogoRects(svg, filledClasses);
+  const whiteClasses = getWhiteClasses(svg);
+  const rects = parseLogoRects(svg, whiteClasses);
   if (!rects.length) { console.warn(`⚠  ${slug}: no cls-2 rects`); return; }
 
   const blackSvg = buildCleanSvg(rects, '#000000');
