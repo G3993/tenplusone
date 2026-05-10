@@ -12,11 +12,11 @@ export const TEAMS: TeamData[] = [
   { name: 'Mexico', slug: 'mexico', code: 'MEX', group: 'A', flag: '\u{1F1F2}\u{1F1FD}', primaryColor: [0.0, 0.39, 0.25] },
   { name: 'South Africa', slug: 'south-africa', code: 'RSA', group: 'A', flag: '\u{1F1FF}\u{1F1E6}', primaryColor: [0.0, 0.53, 0.32] },
   { name: 'South Korea', slug: 'south-korea', code: 'KOR', group: 'A', flag: '\u{1F1F0}\u{1F1F7}', primaryColor: [0.87, 0.16, 0.22] },
-  { name: 'TBD (UEFA Path D)', slug: 'tbd-uefa-d', code: 'TBD', group: 'A', flag: '\u{1F3F3}\u{FE0F}', primaryColor: [0.5, 0.5, 0.5] },
+  { name: 'Bosnia and Herzegovina', slug: 'bosnia-herzegovina', code: 'BIH', group: 'A', flag: '\u{1F1E7}\u{1F1E6}', primaryColor: [0.0, 0.34, 0.71] },
 
   // Group B
   { name: 'Canada', slug: 'canada', code: 'CAN', group: 'B', flag: '\u{1F1E8}\u{1F1E6}', primaryColor: [0.87, 0.12, 0.15] },
-  { name: 'TBD (UEFA Path A)', slug: 'tbd-uefa-a', code: 'TBD', group: 'B', flag: '\u{1F3F3}\u{FE0F}', primaryColor: [0.5, 0.5, 0.5] },
+  { name: 'Türkiye', slug: 'turkiye', code: 'TUR', group: 'B', flag: '\u{1F1F9}\u{1F1F7}', primaryColor: [0.87, 0.12, 0.15] },
   { name: 'Switzerland', slug: 'switzerland', code: 'SUI', group: 'B', flag: '\u{1F1E8}\u{1F1ED}', primaryColor: [0.87, 0.12, 0.15] },
   { name: 'Qatar', slug: 'qatar', code: 'QAT', group: 'B', flag: '\u{1F1F6}\u{1F1E6}', primaryColor: [0.56, 0.08, 0.18] },
 
@@ -30,7 +30,7 @@ export const TEAMS: TeamData[] = [
   { name: 'United States', slug: 'united-states', code: 'USA', group: 'D', flag: '\u{1F1FA}\u{1F1F8}', primaryColor: [0.0, 0.14, 0.42] },
   { name: 'Paraguay', slug: 'paraguay', code: 'PAR', group: 'D', flag: '\u{1F1F5}\u{1F1FE}', primaryColor: [0.87, 0.12, 0.15] },
   { name: 'Australia', slug: 'australia', code: 'AUS', group: 'D', flag: '\u{1F1E6}\u{1F1FA}', primaryColor: [1.0, 0.84, 0.0] },
-  { name: 'TBD (UEFA Path C)', slug: 'tbd-uefa-c', code: 'TBD', group: 'D', flag: '\u{1F3F3}\u{FE0F}', primaryColor: [0.5, 0.5, 0.5] },
+  { name: 'Czechia', slug: 'czechia', code: 'CZE', group: 'D', flag: '\u{1F1E8}\u{1F1FF}', primaryColor: [0.85, 0.13, 0.15] },
 
   // Group E
   { name: 'Germany', slug: 'germany', code: 'GER', group: 'E', flag: '\u{1F1E9}\u{1F1EA}', primaryColor: [0.0, 0.0, 0.0] },
@@ -42,7 +42,7 @@ export const TEAMS: TeamData[] = [
   { name: 'Netherlands', slug: 'netherlands', code: 'NED', group: 'F', flag: '\u{1F1F3}\u{1F1F1}', primaryColor: [1.0, 0.47, 0.0] },
   { name: 'Japan', slug: 'japan', code: 'JPN', group: 'F', flag: '\u{1F1EF}\u{1F1F5}', primaryColor: [0.0, 0.14, 0.58] },
   { name: 'Tunisia', slug: 'tunisia', code: 'TUN', group: 'F', flag: '\u{1F1F9}\u{1F1F3}', primaryColor: [0.87, 0.12, 0.15] },
-  { name: 'TBD (UEFA Path B)', slug: 'tbd-uefa-b', code: 'TBD', group: 'F', flag: '\u{1F3F3}\u{FE0F}', primaryColor: [0.5, 0.5, 0.5] },
+  { name: 'Sweden', slug: 'sweden', code: 'SWE', group: 'F', flag: '\u{1F1F8}\u{1F1EA}', primaryColor: [0.0, 0.41, 0.71] },
 
   // Group G
   { name: 'Belgium', slug: 'belgium', code: 'BEL', group: 'G', flag: '\u{1F1E7}\u{1F1EA}', primaryColor: [0.87, 0.12, 0.15] },
@@ -60,7 +60,7 @@ export const TEAMS: TeamData[] = [
   { name: 'France', slug: 'france', code: 'FRA', group: 'I', flag: '\u{1F1EB}\u{1F1F7}', primaryColor: [0.0, 0.14, 0.58] },
   { name: 'Senegal', slug: 'senegal', code: 'SEN', group: 'I', flag: '\u{1F1F8}\u{1F1F3}', primaryColor: [0.0, 0.53, 0.32] },
   { name: 'Norway', slug: 'norway', code: 'NOR', group: 'I', flag: '\u{1F1F3}\u{1F1F4}', primaryColor: [0.87, 0.12, 0.15] },
-  { name: 'TBD (IC Playoff 2)', slug: 'tbd-ic-playoff-2', code: 'TBD', group: 'I', flag: '\u{1F3F3}\u{FE0F}', primaryColor: [0.5, 0.5, 0.5] },
+  { name: 'DR Congo', slug: 'dr-congo', code: 'COD', group: 'I', flag: '\u{1F1E8}\u{1F1E9}', primaryColor: [0.16, 0.69, 0.96] },
 
   // Group J
   { name: 'Argentina', slug: 'argentina', code: 'ARG', group: 'J', flag: '\u{1F1E6}\u{1F1F7}', primaryColor: [0.45, 0.72, 0.89] },
@@ -72,7 +72,7 @@ export const TEAMS: TeamData[] = [
   { name: 'Portugal', slug: 'portugal', code: 'POR', group: 'K', flag: '\u{1F1F5}\u{1F1F9}', primaryColor: [0.87, 0.12, 0.15] },
   { name: 'Colombia', slug: 'colombia', code: 'COL', group: 'K', flag: '\u{1F1E8}\u{1F1F4}', primaryColor: [1.0, 0.8, 0.0] },
   { name: 'Uzbekistan', slug: 'uzbekistan', code: 'UZB', group: 'K', flag: '\u{1F1FA}\u{1F1FF}', primaryColor: [0.0, 0.44, 0.73] },
-  { name: 'TBD (IC Playoff 1)', slug: 'tbd-ic-playoff-1', code: 'TBD', group: 'K', flag: '\u{1F3F3}\u{FE0F}', primaryColor: [0.5, 0.5, 0.5] },
+  { name: 'Iraq', slug: 'iraq', code: 'IRQ', group: 'K', flag: '\u{1F1EE}\u{1F1F6}', primaryColor: [0.87, 0.12, 0.15] },
 
   // Group L
   { name: 'England', slug: 'england', code: 'ENG', group: 'L', flag: '\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}', primaryColor: [1.0, 1.0, 1.0] },
