@@ -71,4 +71,5 @@ export const MERCH: MerchItem[] = [
   { id:"p4", name:"Team Cap", desc:"adjustable, embroidered crest", price:2200 },
   { id:"p5", name:"Sticker Pack", desc:"48 crests, holographic", price:800 },
   { id:"p6", name:"Team Jersey", desc:"replica kit, all sizes", price:4500 },
+  { id:"p7", name:"Match Poster", desc:"18x24 print, on-demand", price:2000 },
 ];

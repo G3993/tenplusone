@@ -13,3 +13,9 @@
   color: var(--bright);
   transition: color 0.1s;
 }
+
+.icon {
+  display: inline-block;
+  color: var(--bright);
+  line-height: 0;
+}

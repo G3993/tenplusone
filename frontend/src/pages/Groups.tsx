@@ -7,19 +7,6 @@ import styles from './Groups.module.css';
 export function Groups() {
   return (
     <div className={styles.wrap}>
-      <div className={styles.head}>
-        <span className="comment"># FIFA World Cup 2026 &middot; 12 groups &times; 4 teams = 48</span>
-        <span className="comment"># top 2 + 8 best 3rd &rarr; round of 32</span>
-      </div>
-
-      <div className={styles.pot} aria-hidden="true">
-        <span />
-        <span>pot 1</span>
-        <span>pot 2</span>
-        <span>pot 3</span>
-        <span>pot 4</span>
-      </div>
-
       <div className={styles.grid} role="grid" aria-label="World Cup 2026 groups">
         {GROUPS.map((g) => (
           <div key={g.id} style={{ display: 'contents' }} role="row">
@@ -36,8 +23,8 @@ export function Groups() {
                 >
                   <span className={styles.logo}>
                     {team
-                      ? <TeamLogo team={team} variant="white" size={72} />
-                      : <span style={{ fontSize: 40 }}>{g.flags[i]}</span>}
+                      ? <TeamLogo team={team} variant="white" size={56} />
+                      : <span style={{ fontSize: 32 }}>{g.flags[i]}</span>}
                   </span>
                   <span className={styles.text}>
                     <span className={styles.name}>{teamName}</span>

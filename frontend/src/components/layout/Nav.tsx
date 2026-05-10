@@ -21,7 +21,7 @@ export function Nav() {
   return (
     <>
       <nav className={styles.nav}>
-        <Link to="/matches" className={styles.navBrand}>10+1</Link>
+        <Link to="/matches" className={styles.navBrand}>ICF</Link>
 
         {NAV_LINKS.map(({ to, label }) => (
           <Link
