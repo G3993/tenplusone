@@ -36,8 +36,8 @@ export function Groups() {
                 >
                   <span className={styles.logo}>
                     {team
-                      ? <TeamLogo team={team} variant="white" size={120} />
-                      : <span style={{ fontSize: 64 }}>{g.flags[i]}</span>}
+                      ? <TeamLogo team={team} variant="white" size={72} />
+                      : <span style={{ fontSize: 40 }}>{g.flags[i]}</span>}
                   </span>
                   <span className={styles.text}>
                     <span className={styles.name}>{teamName}</span>
