@@ -42,8 +42,10 @@ interface FluidExtensions {
 class GLProgram {
   program: WebGLProgram;
   uniforms: Record<string, WebGLUniformLocation | null>;
+  private gl: WebGL2RenderingContext | WebGLRenderingContext;
 
-  constructor(private gl: WebGL2RenderingContext | WebGLRenderingContext, vs: WebGLShader, fs: WebGLShader) {
+  constructor(gl: WebGL2RenderingContext | WebGLRenderingContext, vs: WebGLShader, fs: WebGLShader) {
+    this.gl = gl;
     this.uniforms = {};
     this.program = gl.createProgram()!;
     gl.attachShader(this.program, vs);
@@ -127,7 +129,8 @@ export class FluidSimulation {
     const params: WebGLContextAttributes = { alpha: false, depth: false, stencil: false, antialias: false };
     const gl2 = this.canvas.getContext('webgl2', params) as WebGL2RenderingContext | null;
     const isWebGL2 = !!gl2;
-    const gl = gl2 || this.canvas.getContext('webgl', params) || this.canvas.getContext('experimental-webgl', params);
+    const glLegacy = (this.canvas.getContext('webgl', params) || this.canvas.getContext('experimental-webgl', params)) as WebGLRenderingContext | null;
+    const gl: WebGL2RenderingContext | WebGLRenderingContext | null = gl2 || glLegacy;
     if (!gl) throw new Error('WebGL not supported');
     this.gl = gl as WebGL2RenderingContext;
 
