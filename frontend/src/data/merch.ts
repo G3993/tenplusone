@@ -135,7 +135,7 @@ function generateProducts(): MockProduct[] {
         id: productId,
         title: `${team.name} ${merch.label}`,
         handle,
-        description: `Official ten+1 World Cup 2026 ${merch.label.toLowerCase()} — ${team.name} edition. Limited run.`,
+        description: `Official iFC World Cup 2026 ${merch.label.toLowerCase()} — ${team.name} edition. Limited run.`,
         productType: merch.type,
         images: [
           {

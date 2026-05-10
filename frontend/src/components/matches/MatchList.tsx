@@ -33,7 +33,7 @@ export function MatchList() {
   return (
     <>
       <Line n={nextLn()}>
-        <span className="bold">ten+1 WC 2026</span>
+        <span className="bold">WC 2026</span>
         <span className="dim"> /matches /groups /outrights /merch</span>
       </Line>
       <Blank n={nextLn()} />
