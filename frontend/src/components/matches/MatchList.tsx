@@ -1,5 +1,6 @@
 import { Link } from 'react-router';
 import { Line, Blank, useLineCounter } from '../layout/Line';
+import { Wordmark } from '../layout/Wordmark';
 import { useMatchesStore } from '../../stores/matches';
 import { MATCHES } from '../../data/matches';
 import { GROUPS } from '../../data/groups';
@@ -33,7 +34,8 @@ export function MatchList() {
   return (
     <>
       <Line n={nextLn()}>
-        <span className="bold">WC 2026</span>
+        <Wordmark />
+        <span className="bold"> · WC 2026</span>
         <span className="dim"> /matches /groups /outrights /merch</span>
       </Line>
       <Blank n={nextLn()} />

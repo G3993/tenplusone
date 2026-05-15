@@ -6,7 +6,12 @@
   --faint: #222222;
   --line-num: #333333;
   --green: #4ade80;
-  --font: 'Geist Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  --surface: #0a0a0a;
+  --hairline: #1a1a1a;
+  --mono: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  --sans: 'Sora', 'Helvetica Neue', 'Helvetica', system-ui, sans-serif;
+  --display: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  --font: var(--mono);
   --font-size: 16px;
   --line-height: 1.85;
   --letter-spacing: 0.01em;

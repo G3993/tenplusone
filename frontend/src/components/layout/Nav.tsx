@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router';
 import { useSlipStore } from '../../stores/slip';
 import { useCartStore } from '../../stores/cart';
 import { CartDrawer } from '../merch/CartDrawer';
+import { Wordmark } from './Wordmark';
 import styles from './Nav.module.css';
 
 const NAV_LINKS = [
@@ -21,7 +22,7 @@ export function Nav() {
   return (
     <>
       <nav className={styles.nav}>
-        <Link to="/matches" className={styles.navBrand}>iFC</Link>
+        <Link to="/matches" className={styles.navBrand} aria-label="iFC home"><Wordmark /></Link>
 
         {NAV_LINKS.map(({ to, label }) => (
           <Link
