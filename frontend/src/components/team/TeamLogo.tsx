@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import type { TeamData } from '../../data/teams';
 
+// iFC Brand System crests. Increment on every logo asset change.
+const LOGO_VERSION = 2;
+
 interface TeamLogoProps {
   team: Pick<TeamData, 'slug' | 'flag' | 'code'>;
   variant?: 'black' | 'white';
@@ -10,9 +13,11 @@ interface TeamLogoProps {
 
 export function TeamLogo({ team, variant = 'black', size = 24, className }: TeamLogoProps) {
   const [failed, setFailed] = useState(false);
+  // Bump LOGO_VERSION whenever the crest SVGs change so browsers don't serve
+  // a stale cached copy from the stable /logos/*.svg path.
   const src = variant === 'white'
-    ? `/logos/white/${team.slug}.svg`
-    : `/logos/${team.slug}.svg`;
+    ? `/logos/white/${team.slug}.svg?v=${LOGO_VERSION}`
+    : `/logos/${team.slug}.svg?v=${LOGO_VERSION}`;
 
   if (failed) {
     return (
