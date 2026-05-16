@@ -70,7 +70,7 @@ export function MatchList() {
                   const linkable = homeTeam && homeTeam.code !== 'TBD';
                   return linkable ? (
                     <Link to={`/team/${homeTeam.slug}`} className={styles.teamLink}>
-                      <TeamLogo team={homeTeam} variant="white" size={18} className={styles.teamLogo} />
+                      <TeamLogo team={homeTeam} variant="white" size={24} className={styles.teamLogo} />
                       {m.h}
                     </Link>
                   ) : (
@@ -83,7 +83,7 @@ export function MatchList() {
                   const linkable = awayTeam && awayTeam.code !== 'TBD';
                   return linkable ? (
                     <Link to={`/team/${awayTeam.slug}`} className={styles.teamLink}>
-                      <TeamLogo team={awayTeam} variant="white" size={18} className={styles.teamLogo} />
+                      <TeamLogo team={awayTeam} variant="white" size={24} className={styles.teamLogo} />
                       {m.a}
                     </Link>
                   ) : (
