@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { TeamData } from '../../data/teams';
 
 // iFC Brand System crests. Increment on every logo asset change.
-const LOGO_VERSION = 2;
+const LOGO_VERSION = 3;
 
 interface TeamLogoProps {
   team: Pick<TeamData, 'slug' | 'flag' | 'code'>;
