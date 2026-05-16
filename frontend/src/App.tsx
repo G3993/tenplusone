@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import { Nav } from './components/layout/Nav';
 import { Editor } from './components/layout/Editor';
+import { PitchBackground } from './components/layout/PitchBackground';
 import { Matches } from './pages/Matches';
 import { Groups } from './pages/Groups';
 import { Outrights } from './pages/Outrights';
@@ -20,6 +21,7 @@ export function App() {
 
   return (
     <BrowserRouter>
+      <PitchBackground />
       <Nav />
       <Editor>
         <Routes>
