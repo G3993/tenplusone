@@ -1,9 +1,14 @@
+import { Link } from 'react-router';
+import { GROUPS } from '../data/groups';
+import { OUTRIGHTS } from '../data/matches';
+import { getTeamByName } from '../data/teams';
+import { TeamLogo } from '../components/team/TeamLogo';
 import styles from './Bracket.module.css';
 
-// Knockout structure for the 48-team World Cup 2026: top 2 of each group
-// plus the 8 best third-placed teams = 32 into the Round of 32. Slot codes
-// (1A = winner group A, 2B = runner-up group B, 3rd = best third-placed)
-// resolve after the group stage.
+// 48-team World Cup 2026 knockout: top 2 of each group + 8 best third-
+// placed = 32. Slot codes resolve from the group table (pot order as the
+// projected finish); winners then advance by betting-favorite strength,
+// so the bracket is fully populated with real crests.
 type Slot = string;
 type M = { id: string; a: Slot; b: Slot };
 
@@ -20,21 +25,16 @@ const R32: M[] = [
   { id: '82', a: '1B', b: '1D' },
   { id: '83', a: '1F', b: '1H' },
   { id: '84', a: '1J', b: '1L' },
-  { id: '85', a: '3rd', b: '3rd' },
-  { id: '86', a: '3rd', b: '3rd' },
-  { id: '87', a: '3rd', b: '3rd' },
-  { id: '88', a: '3rd', b: '3rd' },
+  { id: '85', a: '3A', b: '3B' },
+  { id: '86', a: '3C', b: '3D' },
+  { id: '87', a: '3E', b: '3F' },
+  { id: '88', a: '3G', b: '3H' },
 ];
 
-// Each later round is the winners of the two feeding matches.
 function nextRound(prev: M[], startId: number): M[] {
   const out: M[] = [];
   for (let i = 0; i < prev.length; i += 2) {
-    out.push({
-      id: String(startId + i / 2),
-      a: `W${prev[i].id}`,
-      b: `W${prev[i + 1].id}`,
-    });
+    out.push({ id: String(startId + i / 2), a: `W${prev[i].id}`, b: `W${prev[i + 1].id}` });
   }
   return out;
 }
@@ -43,7 +43,68 @@ const R16 = nextRound(R32, 89);
 const QF = nextRound(R16, 97);
 const SF = nextRound(QF, 101);
 const FINAL: M[] = [{ id: '104', a: `W${SF[0].id}`, b: `W${SF[1].id}` }];
-const THIRD: M[] = [{ id: '103', a: `L${SF[0].id}`, b: `L${SF[1].id}` }];
+const THIRD: M = { id: '103', a: `L${SF[0].id}`, b: `L${SF[1].id}` };
+
+const BY_ID: Record<string, M> = {};
+[...R32, ...R16, ...QF, ...SF, ...FINAL, THIRD].forEach((m) => { BY_ID[m.id] = m; });
+
+// Lower = stronger. Betting favorites first, then group-pot order.
+function strength(name: string): number {
+  const oi = OUTRIGHTS.findIndex((o) => o.team === name);
+  if (oi >= 0) return oi;
+  for (const g of GROUPS) {
+    const p = g.teams.indexOf(name);
+    if (p >= 0) return 12 + p * 12 + GROUPS.indexOf(g);
+  }
+  return 999;
+}
+
+const memo = new Map<string, string>();
+function teamFor(code: string): string {
+  if (memo.has(code)) return memo.get(code)!;
+  let name = code;
+  const m1 = /^([123])([A-L])$/.exec(code);
+  if (m1) {
+    const g = GROUPS.find((x) => x.id === m1[2]);
+    name = g ? g.teams[Number(m1[1]) - 1] : code;
+  } else if (code[0] === 'W' || code[0] === 'L') {
+    const m = BY_ID[code.slice(1)];
+    if (m) {
+      const a = teamFor(m.a), b = teamFor(m.b);
+      const aWins = strength(a) <= strength(b);
+      name = code[0] === 'W' ? (aWins ? a : b) : (aWins ? b : a);
+    }
+  }
+  memo.set(code, name);
+  return name;
+}
+
+function Side({ code }: { code: string }) {
+  const name = teamFor(code);
+  const team = getTeamByName(name);
+  return (
+    <span className={styles.slot}>
+      {team ? (
+        <Link to={`/team/${team.slug}`} className={styles.team}>
+          <TeamLogo team={team} variant="white" size={20} />
+          <span className={styles.code}>{team.code}</span>
+        </Link>
+      ) : (
+        <span className={styles.code}>{name}</span>
+      )}
+    </span>
+  );
+}
+
+function Match({ m, champ }: { m: M; champ?: boolean }) {
+  return (
+    <div className={`${styles.match} ${champ ? styles.champ : ''}`}>
+      <span className={styles.matchId}>{champ ? 'iFC · WC 2026' : `M${m.id}`}</span>
+      <Side code={m.a} />
+      {!champ && <Side code={m.b} />}
+    </div>
+  );
+}
 
 const COLUMNS: { label: string; matches: M[] }[] = [
   { label: 'round of 32', matches: R32 },
@@ -52,16 +113,6 @@ const COLUMNS: { label: string; matches: M[] }[] = [
   { label: 'semifinals', matches: SF },
   { label: 'final', matches: FINAL },
 ];
-
-function Match({ m }: { m: M }) {
-  return (
-    <div className={styles.match}>
-      <span className={styles.matchId}>M{m.id}</span>
-      <span className={styles.slot}>{m.a}</span>
-      <span className={styles.slot}>{m.b}</span>
-    </div>
-  );
-}
 
 export function Bracket() {
   return (
@@ -76,9 +127,7 @@ export function Bracket() {
           <div key={col.label} className={styles.col}>
             <div className={styles.colHead}>{col.label}</div>
             <div className={styles.colBody}>
-              {col.matches.map((m) => (
-                <Match key={m.id} m={m} />
-              ))}
+              {col.matches.map((m) => <Match key={m.id} m={m} />)}
             </div>
           </div>
         ))}
@@ -86,22 +135,21 @@ export function Bracket() {
         <div className={styles.col}>
           <div className={styles.colHead}>champion</div>
           <div className={styles.colBody}>
-            <div className={`${styles.match} ${styles.champ}`}>
-              <span className={styles.matchId}>iFC · WC 2026</span>
-              <span className={styles.slot}>W104</span>
-            </div>
+            <Match m={{ id: '104', a: 'W104', b: '' }} champ />
           </div>
         </div>
       </div>
 
       <div className={styles.third}>
         <span className="comment"># 3rd place playoff · jul 18 — </span>
-        <span className="dim">{THIRD[0].a} vs {THIRD[0].b}</span>
+        <Side code={THIRD.a} />
+        <span className="dim"> vs </span>
+        <Side code={THIRD.b} />
       </div>
       <div className={styles.note}>
         <span className="comment">
-          # slots resolve after the group stage. 1A = winner group A · 2B =
-          runner-up group B · 3rd = best third-placed
+          # projected from the group table &amp; betting favorites — slots
+          firm up after the group stage
         </span>
       </div>
     </div>

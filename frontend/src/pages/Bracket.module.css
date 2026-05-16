@@ -18,7 +18,7 @@
 .col {
   display: flex;
   flex-direction: column;
-  min-width: 132px;
+  min-width: 116px;
   flex: 1 0 auto;
 }
 
@@ -60,10 +60,29 @@
   font-size: 12px;
   color: var(--white);
   padding: 5px 8px;
+  display: flex;
+  align-items: center;
 }
 
 .slot + .slot {
   border-top: 1px solid var(--faint);
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-decoration: none;
+  color: var(--white);
+}
+
+.team:hover {
+  color: var(--green);
+}
+
+.code {
+  font-size: 12px;
+  letter-spacing: 0.04em;
 }
 
 .match:hover {
@@ -87,6 +106,14 @@
 .third {
   padding: 18px 0 6px;
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.third .slot {
+  display: inline-flex;
+  padding: 5px 6px;
 }
 
 .note {
