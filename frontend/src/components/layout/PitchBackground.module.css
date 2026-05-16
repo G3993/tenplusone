@@ -1,9 +1,16 @@
 .pitch {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(46vw, 600px);
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+}
+
+@media (max-width: 720px) {
+  .pitch { width: 70vw; }
 }
 
 .svg {

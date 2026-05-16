@@ -1,14 +1,15 @@
 import styles from './PitchBackground.module.css';
 
 /**
- * Full-viewport soccer pitch, outline only, very thin. Fixed behind all
- * content, non-interactive. FIFA proportions (105 × 68 m, scaled ×10).
+ * Vertical (portrait) soccer pitch pinned to the right side of the page,
+ * outline only, very thin. Fixed behind all content, non-interactive.
+ * FIFA proportions (105 × 68 m, scaled ×10) rotated 90° to stand upright.
  */
 export function PitchBackground() {
   return (
     <div className={styles.pitch} aria-hidden="true">
       <svg
-        viewBox="-25 -25 1100 730"
+        viewBox="-25 -25 730 1100"
         preserveAspectRatio="xMidYMid slice"
         className={styles.svg}
       >
@@ -16,6 +17,7 @@ export function PitchBackground() {
           className={styles.line}
           fill="none"
           vectorEffect="non-scaling-stroke"
+          transform="translate(680,0) rotate(90)"
         >
           {/* boundary */}
           <rect x="0" y="0" width="1050" height="680" />
