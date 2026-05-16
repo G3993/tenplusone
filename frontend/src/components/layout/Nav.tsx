@@ -9,6 +9,7 @@ import styles from './Nav.module.css';
 const NAV_LINKS = [
   { to: '/matches', label: 'matches' },
   { to: '/groups', label: 'groups' },
+  { to: '/bracket', label: 'bracket' },
   { to: '/outrights', label: 'outrights' },
   { to: '/merch', label: 'merch' },
 ];

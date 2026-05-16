@@ -36,7 +36,7 @@ export function MatchList() {
       <Line n={nextLn()}>
         <Wordmark />
         <span className="bold"> · WC 2026</span>
-        <span className="dim"> /matches /groups /outrights /merch</span>
+        <span className="dim"> /matches /groups /bracket /outrights /merch</span>
       </Line>
       <Blank n={nextLn()} />
 

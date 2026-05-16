@@ -1,0 +1,97 @@
+.wrap {
+  padding: 0 24px;
+  max-width: 100%;
+}
+
+.head {
+  padding: 4px 0 20px;
+  font-size: 14px;
+}
+
+.board {
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  min-width: 132px;
+  flex: 1 0 auto;
+}
+
+.colHead {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: 0 12px 14px;
+  white-space: nowrap;
+}
+
+.colBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  flex: 1;
+  gap: 8px;
+}
+
+.match {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: 0 12px;
+  border: 1px solid var(--faint);
+  background: var(--bg);
+}
+
+.matchId {
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--line-num);
+  padding: 3px 8px 2px;
+  border-bottom: 1px solid var(--faint);
+}
+
+.slot {
+  font-size: 12px;
+  color: var(--white);
+  padding: 5px 8px;
+}
+
+.slot + .slot {
+  border-top: 1px solid var(--faint);
+}
+
+.match:hover {
+  border-color: var(--green);
+}
+
+.champ {
+  border-color: var(--green);
+}
+
+.champ .matchId {
+  color: var(--green);
+  border-bottom-color: var(--green);
+}
+
+.champ .slot {
+  color: var(--bright);
+  font-weight: 700;
+}
+
+.third {
+  padding: 18px 0 6px;
+  font-size: 13px;
+}
+
+.note {
+  padding: 2px 0 24px;
+  font-size: 12px;
+  max-width: 640px;
+  line-height: 1.6;
+}
