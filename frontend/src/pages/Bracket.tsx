@@ -1,16 +1,9 @@
-import { Link } from 'react-router';
-import { GROUPS } from '../data/groups';
-import { OUTRIGHTS } from '../data/matches';
-import { getTeamByName } from '../data/teams';
-import { TeamLogo } from '../components/team/TeamLogo';
 import styles from './Bracket.module.css';
 
-// 48-team World Cup 2026 knockout: top 2 of each group + 8 best third-
-// placed = 32. Slot codes resolve from the group table (pot order as the
-// projected finish); winners then advance by betting-favorite strength,
-// so the bracket is fully populated with real crests.
-type Slot = string;
-type M = { id: string; a: Slot; b: Slot };
+// 48-team World Cup 2026 knockout structure: top 2 of each group + 8 best
+// third-placed = 32. Slots are shown as their qualifying codes only — no
+// teams are assigned and no winners are projected until results are real.
+type M = { id: string; a: string; b: string };
 
 const R32: M[] = [
   { id: '73', a: '1A', b: '2B' },
@@ -45,67 +38,6 @@ const SF = nextRound(QF, 101);
 const FINAL: M[] = [{ id: '104', a: `W${SF[0].id}`, b: `W${SF[1].id}` }];
 const THIRD: M = { id: '103', a: `L${SF[0].id}`, b: `L${SF[1].id}` };
 
-const BY_ID: Record<string, M> = {};
-[...R32, ...R16, ...QF, ...SF, ...FINAL, THIRD].forEach((m) => { BY_ID[m.id] = m; });
-
-// Lower = stronger. Betting favorites first, then group-pot order.
-function strength(name: string): number {
-  const oi = OUTRIGHTS.findIndex((o) => o.team === name);
-  if (oi >= 0) return oi;
-  for (const g of GROUPS) {
-    const p = g.teams.indexOf(name);
-    if (p >= 0) return 12 + p * 12 + GROUPS.indexOf(g);
-  }
-  return 999;
-}
-
-const memo = new Map<string, string>();
-function teamFor(code: string): string {
-  if (memo.has(code)) return memo.get(code)!;
-  let name = code;
-  const m1 = /^([123])([A-L])$/.exec(code);
-  if (m1) {
-    const g = GROUPS.find((x) => x.id === m1[2]);
-    name = g ? g.teams[Number(m1[1]) - 1] : code;
-  } else if (code[0] === 'W' || code[0] === 'L') {
-    const m = BY_ID[code.slice(1)];
-    if (m) {
-      const a = teamFor(m.a), b = teamFor(m.b);
-      const aWins = strength(a) <= strength(b);
-      name = code[0] === 'W' ? (aWins ? a : b) : (aWins ? b : a);
-    }
-  }
-  memo.set(code, name);
-  return name;
-}
-
-function Side({ code }: { code: string }) {
-  const name = teamFor(code);
-  const team = getTeamByName(name);
-  return (
-    <span className={styles.slot}>
-      {team ? (
-        <Link to={`/team/${team.slug}`} className={styles.team}>
-          <TeamLogo team={team} variant="white" size={20} />
-          <span className={styles.code}>{team.code}</span>
-        </Link>
-      ) : (
-        <span className={styles.code}>{name}</span>
-      )}
-    </span>
-  );
-}
-
-function Match({ m, champ }: { m: M; champ?: boolean }) {
-  return (
-    <div className={`${styles.match} ${champ ? styles.champ : ''}`}>
-      <span className={styles.matchId}>{champ ? 'iFC · WC 2026' : `M${m.id}`}</span>
-      <Side code={m.a} />
-      {!champ && <Side code={m.b} />}
-    </div>
-  );
-}
-
 const COLUMNS: { label: string; matches: M[] }[] = [
   { label: 'round of 32', matches: R32 },
   { label: 'round of 16', matches: R16 },
@@ -113,6 +45,16 @@ const COLUMNS: { label: string; matches: M[] }[] = [
   { label: 'semifinals', matches: SF },
   { label: 'final', matches: FINAL },
 ];
+
+function Match({ m }: { m: M }) {
+  return (
+    <div className={styles.match}>
+      <span className={styles.matchId}>M{m.id}</span>
+      <span className={styles.slot}><span className={styles.code}>{m.a}</span></span>
+      <span className={styles.slot}><span className={styles.code}>{m.b}</span></span>
+    </div>
+  );
+}
 
 export function Bracket() {
   return (
@@ -135,21 +77,22 @@ export function Bracket() {
         <div className={styles.col}>
           <div className={styles.colHead}>champion</div>
           <div className={styles.colBody}>
-            <Match m={{ id: '104', a: 'W104', b: '' }} champ />
+            <div className={`${styles.match} ${styles.champ}`}>
+              <span className={styles.matchId}>iFC · WC 2026</span>
+              <span className={styles.slot}><span className={styles.code}>W104</span></span>
+            </div>
           </div>
         </div>
       </div>
 
       <div className={styles.third}>
         <span className="comment"># 3rd place playoff · jul 18 — </span>
-        <Side code={THIRD.a} />
-        <span className="dim"> vs </span>
-        <Side code={THIRD.b} />
+        <span className="dim">{THIRD.a} vs {THIRD.b}</span>
       </div>
       <div className={styles.note}>
         <span className="comment">
-          # projected from the group table &amp; betting favorites — slots
-          firm up after the group stage
+          # slots resolve after the group stage. 1A = winner group A · 2B =
+          runner-up group B · 3A = third-placed group A
         </span>
       </div>
     </div>
