@@ -1,0 +1,25 @@
+.ctaRow {
+  display: inline-flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.cta {
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--white);
+  text-decoration: none;
+  border: 1px solid var(--faint);
+  padding: 4px 14px;
+  transition: all 0.1s;
+}
+
+.cta:hover {
+  color: var(--green);
+  border-color: var(--dim);
+}
+
+@media (max-width: 560px) {
+  .ctaRow { gap: 10px; }
+  .cta { font-size: 13px; padding: 4px 10px; }
+}

@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router';
 import { Nav } from './components/layout/Nav';
 import { Editor } from './components/layout/Editor';
 import { PitchBackground } from './components/layout/PitchBackground';
+import { Landing } from './pages/Landing';
 import { Matches } from './pages/Matches';
 import { Groups } from './pages/Groups';
 import { Bracket } from './pages/Bracket';
@@ -15,10 +16,10 @@ import { MatchDetail } from './pages/MatchDetail';
 import { AdminGenerate } from './pages/AdminGenerate';
 import { useCartStore } from './stores/cart';
 
-// Pitch outline shows only on the home page (the default /matches route).
+// Pitch outline shows on the landing page and the matches list.
 function HomePitch() {
   const { pathname } = useLocation();
-  return pathname === '/matches' ? <PitchBackground /> : null;
+  return pathname === '/' || pathname === '/matches' ? <PitchBackground /> : null;
 }
 
 export function App() {
@@ -32,7 +33,7 @@ export function App() {
       <Nav />
       <Editor>
         <Routes>
-          <Route path="/" element={<Navigate to="/matches" replace />} />
+          <Route path="/" element={<Landing />} />
           <Route path="/matches" element={<Matches />} />
           <Route path="/groups" element={<Groups />} />
           <Route path="/bracket" element={<Bracket />} />
