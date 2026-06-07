@@ -1,5 +1,5 @@
 .preview {
-  padding: 16px 24px 96px;
+  padding: 16px 24px 56px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -233,7 +233,7 @@
 /* bottom CTA into the full World Cup page */
 .cta {
   display: block;
-  margin: 28px auto 0;
+  margin: 56px auto 0;
   width: fit-content;
   font-family: var(--font);
   font-size: 14px;
