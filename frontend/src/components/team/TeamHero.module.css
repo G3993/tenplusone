@@ -1,0 +1,91 @@
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 24px;
+  padding: 32px 0 44px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* Gallery slider — one crest variation per slide, swipe to flip through. */
+.slider {
+  display: flex;
+  width: 100%;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.slider::-webkit-scrollbar { display: none; }
+
+.slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48vh;
+}
+
+/* Pagination dots — the only chrome on the gallery. */
+.dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--hairline);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.dot:hover { background: var(--dim); }
+
+.dotActive {
+  background: var(--accent, var(--bright));
+  transform: scale(1.3);
+}
+
+.name {
+  font-size: 52px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--bright);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.sub {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 15px;
+  color: var(--dim);
+}
+
+.code {
+  color: var(--accent, var(--green));
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.sep { color: var(--dim); }
+
+@media (max-width: 560px) {
+  .hero { gap: 18px; padding: 24px 0 32px; }
+  .slide { min-height: 40vh; }
+  .name { font-size: 34px; }
+  .sub { font-size: 14px; }
+}

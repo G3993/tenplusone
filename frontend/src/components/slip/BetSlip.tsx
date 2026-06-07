@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSlipStore } from '../../stores/slip';
 import { fetchProducts, type ShopifyProduct } from '../../lib/shopify';
 import { placeWager } from '../../lib/api';
+import { toAmerican } from '../../lib/odds';
 import { Line, Blank, useLineCounter } from '../layout/Line';
 import styles from './BetSlip.module.css';
 
@@ -72,8 +73,8 @@ export function BetSlip() {
 
   return (
     <>
-      <Line n={nextLn()}><span className="comment"># your bet slip</span></Line>
-      <Line n={nextLn()}><span className="comment"># select merch to wager on each pick</span></Line>
+      <Line n={nextLn()}><span className="comment"># your predictions</span></Line>
+      <Line n={nextLn()}><span className="comment"># merch store for prediction markets &middot; pick merch on each call</span></Line>
       <Blank n={nextLn()} />
 
       {bets.length === 0 ? (
@@ -84,10 +85,8 @@ export function BetSlip() {
       ) : (
         <>
           {bets.map((b, i) => {
-            // Use first variant ID as wager value
-            const selectedProduct = products.find((p) =>
-              p.variants.edges.some((v) => v.node.id === b.wager)
-            );
+            // Wager value is the product id (sent to the backend as productId).
+            const selectedProduct = products.find((p) => p.id === b.wager);
             void selectedProduct; // referenced for future use
 
             return (
@@ -104,7 +103,7 @@ export function BetSlip() {
                 <Line n={nextLn()}>
                   <span className="dim">pick: </span>
                   <span className="bright">
-                    {pickLabel(b.pick, b.homeTeam, b.awayTeam)} @ {b.odds.toFixed(2)}
+                    {pickLabel(b.pick, b.homeTeam, b.awayTeam)} @ {toAmerican(b.odds)}
                   </span>
                 </Line>
                 <Line n={nextLn()} className={styles.inputLine}>
@@ -116,10 +115,10 @@ export function BetSlip() {
                   >
                     <option value="">select merch...</option>
                     {products.map((p) => {
-                      const variantId = p.variants.edges[0]?.node.id ?? '';
+                      const wagerValue = p.id;
                       const price = parseFloat(p.priceRange.minVariantPrice.amount).toFixed(2);
                       return (
-                        <option key={p.id} value={variantId}>
+                        <option key={p.id} value={wagerValue}>
                           {p.title} (${price})
                         </option>
                       );

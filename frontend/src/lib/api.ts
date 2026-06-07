@@ -1,4 +1,14 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+// Local persistence layer. Predictions and match lookups used to hit a
+// localhost backend that never shipped to production; this version
+// reads matches from the static dataset and persists wagers to
+// localStorage so the predictions tab actually works.
+//
+// When a real backend exists (Vercel KV / Supabase), swap the impls
+// here — every consumer keeps the same interface.
+
+import { MATCHES } from '../data/matches';
+
+const STORAGE_KEY = 'tenplusone-wagers';
 
 export interface ApiMatch {
   id: string;
@@ -29,22 +39,45 @@ export interface ApiWager {
   score_away?: number;
 }
 
-export async function fetchMatches() {
-  const res = await fetch(`${API_BASE}/api/matches`);
-  if (!res.ok) throw new Error('Failed to fetch matches');
-  const data = await res.json();
-  return data.matches;
+function toApiMatch(m: typeof MATCHES[number]): ApiMatch {
+  return {
+    id: m.id,
+    home_team: m.h,
+    away_team: m.a,
+    kickoff: `${m.d} · ${m.t}`,
+    group_id: m.grp,
+    venue: m.v,
+    status: 'SCHEDULED',
+    odds_home: m.odds[0],
+    odds_draw: m.odds[1],
+    odds_away: m.odds[2],
+  };
+}
+
+function readWagers(): ApiWager[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as ApiWager[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeWagers(w: ApiWager[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(w));
+  } catch {
+    /* storage full or unavailable */
+  }
+}
+
+export async function fetchMatches(): Promise<ApiMatch[]> {
+  return MATCHES.map(toApiMatch);
 }
 
 export async function fetchMatch(id: string): Promise<ApiMatch | null> {
-  try {
-    const res = await fetch(`${API_BASE}/api/matches/${id}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.match as ApiMatch;
-  } catch {
-    return null;
-  }
+  const m = MATCHES.find((x) => x.id === id);
+  return m ? toApiMatch(m) : null;
 }
 
 export async function placeWager(params: {
@@ -52,34 +85,35 @@ export async function placeWager(params: {
   matchId: string;
   pick: 'home' | 'away' | 'draw';
   productId?: string;
-}) {
-  const res = await fetch(`${API_BASE}/api/wagers`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params),
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Failed to place prediction');
-  }
-  return res.json();
+}): Promise<{ wager: ApiWager }> {
+  const all = readWagers();
+  // one wager per (email, match) — replace if it exists
+  const filtered = all.filter(
+    (w) => !(w.user_email === params.email && w.match_id === params.matchId),
+  );
+  const match = MATCHES.find((m) => m.id === params.matchId);
+  const wager: ApiWager = {
+    id: `w_${params.matchId}_${Date.now()}`,
+    user_email: params.email,
+    match_id: params.matchId,
+    pick: params.pick,
+    status: 'PENDING',
+    product_id: params.productId,
+    home_team: match?.h,
+    away_team: match?.a,
+  };
+  writeWagers([...filtered, wager]);
+  return { wager };
 }
 
 export async function fetchMyWagers(email: string): Promise<ApiWager[]> {
-  const res = await fetch(`${API_BASE}/api/wagers?email=${encodeURIComponent(email)}`);
-  if (!res.ok) throw new Error('Failed to fetch wagers');
-  const data = await res.json();
-  return data.wagers;
+  return readWagers().filter((w) => w.user_email === email);
 }
 
 export async function fetchWagerForMatch(
   email: string,
-  matchId: string
+  matchId: string,
 ): Promise<ApiWager | null> {
-  try {
-    const wagers = await fetchMyWagers(email);
-    return wagers.find((w: ApiWager) => w.match_id === matchId) || null;
-  } catch {
-    return null;
-  }
+  const mine = await fetchMyWagers(email);
+  return mine.find((w) => w.match_id === matchId) ?? null;
 }

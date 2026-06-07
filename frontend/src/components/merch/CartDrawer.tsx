@@ -50,7 +50,7 @@ export function CartDrawer({ open, onClose }: { open: boolean; onClose: () => vo
                 </Line>
                 <Line n={nextLn()}>
                   <span className="dim">
-                    {item.merchandise.title} x{item.quantity} &mdash; $
+                    {item.merchandise.title} &middot; x{item.quantity} &middot; $
                     {parseFloat(item.cost.totalAmount.amount).toFixed(2)}
                   </span>
                 </Line>

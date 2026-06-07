@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vector Grid // 32×32</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; overflow: hidden; font-family: 'JetBrains Mono', monospace; cursor: crosshair; }
+        #fluid-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+        #canvas-container { width: 100vw; height: 100vh; position: fixed; top: 0; left: 0; z-index: 1; }
+        .top-right-controls { position: fixed; top: 24px; right: 24px; z-index: 100; display: flex; align-items: center; gap: 10px; }
+        .top-left-controls { position: fixed; top: 24px; left: 24px; z-index: 100; }
+        .top-left-controls button, .top-left-controls select { background: rgba(0,0,0,0.7); border: 1px solid #333; color: #666; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; }
+        .top-left-controls button:hover, .top-left-controls select:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.1); }
+        .icon-btn { background: rgba(0,0,0,0.7); border: 1px solid #333; color: #666; width: 36px; height: 36px; font-size: 18px; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; }
+        .icon-btn:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.1); }
+        .toggle-switch { position: relative; width: 44px; height: 24px; background: #333; border-radius: 12px; cursor: pointer; transition: background 0.3s; }
+        .toggle-switch.active { background: #fff; }
+        .toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: #888; border-radius: 50%; transition: transform 0.3s, background 0.3s; }
+        .toggle-switch.active::after { transform: translateX(20px); background: #333; }
+        .toggle-label { color: #666; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+        .side-slider { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 100; display: flex; align-items: center; gap: 15px; }
+        .side-slider input[type="range"] { width: 150px; height: 8px; -webkit-appearance: none; appearance: none; background: #333; border-radius: 4px; outline: none; cursor: pointer; }
+        .side-slider input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: #888; border-radius: 50%; cursor: pointer; transition: background 0.2s; }
+        .side-slider input[type="range"]::-webkit-slider-thumb:hover { background: #fff; }
+        .side-slider input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; background: #888; border-radius: 50%; cursor: pointer; border: none; }
+        .side-slider .slider-label { color: #666; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'JetBrains Mono', monospace; }
+        .controls { position: fixed; bottom: 24px; left: 24px; display: flex; gap: 12px; z-index: 100; flex-wrap: wrap; }
+        .controls button { background: rgba(0,0,0,0.7); border: 1px solid #333; color: #666; padding: 8px 16px; font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.3s ease; }
+        .controls button:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.1); }
+        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; z-index: 1000; animation: pulse 1s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <canvas id="fluid-canvas"></canvas>
+    <div class="loading" id="loading">Initializing Grid...</div>
+
+    <div class="top-left-controls">
+        <select id="team-select"></select><button id="random-btn">Random</button>
+    </div>
+    <div class="top-right-controls">
+        <button id="refresh-btn" class="icon-btn">↻</button>
+        <span class="toggle-label">Dark</span>
+        <div class="toggle-switch" id="mode-toggle"></div>
+        <span class="toggle-label">Light</span>
+    </div>
+    <div class="side-slider">
+        <span class="slider-label">−</span>
+        <input type="range" id="scale-slider" min="0.3" max="1.5" step="0.01" value="1">
+        <span class="slider-label">+</span>
+        <span class="slider-label" style="margin-left: 20px;">↺</span>
+        <input type="range" id="rotate-slider" min="0" max="360" step="1" value="0">
+        <span class="slider-label">↻</span>
+    </div>
+    <div class="controls">
+        <button id="shape-btn">Spheres</button>
+        <button id="wave-btn">VFX</button>
+    </div>
+    <div id="canvas-container"></div>
+
+    <script>
+    'use strict';
+    
+    // ============== FLUID SIMULATION ==============
+    const fluidCanvas = document.getElementById('fluid-canvas');
+    fluidCanvas.width = fluidCanvas.clientWidth;
+    fluidCanvas.height = fluidCanvas.clientHeight;
+
+    let fluidConfig = { TEXTURE_DOWNSAMPLE: 1, DENSITY_DISSIPATION: 0.98, VELOCITY_DISSIPATION: 0.98, PRESSURE_DISSIPATION: 0.8, PRESSURE_ITERATIONS: 25, CURL: 30, SPLAT_RADIUS: 0.005 };
+    let fluidPointers = [];
+
+    const { gl: fluidGl, ext: fluidExt } = getFluidWebGLContext(fluidCanvas);
+
+    function getFluidWebGLContext(canvas) {
+        const params = { alpha: false, depth: false, stencil: false, antialias: false };
+        let gl = canvas.getContext('webgl2', params);
+        const isWebGL2 = !!gl;
+        if (!isWebGL2) gl = canvas.getContext('webgl', params) || canvas.getContext('experimental-webgl', params);
+        let halfFloat, supportLinearFiltering;
+        if (isWebGL2) { gl.getExtension('EXT_color_buffer_float'); supportLinearFiltering = gl.getExtension('OES_texture_float_linear'); }
+        else { halfFloat = gl.getExtension('OES_texture_half_float'); supportLinearFiltering = gl.getExtension('OES_texture_half_float_linear'); }
+        gl.clearColor(0.0, 0.0, 0.0, 1.0);
+        const halfFloatTexType = isWebGL2 ? gl.HALF_FLOAT : halfFloat.HALF_FLOAT_OES;
+        let formatRGBA, formatRG, formatR;
+        if (isWebGL2) { formatRGBA = getFluidSupportedFormat(gl, gl.RGBA16F, gl.RGBA, halfFloatTexType); formatRG = getFluidSupportedFormat(gl, gl.RG16F, gl.RG, halfFloatTexType); formatR = getFluidSupportedFormat(gl, gl.R16F, gl.RED, halfFloatTexType); }
+        else { formatRGBA = formatRG = formatR = getFluidSupportedFormat(gl, gl.RGBA, gl.RGBA, halfFloatTexType); }
+        return { gl, ext: { formatRGBA, formatRG, formatR, halfFloatTexType, supportLinearFiltering } };
+    }
+
+    function getFluidSupportedFormat(gl, internalFormat, format, type) {
+        if (!supportFluidRenderTextureFormat(gl, internalFormat, format, type)) {
+            if (internalFormat === gl.R16F) return getFluidSupportedFormat(gl, gl.RG16F, gl.RG, type);
+            if (internalFormat === gl.RG16F) return getFluidSupportedFormat(gl, gl.RGBA16F, gl.RGBA, type);
+            return null;
+        }
+        return { internalFormat, format };
+    }
+
+    function supportFluidRenderTextureFormat(gl, internalFormat, format, type) {
+        let texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+        gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, 4, 4, 0, format, type, null);
+        let fbo = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
+        return gl.checkFramebufferStatus(gl.FRAMEBUFFER) === gl.FRAMEBUFFER_COMPLETE;
+    }
+
+    function fluidPointerPrototype() { this.id = -1; this.x = 0; this.y = 0; this.dx = 0; this.dy = 0; this.down = false; this.moved = false; this.color = [30, 0, 300]; }
+    fluidPointers.push(new fluidPointerPrototype());
+
+    class FluidGLProgram {
+        constructor(vs, fs) {
+            this.uniforms = {};
+            this.program = fluidGl.createProgram();
+            fluidGl.attachShader(this.program, vs);
+            fluidGl.attachShader(this.program, fs);
+            fluidGl.linkProgram(this.program);
+            const uc = fluidGl.getProgramParameter(this.program, fluidGl.ACTIVE_UNIFORMS);
+            for (let i = 0; i < uc; i++) { const n = fluidGl.getActiveUniform(this.program, i).name; this.uniforms[n] = fluidGl.getUniformLocation(this.program, n); }
+        }
+        bind() { fluidGl.useProgram(this.program); }
+    }
+
+    function compileFluidShader(type, source) {
+        const shader = fluidGl.createShader(type);
+        fluidGl.shaderSource(shader, source);
+        fluidGl.compileShader(shader);
+        return shader;
+    }
+
+    const fluidBaseVS = compileFluidShader(fluidGl.VERTEX_SHADER, `precision highp float; attribute vec2 aPosition; varying vec2 vUv, vL, vR, vT, vB; uniform vec2 texelSize; void main() { vUv = aPosition * 0.5 + 0.5; vL = vUv - vec2(texelSize.x, 0.0); vR = vUv + vec2(texelSize.x, 0.0); vT = vUv + vec2(0.0, texelSize.y); vB = vUv - vec2(0.0, texelSize.y); gl_Position = vec4(aPosition, 0.0, 1.0); }`);
+    const fluidClearFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv; uniform sampler2D uTexture; uniform float value; void main() { gl_FragColor = value * texture2D(uTexture, vUv); }`);
+    const fluidDisplayFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv; uniform sampler2D uTexture; void main() { vec3 c = texture2D(uTexture, vUv).rgb; float lum = dot(c, vec3(0.299, 0.587, 0.114)); vec3 darkChrome = vec3(0.15, 0.17, 0.2); vec3 midChrome = vec3(0.5, 0.53, 0.58); vec3 brightChrome = vec3(0.85, 0.88, 0.92); vec3 highlight = vec3(1.0, 1.0, 1.0); float angle = lum * 10.0 + vUv.x * 4.0 + vUv.y * 3.0; float irid = sin(angle) * 0.03; vec3 color = mix(darkChrome, midChrome, smoothstep(0.0, 0.4, lum)); color = mix(color, brightChrome, smoothstep(0.3, 0.7, lum)); color = mix(color, highlight, smoothstep(0.75, 1.0, lum) * 0.5); color += vec3(irid, irid * 0.5, -irid); color *= lum * 1.4 + 0.1; gl_FragColor = vec4(color, 1.0); }`);
+    const fluidSplatFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv; uniform sampler2D uTarget; uniform float aspectRatio; uniform vec3 color; uniform vec2 point; uniform float radius; void main() { vec2 p = vUv - point.xy; p.x *= aspectRatio; vec3 splat = exp(-dot(p, p) / radius) * color; vec3 base = texture2D(uTarget, vUv).xyz; gl_FragColor = vec4(base + splat, 1.0); }`);
+    const fluidAdvectionFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv; uniform sampler2D uVelocity, uSource; uniform vec2 texelSize; uniform float dt, dissipation; void main() { vec2 coord = vUv - dt * texture2D(uVelocity, vUv).xy * texelSize; gl_FragColor = dissipation * texture2D(uSource, coord); gl_FragColor.a = 1.0; }`);
+    const fluidDivergenceFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv, vL, vR, vT, vB; uniform sampler2D uVelocity; vec2 sampleV(vec2 uv) { vec2 m = vec2(1.0); if(uv.x<0.0){uv.x=0.0;m.x=-1.0;} if(uv.x>1.0){uv.x=1.0;m.x=-1.0;} if(uv.y<0.0){uv.y=0.0;m.y=-1.0;} if(uv.y>1.0){uv.y=1.0;m.y=-1.0;} return m*texture2D(uVelocity,uv).xy; } void main() { float L=sampleV(vL).x, R=sampleV(vR).x, T=sampleV(vT).y, B=sampleV(vB).y; gl_FragColor = vec4(0.5*(R-L+T-B), 0.0, 0.0, 1.0); }`);
+    const fluidCurlFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv, vL, vR, vT, vB; uniform sampler2D uVelocity; void main() { float L=texture2D(uVelocity,vL).y, R=texture2D(uVelocity,vR).y, T=texture2D(uVelocity,vT).x, B=texture2D(uVelocity,vB).x; gl_FragColor = vec4(R-L-T+B, 0.0, 0.0, 1.0); }`);
+    const fluidVorticityFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv, vT, vB; uniform sampler2D uVelocity, uCurl; uniform float curl, dt; void main() { float T=texture2D(uCurl,vT).x, B=texture2D(uCurl,vB).x, C=texture2D(uCurl,vUv).x; vec2 force=vec2(abs(T)-abs(B),0.0); force*=1.0/length(force+0.00001)*curl*C; vec2 vel=texture2D(uVelocity,vUv).xy; gl_FragColor=vec4(vel+force*dt,0.0,1.0); }`);
+    const fluidPressureFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv, vL, vR, vT, vB; uniform sampler2D uPressure, uDivergence; vec2 b(vec2 uv){return min(max(uv,0.0),1.0);} void main() { float L=texture2D(uPressure,b(vL)).x, R=texture2D(uPressure,b(vR)).x, T=texture2D(uPressure,b(vT)).x, B=texture2D(uPressure,b(vB)).x, div=texture2D(uDivergence,vUv).x; gl_FragColor=vec4((L+R+B+T-div)*0.25,0.0,0.0,1.0); }`);
+    const fluidGradSubFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `precision highp float; varying vec2 vUv, vL, vR, vT, vB; uniform sampler2D uPressure, uVelocity; vec2 b(vec2 uv){return min(max(uv,0.0),1.0);} void main() { float L=texture2D(uPressure,b(vL)).x, R=texture2D(uPressure,b(vR)).x, T=texture2D(uPressure,b(vT)).x, B=texture2D(uPressure,b(vB)).x; vec2 vel=texture2D(uVelocity,vUv).xy; vel.xy-=vec2(R-L,T-B); gl_FragColor=vec4(vel,0.0,1.0); }`);
+
+    let fluidTextureWidth, fluidTextureHeight, fluidDensity, fluidVelocity, fluidDivergence, fluidCurl, fluidPressure;
+    initFluidFramebuffers();
+
+    const fluidClearProg = new FluidGLProgram(fluidBaseVS, fluidClearFS);
+    const fluidDisplayProg = new FluidGLProgram(fluidBaseVS, fluidDisplayFS);
+    const fluidSplatProg = new FluidGLProgram(fluidBaseVS, fluidSplatFS);
+    const fluidAdvectionProg = new FluidGLProgram(fluidBaseVS, fluidAdvectionFS);
+    const fluidDivergenceProg = new FluidGLProgram(fluidBaseVS, fluidDivergenceFS);
+    const fluidCurlProg = new FluidGLProgram(fluidBaseVS, fluidCurlFS);
+    const fluidVorticityProg = new FluidGLProgram(fluidBaseVS, fluidVorticityFS);
+    const fluidPressureProg = new FluidGLProgram(fluidBaseVS, fluidPressureFS);
+    const fluidGradSubProg = new FluidGLProgram(fluidBaseVS, fluidGradSubFS);
+
+    function initFluidFramebuffers() {
+        fluidTextureWidth = fluidGl.drawingBufferWidth >> fluidConfig.TEXTURE_DOWNSAMPLE;
+        fluidTextureHeight = fluidGl.drawingBufferHeight >> fluidConfig.TEXTURE_DOWNSAMPLE;
+        const texType = fluidExt.halfFloatTexType, rgba = fluidExt.formatRGBA, rg = fluidExt.formatRG, r = fluidExt.formatR;
+        const filtering = fluidExt.supportLinearFiltering ? fluidGl.LINEAR : fluidGl.NEAREST;
+        fluidDensity = createFluidDoubleFBO(2, fluidTextureWidth, fluidTextureHeight, rgba.internalFormat, rgba.format, texType, filtering);
+        fluidVelocity = createFluidDoubleFBO(0, fluidTextureWidth, fluidTextureHeight, rg.internalFormat, rg.format, texType, filtering);
+        fluidDivergence = createFluidFBO(4, fluidTextureWidth, fluidTextureHeight, r.internalFormat, r.format, texType, fluidGl.NEAREST);
+        fluidCurl = createFluidFBO(5, fluidTextureWidth, fluidTextureHeight, r.internalFormat, r.format, texType, fluidGl.NEAREST);
+        fluidPressure = createFluidDoubleFBO(6, fluidTextureWidth, fluidTextureHeight, r.internalFormat, r.format, texType, fluidGl.NEAREST);
+    }
+
+    function createFluidFBO(texId, w, h, internalFormat, format, type, param) {
+        fluidGl.activeTexture(fluidGl.TEXTURE0 + texId);
+        let texture = fluidGl.createTexture();
+        fluidGl.bindTexture(fluidGl.TEXTURE_2D, texture);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_MIN_FILTER, param);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_MAG_FILTER, param);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_WRAP_S, fluidGl.CLAMP_TO_EDGE);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_WRAP_T, fluidGl.CLAMP_TO_EDGE);
+        fluidGl.texImage2D(fluidGl.TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, null);
+        let fbo = fluidGl.createFramebuffer();
+        fluidGl.bindFramebuffer(fluidGl.FRAMEBUFFER, fbo);
+        fluidGl.framebufferTexture2D(fluidGl.FRAMEBUFFER, fluidGl.COLOR_ATTACHMENT0, fluidGl.TEXTURE_2D, texture, 0);
+        fluidGl.viewport(0, 0, w, h);
+        fluidGl.clear(fluidGl.COLOR_BUFFER_BIT);
+        return [texture, fbo, texId];
+    }
+
+    function createFluidDoubleFBO(texId, w, h, internalFormat, format, type, param) {
+        let fbo1 = createFluidFBO(texId, w, h, internalFormat, format, type, param);
+        let fbo2 = createFluidFBO(texId + 1, w, h, internalFormat, format, type, param);
+        return { get read() { return fbo1; }, get write() { return fbo2; }, swap() { [fbo1, fbo2] = [fbo2, fbo1]; } };
+    }
+
+    const fluidBlit = (() => {
+        fluidGl.bindBuffer(fluidGl.ARRAY_BUFFER, fluidGl.createBuffer());
+        fluidGl.bufferData(fluidGl.ARRAY_BUFFER, new Float32Array([-1,-1,-1,1,1,1,1,-1]), fluidGl.STATIC_DRAW);
+        fluidGl.bindBuffer(fluidGl.ELEMENT_ARRAY_BUFFER, fluidGl.createBuffer());
+        fluidGl.bufferData(fluidGl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0,1,2,0,2,3]), fluidGl.STATIC_DRAW);
+        fluidGl.vertexAttribPointer(0, 2, fluidGl.FLOAT, false, 0, 0);
+        fluidGl.enableVertexAttribArray(0);
+        return (dest) => { fluidGl.bindFramebuffer(fluidGl.FRAMEBUFFER, dest); fluidGl.drawElements(fluidGl.TRIANGLES, 6, fluidGl.UNSIGNED_SHORT, 0); };
+    })();
+
+    let fluidLastTime = Date.now();
+    // Only create splats on user interaction, no auto-splats
+
+    function fluidStep() {
+        fluidResizeCanvas();
+        const dt = Math.min((Date.now() - fluidLastTime) / 1000, 0.016);
+        fluidLastTime = Date.now();
+        fluidGl.viewport(0, 0, fluidTextureWidth, fluidTextureHeight);
+
+        fluidAdvectionProg.bind();
+        fluidGl.uniform2f(fluidAdvectionProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidAdvectionProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidGl.uniform1i(fluidAdvectionProg.uniforms.uSource, fluidVelocity.read[2]);
+        fluidGl.uniform1f(fluidAdvectionProg.uniforms.dt, dt);
+        fluidGl.uniform1f(fluidAdvectionProg.uniforms.dissipation, fluidConfig.VELOCITY_DISSIPATION);
+        fluidBlit(fluidVelocity.write[1]); fluidVelocity.swap();
+
+        fluidGl.uniform1i(fluidAdvectionProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidGl.uniform1i(fluidAdvectionProg.uniforms.uSource, fluidDensity.read[2]);
+        fluidGl.uniform1f(fluidAdvectionProg.uniforms.dissipation, fluidConfig.DENSITY_DISSIPATION);
+        fluidBlit(fluidDensity.write[1]); fluidDensity.swap();
+
+        for (let p of fluidPointers) { if (p.moved) { fluidSplat(p.x, p.y, p.dx, p.dy, p.color); p.moved = false; } }
+
+        fluidCurlProg.bind();
+        fluidGl.uniform2f(fluidCurlProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidCurlProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidBlit(fluidCurl[1]);
+
+        fluidVorticityProg.bind();
+        fluidGl.uniform2f(fluidVorticityProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidVorticityProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidGl.uniform1i(fluidVorticityProg.uniforms.uCurl, fluidCurl[2]);
+        fluidGl.uniform1f(fluidVorticityProg.uniforms.curl, fluidConfig.CURL);
+        fluidGl.uniform1f(fluidVorticityProg.uniforms.dt, dt);
+        fluidBlit(fluidVelocity.write[1]); fluidVelocity.swap();
+
+        fluidDivergenceProg.bind();
+        fluidGl.uniform2f(fluidDivergenceProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidDivergenceProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidBlit(fluidDivergence[1]);
+
+        fluidClearProg.bind();
+        let pTexId = fluidPressure.read[2];
+        fluidGl.activeTexture(fluidGl.TEXTURE0 + pTexId);
+        fluidGl.bindTexture(fluidGl.TEXTURE_2D, fluidPressure.read[0]);
+        fluidGl.uniform1i(fluidClearProg.uniforms.uTexture, pTexId);
+        fluidGl.uniform1f(fluidClearProg.uniforms.value, fluidConfig.PRESSURE_DISSIPATION);
+        fluidBlit(fluidPressure.write[1]); fluidPressure.swap();
+
+        fluidPressureProg.bind();
+        fluidGl.uniform2f(fluidPressureProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidPressureProg.uniforms.uDivergence, fluidDivergence[2]);
+        pTexId = fluidPressure.read[2];
+        fluidGl.uniform1i(fluidPressureProg.uniforms.uPressure, pTexId);
+        fluidGl.activeTexture(fluidGl.TEXTURE0 + pTexId);
+        for (let i = 0; i < fluidConfig.PRESSURE_ITERATIONS; i++) { fluidGl.bindTexture(fluidGl.TEXTURE_2D, fluidPressure.read[0]); fluidBlit(fluidPressure.write[1]); fluidPressure.swap(); }
+
+        fluidGradSubProg.bind();
+        fluidGl.uniform2f(fluidGradSubProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidGradSubProg.uniforms.uPressure, fluidPressure.read[2]);
+        fluidGl.uniform1i(fluidGradSubProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidBlit(fluidVelocity.write[1]); fluidVelocity.swap();
+
+        fluidGl.viewport(0, 0, fluidGl.drawingBufferWidth, fluidGl.drawingBufferHeight);
+        fluidDisplayProg.bind();
+        fluidGl.uniform1i(fluidDisplayProg.uniforms.uTexture, fluidDensity.read[2]);
+        fluidBlit(null);
+    }
+
+    function fluidSplat(x, y, dx, dy, color) {
+        fluidSplatProg.bind();
+        fluidGl.uniform1i(fluidSplatProg.uniforms.uTarget, fluidVelocity.read[2]);
+        fluidGl.uniform1f(fluidSplatProg.uniforms.aspectRatio, fluidCanvas.width / fluidCanvas.height);
+        fluidGl.uniform2f(fluidSplatProg.uniforms.point, x / fluidCanvas.width, 1.0 - y / fluidCanvas.height);
+        fluidGl.uniform3f(fluidSplatProg.uniforms.color, dx, -dy, 1.0);
+        fluidGl.uniform1f(fluidSplatProg.uniforms.radius, fluidConfig.SPLAT_RADIUS);
+        fluidBlit(fluidVelocity.write[1]); fluidVelocity.swap();
+        fluidGl.uniform1i(fluidSplatProg.uniforms.uTarget, fluidDensity.read[2]);
+        fluidGl.uniform3f(fluidSplatProg.uniforms.color, color[0]*0.3, color[1]*0.3, color[2]*0.3);
+        fluidBlit(fluidDensity.write[1]); fluidDensity.swap();
+    }
+
+    function fluidMultipleSplats(amount) {
+        for (let i = 0; i < amount; i++) {
+            const color = [Math.random()*10, Math.random()*10, Math.random()*10];
+            const x = fluidCanvas.width * Math.random(), y = fluidCanvas.height * Math.random();
+            const dx = 1000 * (Math.random() - 0.5), dy = 1000 * (Math.random() - 0.5);
+            fluidSplat(x, y, dx, dy, color);
+        }
+    }
+
+    function fluidResizeCanvas() {
+        if (fluidCanvas.width !== fluidCanvas.clientWidth || fluidCanvas.height !== fluidCanvas.clientHeight) {
+            fluidCanvas.width = fluidCanvas.clientWidth; fluidCanvas.height = fluidCanvas.clientHeight;
+            initFluidFramebuffers();
+        }
+    }
+
+    // Mouse and touch handlers - only splat on actual movement
+    let lastMouseX = 0, lastMouseY = 0;
+    let colorPhase = 0; // For continuously varying colors
+    
+    function getNextColor() {
+        colorPhase += 0.15;
+        // Varying brightness for nice fluid dynamics
+        const base = 0.6 + Math.random() * 0.4;
+        return [base, base, base];
+    }
+    
+    window.addEventListener('mousemove', e => { 
+        const dx = e.clientX - lastMouseX;
+        const dy = e.clientY - lastMouseY;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        
+        if (fluidPointers[0].down && (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5)) {
+            fluidPointers[0].moved = true;
+            fluidPointers[0].dx = dx * 10; 
+            fluidPointers[0].dy = dy * 10; 
+            fluidPointers[0].x = e.clientX; 
+            fluidPointers[0].y = e.clientY;
+            fluidPointers[0].color = getNextColor(); // Change color on every move
+        }
+    });
+    
+    window.addEventListener('mousedown', e => { 
+        fluidPointers[0].down = true; 
+        fluidPointers[0].color = getNextColor();
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    });
+    
+    window.addEventListener('mouseup', () => { 
+        fluidPointers[0].down = false; 
+    });
+    
+    // Touch handlers
+    window.addEventListener('touchstart', e => {
+        const touches = e.targetTouches;
+        for (let i = 0; i < touches.length; i++) {
+            if (i >= fluidPointers.length) {
+                fluidPointers.push(new fluidPointerPrototype());
+            }
+            fluidPointers[i].down = true;
+            fluidPointers[i].x = touches[i].clientX;
+            fluidPointers[i].y = touches[i].clientY;
+            fluidPointers[i].color = getNextColor();
+        }
+    }, { passive: true });
+    
+    window.addEventListener('touchmove', e => {
+        const touches = e.targetTouches;
+        for (let i = 0; i < touches.length; i++) {
+            if (i >= fluidPointers.length) continue;
+            const dx = touches[i].clientX - fluidPointers[i].x;
+            const dy = touches[i].clientY - fluidPointers[i].y;
+            if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+                fluidPointers[i].moved = true;
+                fluidPointers[i].dx = dx * 10;
+                fluidPointers[i].dy = dy * 10;
+                fluidPointers[i].x = touches[i].clientX;
+                fluidPointers[i].y = touches[i].clientY;
+                fluidPointers[i].color = getNextColor(); // Change color on every move
+            }
+        }
+    }, { passive: true });
+    
+    window.addEventListener('touchend', e => {
+        const touches = e.changedTouches;
+        for (let i = 0; i < touches.length; i++) {
+            for (let j = 0; j < fluidPointers.length; j++) {
+                if (touches[i].identifier === fluidPointers[j].id) {
+                    fluidPointers[j].down = false;
+                }
+            }
+        }
+        // Also reset first pointer on any touch end
+        if (e.targetTouches.length === 0) {
+            fluidPointers[0].down = false;
+        }
+    }, { passive: true });
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+    // ============== THREE.JS GRID WITH MASK ==============
+    const GRID_SIZE = 32, CELL_SIZE = 1.3, GAP = 0.02;
+    
+    const scene = new THREE.Scene(); 
+    scene.background = null;
+    
+    const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 1000);
+    camera.position.set(0, 80, 0); 
+    camera.lookAt(0, 0, 0);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(innerWidth, innerHeight); 
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.VSMShadowMap;
+    document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.25));
+    const dLight = new THREE.DirectionalLight(0xffffff, 0.9); 
+    dLight.position.set(15, 50, 15); 
+    dLight.castShadow = true;
+    dLight.shadow.mapSize.width = 2048;
+    dLight.shadow.mapSize.height = 2048;
+    dLight.shadow.camera.near = 1;
+    dLight.shadow.camera.far = 150;
+    dLight.shadow.camera.left = -60;
+    dLight.shadow.camera.right = 60;
+    dLight.shadow.camera.top = 60;
+    dLight.shadow.camera.bottom = -60;
+    dLight.shadow.radius = 30;
+    dLight.shadow.blurSamples = 50;
+    dLight.shadow.bias = -0.0005;
+    scene.add(dLight);
+    const rLight = new THREE.DirectionalLight(0x4488ff, 0.3); 
+    rLight.position.set(-50, 20, -50); 
+    scene.add(rLight);
+    // Extra fill lights for chrome reflections
+    const fillLight1 = new THREE.DirectionalLight(0xffffff, 0.4);
+    fillLight1.position.set(-30, 40, 30);
+    scene.add(fillLight1);
+    const fillLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
+    fillLight2.position.set(30, 30, -30);
+    scene.add(fillLight2);
+    
+    // Shadow-receiving plane (invisible, just catches shadows)
+    const shadowPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(200, 200),
+        new THREE.ShadowMaterial({ opacity: 0.35 })
+    );
+    shadowPlane.rotation.x = -Math.PI / 2;
+    shadowPlane.position.y = -1.0;
+    shadowPlane.receiveShadow = true;
+    scene.add(shadowPlane);
+
+    // White opaque material - blocks the fluid
+    const whiteMat = new THREE.MeshStandardMaterial({ 
+        color: 0xffffff, 
+        metalness: 0.1, 
+        roughness: 0.3 
+    });
+    
+    // Fully transparent material - shows fluid through
+    const transparentMat = new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide
+    });
+    
+    // Geometries
+    const cubeGeometry = new THREE.BoxGeometry(CELL_SIZE, CELL_SIZE, CELL_SIZE);
+    const sphereGeometry = new THREE.SphereGeometry(CELL_SIZE * 0.55, 24, 24);
+    let currentGeometry = cubeGeometry;
+    let isSpheres = false;
+    
+    const gridGroup = new THREE.Group(); 
+    scene.add(gridGroup);
+
+    const vectors = [], vectorStates = [], animatingVectors = new Set();
+    const offset = (GRID_SIZE * (CELL_SIZE + GAP)) / 2 - (CELL_SIZE + GAP) / 2;
+
+    let pixelNum = 1;
+    for (let j = 0; j < GRID_SIZE; j++) {
+        for (let i = 0; i < GRID_SIZE; i++) {
+            if (!vectors[i]) { vectors[i] = []; vectorStates[i] = []; }
+            const g = new THREE.Group();
+            const cube = new THREE.Mesh(
+                currentGeometry, 
+                transparentMat.clone()
+            );
+            cube.position.y = CELL_SIZE / 2;
+            cube.castShadow = true;
+            cube.receiveShadow = true;
+            cube.visible = false; // Start invisible
+            g.add(cube);
+            g.position.x = i * (CELL_SIZE + GAP) - offset;
+            g.position.z = j * (CELL_SIZE + GAP) - offset;
+            g.userData = { row: i, col: j, pixelId: pixelNum++, phase: Math.random() * Math.PI * 2, speed: 0.5 + Math.random() * 0.5 };
+            gridGroup.add(g); 
+            vectors[i][j] = g; 
+            vectorStates[i][j] = false; // Start as transparent
+        }
+    }
+    document.getElementById('loading').style.display = 'none';
+
+    const teamLogos = {
+        algeria: { name: "Algeria", pixels: [72,99,100,101,102,103,104,105,106,107,108,109,110,111,134,135,144,163,164,165,166,167,168,169,170,171,172,173,174,177,197,198,207,210,227,228,229,230,231,232,233,234,235,236,237,240,243,244,246,247,250,253,254,260,261,262,270,273,281,283,292,293,294,303,306,307,308,310,311,313,314,315,317,318,324,325,326,327,333,336,342,345,347,349,357,358,359,365,366,369,370,371,372,374,377,379,381,389,390,393,394,395,398,399,424,425,426,427,428,455,456,457,458,459,460,461,468,470,487,488,489,490,491,492,493,501,515,519,520,521,522,523,524,525,529,532,534,538,547,548,552,553,554,555,556,560,561,569,579,580,585,586,587,592,593,599,600,601,612,613,623,624,629,630,631,632,660,661,662,663,681,682,683,687,688,689,690,691,692,693,694,712,713,714,715,716,718,719,720,721,722,723,724,725,750,751,752,753,754,755,756,810,812,815,820,822,844,849,852,854,871,874,876,879,882,884,886,903,904,905,906,908,911,912,913,915,916,918,934,935,942,943,946] },
+        argentina: { name: "Argentina", pixels: [72,74,79,81,87,89,105,112,120,136,138,143,145,151,153,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,294,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,315,328,329,330,331,332,333,334,335,336,337,338,339,340,341,342,343,344,345,360,361,362,363,364,375,376,377,392,393,394,395,396,397,398,406,407,408,409,424,425,426,427,428,429,430,433,434,435,436,437,438,439,440,441,456,457,458,460,461,462,465,466,467,468,469,471,472,473,488,489,491,493,494,499,500,502,504,505,520,522,523,526,531,533,534,537,552,554,555,558,561,562,563,565,566,569,584,590,593,594,595,601,616,618,619,622,625,626,627,629,630,633,645,648,650,651,654,657,658,659,661,662,665,668,676,677,680,682,683,686,689,690,691,693,694,697,700,701,712,713,714,715,716,717,718,721,722,723,724,725,726,727,728,729,742,745,746,747,748,749,750,753,754,755,756,757,758,759,760,763,773,774,778,779,780,781,787,788,789,790,791,795,796,808,811,812,813,814,815,816,817,818,819,820,821,822,825,839,840,845,846,847,848,849,850,851,852,857,858,874,879,880,881,882,887,905,906,909,916,919,920,940,941,943,944,945,946,948,949] },
+        australia: { name: "Australia", pixels: [81,82,83,84,107,108,109,113,114,115,116,117,137,138,139,140,141,142,145,146,147,148,149,152,168,169,170,171,172,173,174,175,178,179,180,181,184,185,199,200,201,202,203,204,205,206,207,210,211,212,213,217,218,230,231,232,233,234,235,236,237,238,239,242,243,244,245,246,249,250,251,261,262,263,264,265,268,269,270,271,274,275,276,277,278,282,283,284,293,294,295,300,301,302,303,307,308,309,310,315,316,324,325,326,331,332,333,334,335,339,340,341,342,343,347,348,349,356,357,363,364,365,366,371,372,373,374,375,379,380,381,387,388,394,395,396,397,398,404,405,406,407,408,411,412,413,414,419,420,425,426,427,428,429,436,437,438,439,440,443,444,445,446,451,456,457,458,459,460,461,469,470,471,472,473,474,475,476,477,478,487,488,489,490,491,492,502,503,504,505,506,507,508,509,510,518,519,520,521,522,523,535,536,537,538,539,540,541,542,549,550,551,552,553,554,568,569,570,571,572,573,574,579,580,581,582,583,584,585,601,602,603,604,605,611,612,613,614,615,616,621,622,623,624,625,626,627,644,645,646,647,651,652,653,654,655,656,657,658,659,660,661,676,677,678,682,683,684,685,686,687,688,689,690,691,692,693,694,695,696,697,713,714,715,716,717,718,719,720,721,722,723,724,725,726,727,728,729,730,731,732,744,745,746,747,748,749,750,751,752,753,754,755,756,757,758,759,760,761,762,763,764,776,777,778,779,780,789,790,791,792,793,794,795,808,809,810,811,812,813,824,825,826,840,841,842,843,844,845,846,847,848,873,874,875,876,877,878,879,880,881,882,883,884,885,886,887,907,908,909,910,911,912,913,914,915,916,917,918,941,942,943,944,945,946,947,948] },
+        austria: { name: "Austria", pixels: [74,75,76,77,79,80,81,82,84,85,86,87,106,109,111,116,119,138,141,143,144,145,148,149,150,151,170,173,175,180,183,202,203,204,205,207,212,213,214,215,295,296,297,298,299,310,311,312,313,314,327,328,329,330,331,332,336,337,341,342,343,344,345,346,359,360,361,362,363,364,365,367,368,369,372,373,374,375,376,377,378,396,397,400,401,404,405,423,424,425,426,427,428,429,430,432,433,435,436,437,438,439,440,441,442,455,456,457,458,459,460,461,462,463,464,465,466,467,468,469,470,471,472,473,474,492,493,500,501,519,520,521,522,523,524,525,527,528,529,530,532,533,534,535,536,537,538,551,552,553,554,555,556,557,559,560,561,562,564,565,566,567,568,569,570,588,589,596,597,615,616,617,618,619,620,621,623,624,625,626,628,629,630,631,632,633,634,647,648,649,650,651,652,653,654,656,657,659,660,661,662,663,664,665,666,679,680,681,682,684,685,686,687,690,691,692,693,695,696,697,698,711,712,713,715,716,717,718,719,720,721,722,723,724,725,726,728,729,730,743,744,746,747,748,750,751,754,755,757,758,759,761,762,775,777,778,779,781,782,784,785,787,788,790,791,792,794,807,809,810,812,813,815,816,817,818,820,821,823,824,826,841,842,844,845,847,848,849,850,852,853,855,856,874,876,877,878,880,881,883,884,885,887,909,910,911,914,915,916,943,944,945,946] },
+        belgium: { name: "Belgium", pixels: [79,82,110,112,113,115,141,142,143,146,147,148,206,207,208,209,210,211,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,297,299,301,303,312,329,331,333,335,344,361,363,365,367,376,393,395,397,399,408,425,427,429,431,433,434,435,440,457,459,461,463,465,466,467,468,472,489,491,493,495,497,498,499,500,501,504,521,523,525,527,529,530,531,532,533,534,536,553,555,557,559,561,562,563,564,565,566,567,568,585,587,589,591,593,594,595,596,597,598,599,600,617,619,621,623,625,626,627,628,629,630,631,632,649,651,653,655,657,658,659,660,661,662,663,664,681,683,685,687,689,690,691,692,693,694,695,696,713,715,717,719,721,722,723,724,725,726,727,728,746,747,749,751,753,754,755,756,757,758,759,779,781,783,785,786,787,788,789,790,809,812,813,815,817,818,819,820,821,824,842,845,847,849,850,851,852,855,873,875,878,879,880,881,882,883,886,888,906,908,917,919,939,941,943,944,945,946,948,950] },
+        bosnia: { name: "Bosnia", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,149,150,151,152,168,169,170,175,176,177,178,183,184,185,199,200,205,206,207,208,209,210,211,212,217,218,230,231,236,237,238,239,240,241,242,243,244,245,250,251,261,262,268,269,270,271,272,273,274,275,276,277,283,284,293,294,297,298,303,304,305,306,311,312,315,316,324,325,328,329,330,342,343,344,345,348,349,356,357,360,361,363,364,365,366,367,368,369,370,371,372,375,376,377,380,381,387,388,389,391,392,394,395,396,397,398,399,400,401,402,403,404,405,406,408,409,410,413,414,419,420,423,424,426,427,428,429,430,431,432,433,434,435,436,437,438,440,441,442,445,446,451,452,455,456,458,459,460,461,462,463,464,465,466,467,468,469,470,472,473,474,477,478,483,484,486,487,488,489,492,493,494,495,496,497,498,499,500,501,502,503,505,506,507,509,510,515,516,518,519,520,521,524,525,526,527,528,529,530,531,532,533,534,535,537,538,539,541,542,547,548,551,552,556,557,558,559,560,561,562,563,564,565,566,568,569,570,573,574,579,580,590,591,592,593,594,595,596,597,598,599,605,606,611,612,623,624,625,626,627,628,629,630,631,632,637,638,644,645,649,650,656,657,658,659,660,661,662,668,669,676,677,680,681,682,683,684,689,690,691,692,693,695,696,697,700,701,709,710,712,713,714,715,716,717,723,724,726,727,728,729,731,732,741,742,745,746,747,748,749,754,755,757,758,759,760,763,764,774,775,778,779,780,781,782,788,789,790,791,794,795,807,808,812,813,814,819,820,821,825,826,840,841,842,855,856,857,873,874,875,876,877,884,885,886,887,888,907,908,909,910,911,912,913,914,915,916,917,918,941,942,943,944,945,946,947,948] },
+        brazil: { name: "Brazil", pixels: [79,82,105,108,112,113,117,120,138,139,144,145,150,151,163,166,170,171,175,178,182,183,187,190,196,197,201,204,213,216,220,221,228,229,238,239,240,241,242,243,252,253,259,262,268,269,270,271,274,275,276,277,283,286,298,299,300,301,302,303,306,307,308,309,310,311,328,329,330,331,342,343,344,345,358,359,360,361,362,363,364,373,374,375,376,377,378,379,391,392,393,395,396,397,404,405,406,408,409,410,424,425,428,429,436,437,440,441,456,457,472,473,488,489,491,492,493,495,496,497,498,500,501,502,504,505,523,527,530,532,555,559,560,561,562,564,565,566,584,585,587,591,594,596,600,601,616,617,619,620,621,623,624,625,626,628,632,633,648,649,664,665,680,681,684,685,692,693,696,697,712,713,715,716,717,724,725,726,728,729,744,745,746,747,748,757,758,759,760,761,777,778,779,790,791,792,810,811,812,813,814,815,818,819,820,821,822,823,843,844,845,846,847,850,851,852,853,854,877,878,879,882,883,884,911,912,913,914,944,945] },
+        cabo_verde: { name: "Cabo Verde", pixels: [71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,167,168,173,174,179,180,185,186,199,200,202,203,204,205,206,208,209,210,211,212,214,215,216,217,218,231,232,236,237,238,240,241,242,243,244,248,249,250,263,264,266,267,268,269,270,275,276,278,279,280,281,282,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,313,314,327,328,329,330,331,332,335,336,344,345,346,359,360,366,369,370,371,372,373,374,375,377,378,391,392,396,399,400,401,404,405,406,407,408,409,410,423,424,428,430,431,432,433,434,435,436,437,438,441,442,455,456,459,461,462,463,464,465,466,467,473,474,487,488,490,492,493,494,495,496,497,498,505,506,519,520,521,522,523,524,525,526,530,531,532,533,537,538,551,552,556,557,558,561,562,563,569,570,583,584,589,590,591,592,593,594,601,602,615,616,622,623,624,626,633,634,647,648,655,658,665,666,679,680,687,690,697,698,711,712,713,719,722,728,729,730,743,744,745,746,751,754,759,760,761,762,775,776,777,778,779,783,786,790,791,792,793,794,808,809,810,811,812,815,818,821,822,823,824,825,841,842,843,844,845,847,850,852,853,854,855,856,875,876,877,878,879,882,883,884,885,886,909,910,911,912,913,914,915,916,944,945] },
+        canada: { name: "Canada", pixels: [80,81,108,112,113,117,140,141,143,144,145,146,148,149,172,173,174,175,176,177,178,179,180,181,198,204,205,206,207,208,209,210,211,212,213,219,228,229,230,231,236,237,238,239,240,241,242,243,244,245,250,251,252,253,260,261,262,263,264,268,269,270,271,272,273,274,275,276,277,281,282,283,284,285,292,293,294,295,296,297,300,301,302,303,304,305,306,307,308,309,312,313,314,315,316,317,323,324,325,326,327,328,329,330,332,333,334,335,336,337,338,339,340,341,343,344,345,346,347,348,349,350,355,356,357,358,359,360,361,362,363,364,365,366,367,368,369,370,371,372,373,374,375,376,377,378,379,380,381,382,388,389,390,391,392,393,394,395,396,397,398,399,400,401,402,403,404,405,406,407,408,409,410,411,412,413,421,422,423,424,425,426,427,428,429,430,431,432,433,434,435,436,437,438,439,440,441,442,443,444,484,485,486,487,490,493,496,499,502,503,504,508,516,521,523,525,526,528,530,532,534,537,539,541,548,553,554,555,557,559,560,562,563,564,566,569,571,572,573,580,581,582,583,585,587,589,592,594,596,598,599,600,603,605,644,645,648,649,650,651,662,663,664,665,668,669,676,677,678,681,682,683,684,693,694,695,696,699,700,701,709,710,711,714,715,718,719,720,721,722,723,726,727,730,731,732,741,742,743,744,749,750,751,752,753,754,755,756,761,762,763,764,774,775,776,780,781,782,783,784,785,786,787,788,789,793,794,795,807,808,809,813,814,815,816,817,818,819,820,824,825,826,840,841,846,847,848,849,850,851,856,857,911,912,913,914,942,943,944,945,946,947] },
+        colombia: { name: "Colombia", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,141,148,149,150,151,152,168,169,170,176,177,183,184,185,199,200,204,205,206,211,212,213,217,218,230,231,234,235,236,237,238,239,242,243,244,245,246,247,250,251,261,262,265,266,267,268,269,270,271,274,275,276,277,278,279,280,283,284,293,294,296,297,298,299,300,301,302,303,306,307,308,309,310,311,312,313,315,316,324,325,328,329,330,331,332,333,334,335,338,339,340,341,342,343,344,345,348,349,356,357,361,362,363,364,365,372,373,374,375,376,380,381,387,388,391,393,394,395,400,401,406,407,408,410,413,414,419,420,430,431,432,433,434,435,445,446,451,452,455,456,457,460,461,462,463,464,465,466,467,468,469,472,473,474,477,478,486,487,488,489,490,492,493,494,495,496,497,498,499,500,501,503,504,505,506,507,518,519,520,521,522,524,525,526,527,528,529,530,531,532,533,535,536,537,538,539,547,548,551,552,553,554,557,558,559,560,561,562,563,564,567,568,569,570,573,574,579,580,583,584,585,586,589,590,591,592,593,594,595,596,599,600,601,602,605,606,611,612,615,616,617,618,619,621,622,623,624,625,626,627,628,630,631,632,633,634,636,637,638,644,645,648,649,650,651,654,655,656,657,658,659,662,663,664,665,668,669,676,677,680,681,682,683,694,695,696,697,700,701,709,710,713,714,717,718,719,720,721,722,723,724,727,728,731,732,741,742,748,749,750,751,752,753,754,755,756,757,763,764,774,775,778,780,781,782,783,784,785,786,787,788,789,791,794,795,807,808,813,814,815,816,817,818,819,820,825,826,840,841,842,847,848,849,850,855,856,857,873,874,875,876,885,886,887,888,907,908,909,910,911,914,915,916,917,918,941,942,943,946,947,948] },
+        croatia: { name: "Croatia", pixels: [75,76,77,78,79,80,81,82,83,84,85,86,106,107,108,109,116,117,118,119,137,138,139,140,141,143,146,148,149,150,151,152,168,169,170,171,172,173,175,178,180,181,182,183,184,185,197,198,199,200,201,205,207,208,209,210,212,216,217,218,219,220,229,230,231,232,233,237,239,242,244,248,249,250,251,252,261,262,263,264,265,269,271,274,276,280,281,282,283,284,294,295,296,297,298,299,300,301,308,309,310,311,312,313,314,315,326,330,331,332,333,335,338,340,341,342,343,347,358,362,363,364,365,367,368,370,372,373,374,375,379,391,394,395,396,397,399,401,402,404,405,406,407,410,423,424,425,426,427,428,429,431,434,436,437,438,439,440,441,442,455,456,457,458,461,468,471,472,473,474,488,489,490,493,495,496,497,498,500,503,504,505,520,521,522,525,527,532,535,536,537,552,553,554,555,556,557,559,560,561,562,564,565,566,567,568,569,585,587,588,589,594,596,597,598,600,617,619,620,621,623,624,625,626,628,629,630,632,649,650,651,652,653,660,661,662,663,664,681,682,683,685,687,688,689,690,692,694,695,696,714,715,717,718,723,724,726,727,747,749,756,758,779,780,789,790,812,821,844,853,877,884,910,915,943,944,945,946] },
+        curacao: { name: "Curacao", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,149,150,151,152,168,169,170,183,184,185,199,200,206,207,208,209,210,211,217,218,230,231,236,237,244,245,250,251,261,262,267,272,273,278,283,284,293,294,298,303,306,311,315,316,324,325,329,335,338,344,348,349,356,357,360,368,369,377,380,381,387,388,392,409,413,414,419,420,423,427,428,429,430,431,432,433,434,435,436,437,438,442,445,446,451,452,455,457,459,470,472,474,477,478,483,484,487,491,494,497,500,502,506,509,510,515,516,519,523,525,526,528,529,531,532,534,538,541,542,547,548,551,553,555,558,561,564,566,568,570,573,574,579,580,583,587,589,590,591,592,593,594,595,596,598,602,605,606,611,612,616,619,630,633,637,638,644,645,648,652,653,654,655,656,657,658,659,660,661,665,668,669,676,677,681,684,685,692,693,696,700,701,709,710,714,717,718,719,720,721,722,723,724,727,731,732,741,742,747,750,755,758,763,764,774,775,780,783,784,785,786,789,794,795,807,808,825,826,840,841,842,845,846,847,848,849,850,851,852,855,856,857,873,874,875,876,877,878,879,880,881,882,883,884,885,886,887,888,907,908,909,910,911,912,913,914,915,916,917,918,941,942,943,944,945,946,947,948] },
+        czechia: { name: "Czechia", pixels: [72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,104,121,134,135,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,155,166,168,169,170,171,172,173,174,176,178,180,181,182,183,184,185,187,198,200,201,202,203,204,205,206,207,211,212,213,214,215,216,217,219,230,232,233,234,235,236,237,238,240,244,245,246,247,248,249,251,262,264,265,266,268,269,276,277,279,280,281,283,294,296,297,300,301,302,308,310,312,313,315,326,328,333,334,335,339,341,342,343,345,347,358,360,361,362,363,371,373,374,376,377,379,390,392,393,394,395,396,403,405,406,407,409,411,422,424,425,427,428,429,430,435,437,439,440,441,443,454,456,457,458,467,469,470,472,473,475,486,488,489,491,492,493,499,500,502,504,505,507,518,520,521,522,523,532,533,535,536,537,539,550,552,553,554,555,566,568,569,571,582,584,585,586,587,590,591,592,595,598,600,601,603,614,616,617,618,619,620,623,624,627,628,629,631,632,633,635,646,648,649,650,651,652,655,656,660,661,662,663,664,665,667,678,680,681,682,687,688,689,692,693,694,695,696,697,699,711,713,714,715,717,718,719,724,725,726,727,728,730,744,746,747,748,749,750,751,752,755,756,757,758,759,761,777,779,780,781,782,783,784,785,787,788,789,790,792,810,812,813,814,815,816,817,818,819,820,821,823,843,847,848,849,850,854,876,877,884,885,910,911,914,915,943,944,945,946] },
+        dr_congo: { name: "Dr Congo", pixels: [76,78,79,80,81,82,83,85,108,109,110,111,112,113,114,115,116,117,137,140,141,144,145,148,149,152,168,169,170,172,173,174,175,176,177,178,179,180,181,183,184,185,199,200,201,202,203,205,206,207,210,211,212,214,215,216,217,218,232,233,234,235,237,238,239,240,241,242,243,244,246,247,248,249,264,265,266,267,268,270,275,277,278,279,280,281,296,297,298,299,300,301,303,306,308,309,310,311,312,313,328,329,330,331,333,335,338,340,342,343,344,345,360,361,362,364,365,366,368,369,371,372,373,375,376,377,392,393,395,396,397,398,399,402,403,404,405,406,408,409,423,424,426,427,428,429,432,433,436,437,438,439,441,442,455,457,458,459,460,462,463,464,465,466,467,469,470,471,472,474,486,487,489,490,491,493,494,495,498,499,500,502,503,504,506,507,518,519,521,522,524,525,527,528,529,530,532,533,535,536,538,539,550,551,553,554,556,558,559,562,563,565,567,568,570,571,582,583,585,586,588,590,591,594,595,597,599,600,602,603,614,615,617,618,620,621,623,624,625,626,628,629,631,632,634,635,646,647,649,650,651,653,654,655,658,659,660,662,663,664,666,667,678,679,680,682,683,684,686,687,688,689,690,691,693,694,695,697,698,699,711,712,713,715,716,717,720,721,724,725,726,728,729,730,743,744,745,746,747,748,749,750,751,754,755,756,757,758,759,760,761,762,776,777,778,779,780,781,782,783,784,785,786,787,788,789,790,791,792,793,809,810,811,812,813,814,815,816,817,818,819,820,821,822,823,824,843,844,845,846,847,848,849,850,851,852,853,854,877,878,879,880,881,882,883,884,911,912,913,914,944,945] },
+        ecuador: { name: "Ecuador", pixels: [72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,104,113,117,121,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,166,167,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,187,198,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,230,231,235,236,237,238,239,240,241,242,243,244,245,246,250,251,262,263,264,268,269,270,271,272,273,274,275,276,277,281,282,283,294,295,296,297,301,302,307,308,312,313,314,315,326,327,328,329,330,333,334,339,340,343,344,345,346,347,358,359,361,362,365,366,369,370,371,372,375,376,378,379,390,391,394,397,398,401,402,403,404,407,410,411,422,423,424,426,429,430,433,434,435,436,439,441,442,443,454,455,456,457,458,462,465,468,471,472,473,474,475,486,487,488,489,490,499,500,503,504,505,506,507,518,519,522,525,530,531,532,535,538,539,550,551,554,557,558,561,562,563,564,567,570,571,582,583,586,589,590,593,594,595,596,599,602,603,614,615,618,621,622,625,626,627,628,631,634,635,646,647,650,653,654,657,658,659,660,663,666,667,678,679,682,685,686,691,692,695,698,699,710,711,714,715,716,717,718,723,724,725,726,727,730,731,743,744,747,748,749,750,751,752,753,754,755,756,757,758,761,762,775,776,777,780,781,782,783,784,785,786,787,788,789,792,793,794,809,810,811,814,815,816,817,818,819,822,823,824,841,842,843,844,845,848,849,852,853,854,855,856,875,876,877,878,879,882,883,884,885,886,909,910,911,912,913,914,915,916,944,945] },
+        egypt: { name: "Egypt", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,149,150,151,152,168,169,170,183,184,185,199,200,204,205,206,207,208,217,218,230,231,233,235,237,238,239,241,242,244,250,251,261,262,264,266,274,275,277,283,284,293,294,295,297,307,308,310,315,316,324,325,326,328,329,330,333,334,335,338,339,340,341,343,347,348,349,356,357,359,361,362,364,365,366,367,368,370,371,372,373,374,376,379,380,381,387,388,390,392,393,394,397,398,399,402,403,405,406,407,409,411,412,413,414,419,420,423,425,435,436,438,439,440,442,443,444,445,446,451,452,456,458,466,468,469,471,472,473,475,476,477,478,483,484,489,491,493,494,495,497,499,501,502,504,505,506,508,509,510,515,516,522,524,525,526,527,528,530,532,534,535,537,538,539,541,542,547,548,555,557,559,561,563,565,567,568,570,571,572,573,574,579,580,588,590,592,594,596,598,600,601,603,604,605,606,611,612,621,623,625,627,629,631,633,634,636,637,638,644,645,646,647,648,649,650,651,652,653,654,655,656,657,658,659,660,661,662,663,664,665,666,667,668,669,676,677,700,701,709,710,731,732,741,742,763,764,774,775,794,795,807,808,825,826,840,841,842,855,856,857,873,874,875,876,885,886,887,888,907,908,909,910,911,912,913,914,915,916,917,918,941,942,943,944,945,946,947,948] },
+        england: { name: "England", pixels: [69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,101,104,105,106,107,108,109,110,111,114,115,116,117,118,119,120,121,124,133,136,137,138,140,142,143,146,147,148,149,150,151,153,156,165,166,167,168,169,170,174,175,176,177,178,179,180,181,182,183,185,186,187,188,197,198,199,200,201,202,203,205,217,218,219,220,229,230,231,236,249,250,251,252,261,262,263,264,265,266,267,270,271,272,273,274,275,276,278,279,281,282,283,284,293,294,295,296,301,302,303,304,305,306,310,313,314,315,316,325,326,327,328,329,330,331,332,333,334,335,336,337,338,339,340,341,342,343,344,345,346,347,348,357,360,361,362,363,364,365,366,367,370,371,372,373,374,375,376,377,380,389,392,393,394,396,398,399,402,403,404,405,406,407,409,412,421,422,423,424,425,426,430,431,432,433,434,435,436,437,438,439,441,442,443,444,453,454,455,456,457,458,459,461,473,474,475,476,485,486,487,492,505,506,507,508,517,518,519,520,521,522,523,526,527,528,529,530,531,532,534,535,537,538,539,540,549,550,551,552,557,558,559,560,561,562,566,569,570,571,572,581,582,583,584,585,586,587,588,589,590,591,592,593,594,595,596,597,598,599,600,601,602,603,604,613,616,617,618,619,620,621,622,623,626,627,628,629,630,631,632,633,636,645,648,649,650,652,654,655,658,659,660,661,662,663,665,668,677,678,679,680,681,682,686,687,688,689,690,691,692,693,694,695,697,698,699,700,709,710,711,712,713,714,715,717,729,730,731,732,742,743,744,748,761,762,763,774,775,776,777,778,779,782,783,784,785,786,787,788,790,791,793,794,795,808,809,813,814,815,816,817,818,819,822,825,840,841,842,843,844,845,846,847,850,851,852,853,854,855,856,857,874,875,876,877,878,879,882,883,884,885,886,887,909,910,911,912,913,914,915,916,944,945] },
+        france: { name: "France", pixels: [77,79,82,84,110,115,141,143,146,148,203,235,236,238,265,266,267,268,269,270,298,300,301,309,310,311,312,313,328,329,330,331,332,333,334,340,341,344,345,346,361,362,363,364,365,366,371,372,373,374,375,377,378,394,395,396,397,398,402,403,406,407,408,410,425,426,427,428,429,430,433,434,435,436,437,439,440,441,456,457,458,459,460,461,462,463,464,465,466,467,468,469,470,472,473,488,489,490,491,492,493,494,495,496,497,500,501,502,503,505,520,521,522,523,524,525,526,527,528,529,530,531,533,534,535,537,553,554,555,556,557,558,559,560,561,562,563,564,566,567,586,587,588,589,590,591,592,593,594,595,596,597,599,619,620,621,622,623,624,625,626,627,628,629,631,652,653,654,655,656,657,658,659,660,661,685,686,687,691,692,693,718,724,750,756,780,781,782,786,787,788,844,845,848,849,852,853,876,880,884,908,909,912,913,916,917,940,944,948] },
+        germany: { name: "Germany", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,149,150,151,152,168,169,170,174,175,176,177,178,179,183,184,185,199,200,204,205,206,211,212,213,217,218,230,231,234,235,236,245,246,247,250,251,261,262,265,266,279,280,283,284,293,294,296,297,304,305,306,312,313,315,316,324,325,328,335,336,337,345,348,349,356,357,359,360,368,369,377,378,380,381,388,391,397,398,400,401,403,404,410,413,419,420,422,423,428,429,430,432,433,435,436,437,442,443,445,446,451,452,454,460,461,462,463,464,465,466,467,468,469,475,477,478,483,484,486,491,493,494,495,496,497,498,499,500,502,507,509,510,515,516,518,522,524,526,527,528,529,530,531,533,535,539,541,542,547,548,550,555,557,559,560,561,562,564,566,571,573,574,579,580,582,583,586,588,590,592,593,595,597,599,602,603,605,606,612,615,619,621,623,624,625,626,628,630,634,637,644,645,647,648,655,656,657,658,665,666,668,669,676,677,680,687,690,697,700,701,709,710,712,713,718,720,721,723,728,729,731,732,741,742,745,746,747,758,759,760,763,764,779,780,789,790,807,808,809,812,813,814,819,820,821,824,825,826,840,841,842,846,847,848,849,850,851,855,856,857,873,874,875,876,885,886,887,888,907,908,910,911,912,913,914,915,917,918,942,943,944,945,946,947] },
+        ghana: { name: "Ghana", pixels: [81,82,83,84,85,86,87,88,89,90,113,116,122,145,148,150,154,177,180,186,209,212,215,216,217,218,241,244,247,250,272,275,278,281,303,306,309,312,334,337,340,343,364,365,368,371,374,394,395,399,402,405,425,429,430,433,438,456,459,460,463,464,467,468,471,488,490,493,498,501,503,519,521,524,525,530,531,534,536,551,553,555,556,557,562,563,564,566,568,582,584,591,592,599,601,614,616,618,622,623,624,625,629,631,633,646,648,650,654,655,656,657,661,663,665,678,680,687,688,695,697,711,713,715,716,717,722,723,724,726,728,743,745,748,749,754,755,758,760,776,778,781,786,789,791,808,811,815,816,820,823,841,844,845,850,851,854,874,875,878,879,880,881,884,885,908,909,914,915,942,943,944,945] },
+        haiti: { name: "Haiti", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,149,150,151,152,168,169,170,183,184,185,199,200,217,218,230,231,234,235,236,237,238,239,240,241,242,243,244,245,246,247,250,251,261,262,266,279,283,284,293,294,298,311,315,316,324,325,330,343,348,349,356,357,362,363,364,365,366,367,368,369,370,371,372,373,374,375,380,381,387,388,394,406,407,413,414,419,420,426,437,439,445,446,458,468,471,483,484,490,499,503,509,510,515,516,522,530,535,541,542,554,561,567,579,580,586,592,599,605,606,611,612,618,623,631,637,638,644,645,650,654,663,668,669,676,677,683,685,694,700,701,709,710,716,725,731,732,741,742,749,756,763,764,774,775,782,787,794,795,807,808,815,816,817,818,825,826,840,841,842,855,856,857,873,874,875,876,885,886,887,888,907,908,909,910,911,912,913,914,915,916,917,918,941,942,943,944,945,946,947,948] },
+        iran: { name: "Iran", pixels: [72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,104,121,136,153,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,200,201,202,203,204,205,206,208,209,211,212,213,214,215,216,217,232,233,234,235,236,237,238,239,242,243,244,245,246,247,248,249,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,296,313,328,345,360,361,362,363,364,365,366,367,368,369,370,371,372,373,374,375,376,377,392,409,424,441,456,463,464,465,466,473,488,493,496,497,500,505,520,524,525,532,533,537,552,555,556,557,564,565,566,569,584,601,616,618,624,625,631,633,648,650,651,655,656,657,658,662,663,665,680,682,683,687,688,689,690,694,695,697,712,714,720,721,727,729,744,761,776,779,780,781,788,789,790,793,809,812,813,820,821,824,842,845,848,849,852,855,875,879,880,881,882,886,908,909,916,917,942,943,944,945,946,947] },
+        iraq: { name: "Iraq", pixels: [73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,105,120,136,137,139,141,142,145,148,149,150,152,153,167,168,171,173,176,177,178,180,182,185,186,199,203,205,208,210,212,213,214,215,218,231,250,263,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,282,295,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,314,327,329,330,331,332,333,334,335,336,337,338,339,340,341,342,343,344,346,359,361,362,363,364,365,366,367,368,369,370,371,372,373,374,375,376,378,391,393,394,395,396,397,398,399,400,401,402,403,404,405,406,407,408,410,423,425,426,427,428,429,430,431,432,433,434,435,436,437,438,439,440,442,455,474,487,496,502,506,519,520,524,526,528,531,532,534,537,538,552,555,556,557,558,559,560,562,563,564,566,569,584,585,587,600,601,617,632,649,650,652,653,654,655,656,657,658,659,660,661,663,664,682,684,685,686,687,688,689,690,691,692,693,695,714,715,717,718,719,720,721,722,723,724,726,727,747,749,750,751,752,753,754,755,756,758,779,780,782,783,784,785,786,787,789,790,812,813,815,816,817,818,820,821,845,846,848,849,851,852,878,879,882,883,911,912,913,914,944,945] },
+        ivory_coast: { name: "Ivory Coast", pixels: [71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,135,136,137,140,141,142,143,144,145,146,147,148,149,150,151,152,153,154,167,168,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,186,199,200,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,231,232,234,235,236,237,238,239,244,245,246,247,248,249,250,263,264,267,268,277,278,279,280,281,282,295,296,297,310,311,312,313,314,327,328,329,330,331,332,333,334,336,337,338,343,345,346,359,360,361,362,363,364,365,367,368,369,370,371,375,377,378,391,392,393,394,395,396,397,399,400,401,402,403,407,409,410,423,424,425,426,427,428,429,430,432,433,434,440,441,442,455,456,457,458,459,460,461,462,463,471,473,474,487,488,489,490,491,492,493,503,505,506,519,520,521,524,527,528,534,535,537,538,551,552,556,557,565,566,567,568,569,570,583,584,587,589,596,597,598,599,600,601,602,615,616,622,627,628,629,631,632,633,634,647,648,659,660,662,663,664,665,666,679,680,686,687,693,695,696,697,698,711,712,713,719,720,727,728,729,730,743,744,745,752,753,754,759,760,761,762,775,776,777,778,786,787,791,792,793,794,808,809,810,811,819,820,822,823,824,825,840,841,842,843,844,851,852,853,854,855,856,857,874,875,876,877,883,884,885,886,887,909,910,911,912,913,914,915,916,944,945] },
+        japan: { name: "Japan", pixels: [69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,101,102,103,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,122,123,124,133,134,135,136,137,138,139,140,141,144,145,146,147,148,155,156,165,166,167,168,169,170,171,172,174,178,179,181,182,183,184,185,186,187,188,197,198,199,200,201,202,203,204,206,208,209,210,212,213,218,219,220,229,230,231,232,233,234,235,237,238,240,241,243,244,245,246,247,248,249,250,251,252,261,262,263,264,265,266,268,269,270,272,274,275,281,282,283,284,293,294,295,296,297,298,300,301,302,303,305,306,307,308,309,310,311,312,313,314,315,316,325,326,327,328,329,330,332,333,334,335,336,337,344,345,346,347,348,357,358,359,360,361,362,364,365,366,367,368,369,370,371,372,373,374,375,376,377,378,379,380,389,390,391,392,393,394,395,397,398,399,400,402,404,406,407,408,409,410,411,412,421,422,423,424,430,431,432,435,437,439,440,441,442,443,444,453,454,455,456,457,458,460,462,464,466,468,470,472,473,474,475,476,485,486,490,491,492,495,498,499,501,503,505,506,507,508,517,518,522,523,524,526,527,528,530,531,532,533,534,535,536,537,538,539,540,549,550,554,558,559,560,564,565,566,567,568,569,570,571,572,581,582,583,584,585,586,587,588,589,590,591,592,593,594,595,596,597,598,599,600,601,602,603,604,613,614,615,616,617,618,619,622,627,628,631,632,633,634,635,636,645,646,647,648,649,650,651,652,654,656,657,658,659,661,662,664,665,666,667,668,677,678,679,680,681,682,683,684,686,690,691,696,697,698,699,700,709,710,711,712,713,715,716,718,720,721,722,723,725,726,728,729,730,731,732,742,743,744,745,750,752,753,754,755,757,758,760,761,762,763,774,775,776,777,778,779,780,781,782,783,784,785,786,787,788,789,790,791,792,793,794,795,808,809,810,811,812,813,814,815,816,817,818,819,820,821,822,823,824,825,840,841,842,843,844,845,846,847,848,849,850,851,852,853,854,855,856,857,874,875,876,877,878,879,880,881,882,883,884,885,886,887,909,910,911,912,913,914,915,916,944,945] },
+        jordan: { name: "Jordan", pixels: [69,70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,92,101,102,104,108,112,115,116,117,119,120,124,133,134,136,138,140,142,144,146,148,150,152,154,156,165,166,168,170,172,175,176,178,180,184,186,188,197,200,204,206,208,211,212,214,216,218,220,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,293,295,297,298,299,300,301,302,303,304,305,306,307,308,309,310,311,312,314,316,325,327,329,330,331,332,333,334,335,336,337,338,339,340,341,342,343,344,346,348,357,359,361,362,363,364,365,366,367,368,369,370,371,372,373,374,375,376,378,380,389,391,393,394,395,396,397,398,399,400,401,402,403,404,405,406,407,408,410,412,421,423,425,426,427,428,429,430,431,432,433,434,435,436,437,438,439,440,442,444,453,455,457,458,459,460,461,462,463,466,467,468,469,470,471,472,474,476,485,487,489,490,491,492,495,498,501,502,503,504,506,508,517,519,521,522,523,524,525,532,533,534,535,536,538,540,549,551,553,554,555,556,557,564,565,566,567,568,570,572,581,583,585,586,587,588,597,598,599,600,602,604,613,615,617,618,619,620,621,622,627,628,629,630,631,632,634,636,645,647,649,650,651,652,653,654,656,657,659,660,661,662,663,664,666,668,677,679,680,682,683,684,685,686,687,688,689,690,691,692,693,694,695,697,698,700,709,710,712,713,715,716,717,718,719,720,721,722,723,724,725,726,728,729,731,732,742,743,745,746,749,750,751,752,753,754,755,756,759,760,762,763,775,776,778,779,780,783,784,785,786,789,790,791,793,794,808,809,812,813,814,816,817,819,820,821,824,825,841,842,843,846,847,850,851,854,855,856,875,876,877,884,885,886,909,910,911,914,915,916,944,945] },
+        mexico: { name: "Mexico", pixels: [86,118,119,149,150,151,152,174,175,176,177,178,179,181,182,183,184,204,205,212,213,214,215,216,234,235,239,240,241,242,244,245,246,247,249,265,269,270,275,276,277,278,280,281,296,299,300,307,308,309,311,312,314,328,330,334,338,339,340,342,343,345,346,359,362,365,366,367,370,371,373,374,376,377,391,393,396,397,398,399,401,402,404,405,407,408,410,422,425,427,428,429,430,431,432,433,434,435,436,438,439,441,442,454,456,462,463,464,465,466,467,469,470,472,473,475,486,488,494,495,496,498,499,500,501,503,504,505,507,518,520,527,528,529,531,532,534,535,536,537,539,550,552,559,560,561,562,564,565,566,567,569,571,582,585,591,592,593,594,595,597,598,600,603,615,617,623,625,626,627,628,632,634,647,650,653,654,657,660,661,663,666,680,682,686,688,689,690,695,697,712,715,720,722,726,729,740,741,742,743,744,745,747,752,753,754,758,760,761,762,763,764,765,804,808,810,811,812,814,818,820,822,823,824,826,827,828,829,836,837,839,840,842,847,849,852,854,858,861,868,870,872,874,875,876,880,884,886,890,893,900,904,906,911,913,916,918,922,925,932,936,938,939,940,942,946,948,950,951,952,954,955,956,957] },
+        morocco: { name: "Morocco", pixels: [77,78,79,80,81,82,83,84,107,108,109,116,117,118,137,138,139,150,151,152,168,169,184,185,199,200,217,218,231,238,239,240,241,242,243,250,263,269,270,271,274,275,276,282,294,295,300,301,302,307,308,309,314,315,326,331,342,347,358,363,364,366,368,369,371,373,374,379,390,395,396,399,402,405,406,411,422,427,428,429,431,432,433,434,436,437,438,443,454,459,460,461,468,469,470,475,486,492,493,494,496,497,499,500,501,507,518,519,525,526,528,529,531,532,538,539,551,557,558,559,560,561,562,563,564,570,583,584,589,590,592,594,596,601,602,616,617,621,622,624,626,628,632,633,649,650,651,653,654,656,658,660,662,663,664,683,684,685,686,688,690,692,693,694,717,718,720,722,724,749,750,752,754,756,781,782,784,786,788,813,814,816,818,820,845,846,847,848,850,852,879,880,881,882,883,884,913,914,945,946] },
+        netherlands: { name: "Netherlands", pixels: [76,77,78,79,80,81,82,83,84,85,106,107,108,117,118,119,136,137,138,141,142,143,144,145,146,147,148,151,152,153,167,168,171,172,173,174,175,176,177,178,179,180,181,182,185,186,198,199,201,202,203,204,205,206,207,210,211,212,213,214,215,216,218,219,230,233,234,235,236,237,238,240,243,244,245,246,247,248,251,262,264,265,266,268,269,275,276,277,279,280,281,283,294,296,297,300,301,302,307,308,310,312,313,315,326,328,333,334,335,339,341,342,343,345,347,358,360,361,362,363,371,373,374,376,377,379,390,392,393,394,395,396,403,405,406,407,409,411,422,424,425,427,428,429,430,435,437,438,439,440,441,443,454,456,457,458,467,469,470,471,472,473,475,486,488,489,491,492,493,499,500,502,503,504,505,507,518,520,521,522,523,532,533,535,536,537,539,550,552,553,554,555,565,566,568,569,571,582,584,585,586,587,590,591,592,595,598,600,601,603,614,616,617,618,619,620,623,624,627,628,629,631,632,633,635,646,648,649,650,651,652,655,656,660,661,662,663,664,665,667,678,680,681,682,687,688,689,692,693,694,695,696,697,699,710,712,713,714,715,717,718,719,724,725,726,727,728,729,731,742,746,747,748,749,750,751,752,755,756,757,758,759,763,774,775,776,778,779,780,781,782,783,784,785,787,788,789,790,791,793,794,795,808,812,813,814,815,816,817,818,819,820,821,825,840,841,842,847,848,849,850,855,856,857,874,875,876,877,884,885,886,887,909,910,911,914,915,916,943,944,945,946] },
+        new_zealand: { name: "New Zealand", pixels: [77,79,81,83,107,109,111,113,114,115,116,117,118,138,140,141,143,144,146,148,149,150,151,152,168,170,172,174,175,176,178,179,180,181,182,183,184,185,199,200,202,204,206,207,208,209,211,213,217,218,231,232,234,236,237,238,239,242,244,250,251,261,263,264,266,267,268,269,272,275,283,284,293,295,296,297,298,299,300,301,305,324,325,327,328,329,330,331,332,334,335,356,357,358,359,360,361,364,381,388,389,390,391,392,393,394,397,398,413,414,420,421,422,423,425,426,427,445,446,452,453,454,455,459,460,469,470,471,472,477,478,483,484,485,486,487,488,489,493,503,504,505,506,508,509,515,516,520,521,522,523,532,537,538,539,540,541,547,548,554,555,556,565,566,567,570,571,572,573,579,580,595,598,599,600,601,602,603,604,605,611,612,628,632,633,634,635,636,637,643,657,658,661,662,664,665,666,667,668,669,687,690,691,694,695,696,697,698,699,700,701,709,720,723,724,725,726,727,728,729,730,731,732,741,742,747,750,753,755,756,757,758,759,761,763,764,774,775,777,780,783,785,786,787,788,789,791,793,795,807,808,810,813,815,816,817,819,820,821,823,825,840,841,842,843,844,845,846,847,848,849,850,852,853,855,857,873,874,875,876,877,878,879,880,882,884,885,887,907,908,909,910,911,912,914,915,917,941,942,943,946,947] },
+        norway: { name: "Norway", pixels: [71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,101,102,103,104,105,108,109,110,111,112,113,114,115,116,117,120,121,122,123,124,133,135,136,139,141,142,143,146,147,148,150,153,154,156,165,166,168,172,173,174,176,177,179,180,181,185,187,188,197,199,200,206,208,209,211,217,218,220,229,236,237,238,239,242,243,244,245,252,293,294,295,296,297,298,299,300,301,302,304,305,307,308,309,310,311,312,313,314,315,316,325,326,327,328,329,330,331,332,333,334,336,337,339,340,341,342,343,344,345,346,347,348,357,358,359,360,361,362,363,364,365,366,368,369,371,372,373,374,375,376,377,378,379,380,389,390,391,392,393,394,395,396,397,398,400,401,403,404,405,406,407,408,409,410,411,412,421,422,423,424,425,426,427,428,429,430,432,433,435,436,437,438,439,440,441,442,443,444,464,465,485,486,487,488,489,490,491,492,493,494,495,496,497,498,499,500,501,502,503,504,505,506,507,508,517,518,519,520,521,522,523,524,525,526,527,528,529,530,531,532,533,534,535,536,537,538,539,540,560,561,581,582,583,584,585,586,587,588,589,590,592,593,595,596,597,598,599,600,601,602,603,604,613,614,615,616,617,618,619,620,621,622,624,625,627,628,629,630,631,632,633,634,635,636,645,646,647,648,649,650,651,652,653,654,656,657,659,660,661,662,663,664,665,666,667,668,677,678,679,680,681,682,683,684,685,686,688,689,691,692,693,694,695,696,697,698,699,700,709,710,711,712,713,714,715,716,717,718,720,721,723,724,725,726,727,728,729,730,731,732,742,743,744,745,746,747,748,749,750,752,753,755,756,757,758,759,760,761,762,763,774,775,776,777,778,779,780,781,782,784,785,787,788,789,790,791,792,793,794,795,808,809,810,811,812,813,814,816,817,819,820,821,822,823,824,825,840,841,842,843,844,845,846,848,849,851,852,853,854,855,856,857,874,875,876,877,878,880,881,883,884,885,886,887,909,910,911,912,913,914,915,916,944,945] },
+        panama: { name: "Panama", pixels: [69,70,71,74,77,78,79,82,85,88,91,101,103,105,107,109,111,113,115,117,118,119,120,122,124,133,135,137,139,141,143,145,147,149,152,154,156,165,166,167,169,170,171,173,175,177,178,179,181,184,186,187,188,197,201,203,205,207,209,211,213,216,218,220,229,233,235,237,239,241,243,245,248,250,252,293,294,295,296,297,298,304,305,311,312,313,314,315,316,326,327,328,329,330,331,335,336,338,339,342,343,344,345,346,347,360,361,362,363,364,368,369,370,373,374,375,376,377,394,395,396,397,400,401,402,404,405,406,407,421,422,423,424,425,426,427,428,429,430,431,432,433,434,435,436,437,438,439,440,441,442,443,444,454,455,456,457,458,459,460,469,470,471,472,473,474,475,490,491,492,501,502,503,517,518,519,520,521,522,523,524,526,527,528,533,534,535,536,537,538,539,540,550,551,552,553,554,555,556,558,560,565,566,567,568,569,570,571,586,587,588,590,591,592,597,598,599,613,614,615,616,617,618,619,620,625,626,627,629,630,631,632,633,634,635,636,646,647,648,649,650,651,652,657,659,661,662,663,664,665,666,667,682,683,684,689,690,691,693,694,695,709,710,711,712,713,714,715,716,717,721,722,724,725,726,727,728,729,730,731,732,742,743,744,745,746,747,748,749,750,755,756,757,758,759,760,761,762,763,780,781,782,783,786,787,788,789,813,814,815,816,817,818,819,820,844,845,846,847,848,849,850,851,852,853,875,876,879,880,881,882,885,886,910,911,912,913,914,915,941,942,943,946,947,948] },
+        paraguay: { name: "Paraguay", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,149,150,151,152,168,169,170,183,184,185,199,200,204,207,208,209,211,212,213,217,218,230,231,235,237,239,241,243,250,251,261,262,263,267,268,269,271,272,273,275,276,282,283,284,293,294,296,299,301,303,307,313,315,316,324,325,327,329,344,346,348,349,356,357,360,362,368,369,375,377,380,381,387,388,393,400,401,408,413,414,419,420,428,429,430,431,432,433,434,435,436,437,445,446,451,452,461,462,463,464,465,466,467,468,477,478,483,484,494,495,496,497,498,499,509,510,515,516,527,528,529,530,541,542,547,548,558,559,560,561,562,563,573,574,579,580,589,590,591,594,595,596,605,606,611,612,621,628,636,637,638,644,645,651,662,668,669,676,677,682,684,693,695,700,701,709,710,713,715,726,728,731,732,741,742,744,746,759,761,763,764,774,775,777,792,794,795,807,808,825,826,840,841,842,855,856,857,873,874,875,876,885,886,887,888,907,908,909,910,911,912,913,914,915,916,917,918,941,942,943,944,945,946,947,948] },
+        portugal: { name: "Portugal", pixels: [74,75,76,77,78,79,80,81,82,83,84,85,86,87,108,109,116,117,141,144,145,148,173,176,177,180,205,206,207,208,209,210,211,212,234,235,236,237,244,245,246,247,260,265,271,274,280,285,292,296,299,300,301,302,304,305,307,308,309,313,317,324,325,328,330,331,342,343,345,348,349,356,357,358,359,362,368,369,375,378,379,380,381,388,391,392,394,400,401,407,409,410,413,420,424,427,432,433,438,441,445,452,456,457,459,470,472,473,477,484,489,491,493,494,496,497,499,500,502,504,509,516,521,523,525,526,528,529,531,532,534,536,541,548,550,551,552,553,555,557,558,560,561,563,564,566,568,569,570,571,573,580,581,582,585,587,598,600,603,604,605,612,613,617,619,624,625,630,632,636,637,644,649,651,656,657,662,664,669,676,681,683,684,688,689,693,694,696,701,713,717,724,728,746,747,750,751,752,753,754,755,758,759,780,789,813,814,815,816,817,818,819,820,845,848,849,852,877,880,881,884,908,909,916,917,938,939,940,941,942,943,944,945,946,947,948,949,950,951] },
+        qatar: { name: "Qatar", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,149,150,151,152,168,169,170,183,184,185,199,200,217,218,230,231,250,251,261,262,263,264,281,282,283,284,293,294,295,296,297,303,304,305,306,312,313,314,315,316,324,325,326,327,328,329,330,333,334,336,339,340,343,344,345,346,347,348,349,356,357,358,359,360,361,362,363,364,365,369,370,373,374,375,376,377,378,379,380,381,387,388,389,390,391,392,393,394,395,400,401,406,407,408,409,410,411,412,413,414,419,420,421,422,423,424,425,426,427,429,432,437,438,439,440,441,442,443,444,445,446,451,452,453,454,455,456,457,458,461,462,463,464,465,466,467,471,472,473,474,475,476,477,478,483,484,485,486,487,488,489,490,491,495,498,501,503,504,505,506,507,508,509,510,515,516,517,518,519,520,521,522,523,526,528,533,535,536,537,538,539,540,541,542,547,548,549,550,551,552,553,554,557,558,560,561,565,566,567,568,569,570,571,572,573,574,579,580,581,582,583,584,585,586,587,593,598,599,600,601,602,603,604,605,606,611,612,613,614,615,616,617,618,619,622,627,628,629,630,631,632,633,634,635,636,637,638,644,645,646,647,648,649,650,651,652,655,657,661,662,663,664,665,666,667,668,669,676,677,678,679,680,681,682,683,684,685,686,688,691,692,693,694,695,696,697,698,699,700,701,709,710,711,712,713,714,715,716,717,718,719,720,721,722,723,724,725,726,727,728,729,730,731,732,741,742,743,744,745,746,747,751,754,755,757,758,759,760,761,762,763,764,774,775,776,777,778,779,781,783,785,786,788,790,791,792,793,794,795,807,808,809,810,811,813,815,818,822,823,824,825,826,840,841,842,843,847,849,850,852,854,855,856,857,873,874,875,876,877,879,881,882,884,886,887,888,907,908,909,910,911,912,913,914,915,916,917,918,941,942,943,944,945,946,947,948] },
+        saudi_arabia: { name: "Saudi Arabia", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,112,114,116,117,118,137,138,139,140,149,150,151,152,168,169,170,183,184,185,199,200,217,218,230,231,237,238,239,240,241,242,243,244,250,251,261,262,267,268,277,283,284,293,298,304,305,306,310,316,324,325,329,339,343,348,349,356,360,361,376,381,387,388,391,392,393,408,409,413,414,419,422,423,424,425,436,437,438,439,440,441,446,451,454,455,456,467,473,478,483,485,498,510,515,517,542,547,549,550,551,552,553,559,560,561,563,564,565,567,568,570,571,574,579,580,581,582,583,584,585,586,591,595,597,599,602,606,611,612,613,614,615,616,617,618,623,624,625,627,628,629,631,632,634,635,637,638,644,645,646,647,648,649,650,657,659,661,663,666,669,676,677,678,679,680,681,682,687,688,689,691,693,695,698,700,701,709,710,711,712,713,714,732,741,742,745,754,763,764,774,775,780,787,791,794,795,807,808,811,812,813,814,820,821,822,825,826,840,841,842,843,844,845,846,847,848,849,855,856,857,873,874,875,876,877,878,879,880,881,885,886,887,888,907,908,909,910,911,912,915,916,917,918,941,942,943,944,945,946,947,948] },
+        scotland: { name: "Scotland", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,149,150,151,152,168,169,170,183,184,185,199,200,205,206,207,208,209,210,211,212,217,218,230,231,236,237,238,239,240,241,242,243,244,245,250,251,261,262,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,283,284,293,294,297,312,315,316,324,325,329,331,333,340,342,344,348,349,355,356,359,361,368,369,376,378,381,387,388,390,391,393,395,399,401,402,406,408,410,411,413,414,419,420,422,423,425,432,433,434,440,442,443,445,446,451,452,454,455,457,462,463,464,465,466,468,469,472,474,475,477,478,483,484,486,487,489,496,497,498,500,504,506,507,509,510,515,516,518,519,521,526,527,528,529,530,532,536,538,539,541,542,547,548,550,551,553,555,560,561,562,563,566,568,570,571,573,574,579,580,582,583,585,592,593,594,600,602,603,605,606,611,612,614,615,617,624,626,632,634,635,637,638,643,644,646,647,650,653,655,656,658,660,663,666,667,669,670,676,679,680,683,689,690,694,697,698,701,708,709,712,713,716,725,728,729,732,733,741,742,745,746,749,753,756,759,760,763,764,774,775,778,779,782,787,790,791,794,795,807,808,811,812,815,816,817,818,821,822,825,826,840,841,845,852,856,857,873,874,875,879,880,881,882,886,887,888,907,908,909,916,917,918,941,942,943,944,945,946,947,948] },
+        senegal: { name: "Senegal", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,141,148,149,150,151,152,168,169,170,175,176,177,178,183,184,185,199,200,204,205,206,211,212,213,217,218,230,231,234,235,240,241,246,250,251,261,262,265,271,274,275,276,278,279,283,284,293,294,296,297,298,299,303,315,316,324,325,331,333,336,341,342,343,348,349,356,357,359,360,362,363,366,368,369,380,381,387,388,392,393,395,398,401,402,407,410,413,414,419,420,422,423,426,429,433,439,445,446,451,452,455,457,460,463,465,473,477,478,483,484,486,488,491,494,497,503,504,509,510,515,516,518,522,525,529,530,531,532,533,537,541,542,547,548,550,554,556,563,566,567,568,569,573,574,579,580,582,586,589,595,605,606,611,612,615,618,621,625,628,636,637,638,644,645,647,650,652,658,661,668,669,676,677,680,682,685,691,694,700,701,709,710,712,714,718,723,727,731,732,741,742,745,748,750,755,758,763,764,774,775,778,782,787,789,791,794,795,807,808,814,818,820,825,826,840,841,842,849,851,855,856,857,873,874,875,876,885,886,887,888,907,908,909,910,911,912,913,914,915,916,917,918,941,942,943,944,945,946,947,948] },
+        south_africa: { name: "South Africa", pixels: [72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,104,105,106,107,108,109,110,111,112,113,114,115,116,117,118,119,120,121,136,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,153,168,169,170,171,172,181,182,183,184,185,200,201,202,203,204,206,207,208,209,210,211,213,214,215,216,217,232,238,239,240,241,242,243,249,264,266,267,268,269,270,271,274,275,276,277,278,279,281,298,299,300,301,302,307,308,309,310,311,328,329,330,331,332,333,340,341,342,343,344,345,360,361,362,363,364,365,366,367,368,369,370,371,372,373,374,375,376,377,392,393,394,396,399,402,405,407,408,409,424,425,426,428,431,434,437,439,440,441,456,457,458,471,472,473,488,489,490,492,501,503,504,521,522,523,525,532,534,535,536,553,554,555,556,558,563,565,566,567,568,582,586,587,588,589,596,597,598,599,600,603,613,614,615,618,619,620,621,622,623,626,627,628,629,630,631,634,635,636,644,645,646,647,648,651,652,655,658,661,662,665,666,667,668,669,677,678,679,680,681,684,685,686,691,692,693,696,697,698,699,700,710,711,712,713,714,717,718,719,722,723,724,727,728,729,730,731,743,744,745,746,747,750,751,752,753,754,755,758,759,760,761,762,776,777,778,779,780,783,784,785,786,789,790,791,792,793,807,808,809,810,811,812,813,816,817,820,821,822,823,824,825,826,840,841,842,843,844,845,846,851,852,853,854,855,856,857,874,875,876,877,878,879,880,881,882,883,884,885,886,887,908,909,910,911,912,913,914,915,916,917,943,944,945,946] },
+        south_korea: { name: "South Korea", pixels: [74,75,76,77,78,79,80,81,82,83,84,85,86,87,106,119,138,144,145,151,170,174,175,178,179,183,202,205,208,209,212,215,234,238,239,242,243,247,268,272,273,277,299,304,305,310,330,333,334,339,340,343,361,363,367,370,374,376,392,394,396,399,402,405,407,409,424,426,439,441,457,459,461,463,464,465,466,468,470,472,490,492,496,497,501,503,523,527,530,534,557,558,559,562,563,564,586,589,596,599,618,623,626,631,650,656,657,663,682,695,714,715,716,717,718,719,720,721,722,723,724,725,726,727,811,814,816,817,818,821,843,845,848,852,854,875,876,880,881,884,885,886,907,909,912,916,918,939,942,944,948,950] },
+        spain: { name: "Spain", pixels: [79,82,112,113,144,145,175,178,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,263,264,265,266,267,268,269,271,274,276,277,278,279,280,281,282,295,296,297,298,299,301,302,307,308,310,311,312,313,314,327,328,330,331,332,334,339,341,342,343,345,346,359,363,364,365,367,370,372,373,374,378,391,392,394,395,396,397,398,400,401,403,404,405,406,407,409,410,423,424,426,427,431,434,438,439,441,442,455,456,458,459,461,462,463,464,465,466,467,468,470,471,473,474,487,488,490,491,493,495,496,497,498,500,502,503,505,506,519,520,522,523,525,526,527,530,531,532,534,535,537,538,551,552,554,555,557,558,560,561,563,564,566,567,569,570,583,584,586,587,589,590,592,593,595,596,598,599,601,602,615,616,618,619,621,622,623,626,627,628,630,631,633,634,647,648,650,651,653,654,655,656,657,658,659,660,662,663,665,666,679,683,684,687,688,689,690,693,694,698,711,712,713,714,715,716,717,718,723,724,725,726,727,728,729,730,743,747,748,749,750,751,752,753,754,755,756,757,758,762,775,776,777,778,779,780,781,782,783,786,787,788,789,790,791,792,793,794,808,809,810,811,812,813,814,816,817,819,820,821,822,823,824,825,840,841,842,843,844,845,846,848,849,851,852,853,854,855,856,857,874,875,876,877,878,879,882,883,884,885,886,887,909,910,911,912,913,914,915,916,944,945] },
+        sweden: { name: "Sweden", pixels: [79,80,81,82,110,111,114,115,141,142,144,145,147,148,173,174,176,177,179,180,203,205,206,207,210,211,212,214,234,236,238,239,240,241,242,243,245,247,264,265,267,269,271,274,276,278,280,281,296,298,299,300,301,302,303,304,305,306,307,308,309,310,311,313,328,330,331,332,333,334,335,336,337,338,339,340,341,342,343,345,360,377,392,394,395,396,397,398,399,402,403,404,405,406,407,409,424,426,427,428,429,430,431,434,435,436,437,438,439,441,456,458,459,460,461,462,463,466,467,468,469,470,471,473,488,490,491,492,493,494,495,498,499,500,501,502,503,505,520,537,552,569,584,586,587,588,589,590,591,594,595,596,597,598,599,601,616,618,619,620,621,622,623,626,627,628,629,630,631,633,648,650,651,652,653,654,655,658,659,660,661,662,663,665,680,681,683,684,685,686,687,690,691,692,693,694,696,697,713,714,716,717,718,719,722,723,724,725,727,728,746,747,749,750,751,754,755,756,758,759,779,780,782,783,786,787,789,790,812,813,815,818,820,821,845,846,851,852,878,879,882,883,911,912,913,914,944,945] },
+        switzerland: { name: "Switzerland", pixels: [121,122,152,155,183,188,209,210,211,212,213,214,219,240,249,250,262,263,264,265,266,267,271,272,273,274,275,276,277,283,293,296,309,316,324,328,330,331,332,333,334,335,336,341,349,355,360,364,372,378,382,387,389,390,392,393,394,396,398,399,403,409,412,414,419,421,424,428,434,440,445,451,452,453,455,456,458,459,460,462,465,469,471,492,494,497,502,524,526,530,534,563,567,582,583,586,587,588,589,590,592,594,596,599,613,618,624,625,626,629,632,645,647,648,649,650,652,653,654,656,658,660,662,665,677,682,688,690,691,695,698,710,711,712,714,716,717,722,728,730,746,748,753,761,764,765,776,777,780,783,784,794,798,827,830,860,861] },
+        tunisia: { name: "Tunisia", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,149,150,151,152,168,169,170,174,175,176,177,178,179,183,184,185,199,200,204,205,212,213,217,218,230,231,235,240,241,242,246,250,251,261,262,266,271,273,274,279,283,284,293,294,297,302,303,304,305,306,312,315,316,324,325,328,336,337,338,345,348,349,356,357,360,368,369,370,377,380,381,387,388,389,390,391,392,393,394,395,396,397,398,399,400,401,402,403,404,405,406,407,408,409,410,411,412,413,414,419,430,431,432,433,434,435,446,451,452,453,454,455,456,457,458,459,460,461,468,469,470,471,472,473,474,475,476,477,478,483,484,492,495,496,497,498,501,509,510,515,516,517,518,519,520,521,522,523,526,527,531,534,535,536,537,538,539,540,541,542,547,548,549,554,557,558,567,572,573,574,579,580,581,582,583,584,585,586,588,589,590,593,595,599,600,601,602,603,604,605,606,611,612,615,616,617,618,620,621,622,626,631,632,633,634,637,638,644,648,649,650,652,653,654,657,659,663,664,665,669,676,677,681,682,685,686,695,696,700,701,709,714,715,718,719,723,726,727,732,741,742,747,748,751,752,753,754,757,758,763,764,774,775,780,781,788,789,794,795,807,808,813,814,815,816,817,818,819,820,825,826,840,841,842,855,856,857,873,874,875,876,885,886,887,888,907,908,909,910,911,912,913,914,915,916,917,918,941,942,943,944,945,946,947,948] },
+        turkey: { name: "Turkey", pixels: [77,78,79,80,81,82,83,84,107,108,109,110,111,112,113,114,115,116,117,118,137,138,139,140,141,142,143,144,145,146,147,148,149,150,151,152,168,169,170,171,172,173,174,175,176,177,178,179,180,181,182,183,184,185,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,261,262,263,264,265,266,267,268,269,270,271,272,273,274,275,276,277,278,279,280,281,282,283,284,293,294,295,296,297,298,306,307,308,309,310,311,312,313,314,315,316,324,325,326,327,328,329,334,335,336,337,339,340,341,342,343,344,345,346,347,348,349,356,357,358,359,360,364,365,366,367,368,369,370,371,372,373,374,375,376,377,378,379,380,381,387,388,389,390,391,395,396,397,398,399,400,401,402,403,404,405,406,407,408,409,410,411,412,413,414,419,420,421,422,427,428,429,430,431,432,433,434,435,436,437,438,440,441,442,443,444,445,446,451,452,453,454,459,460,461,462,463,464,465,466,467,468,469,470,472,473,474,475,476,477,478,483,484,485,486,491,492,493,494,495,496,497,498,499,507,508,509,510,515,516,517,518,523,524,525,526,527,528,529,530,531,532,533,537,538,539,540,541,542,547,548,549,550,555,556,557,558,559,560,561,562,563,564,570,571,572,573,574,579,580,581,582,587,588,589,590,591,592,593,594,595,596,598,599,600,602,603,604,605,606,611,612,613,614,615,619,620,621,622,623,624,625,626,627,628,629,630,631,632,633,634,635,636,637,638,644,645,646,647,648,652,653,654,655,656,657,658,659,660,661,662,663,664,665,666,667,668,669,676,677,678,679,680,681,686,687,688,689,691,692,693,694,695,696,697,698,699,700,701,709,710,711,712,713,714,722,723,724,725,726,727,728,729,730,731,732,741,742,743,744,745,746,747,748,749,750,751,752,753,754,755,756,757,758,759,760,761,762,763,764,774,775,776,777,778,779,780,781,782,783,784,785,786,787,788,789,790,791,792,793,794,795,807,808,809,810,811,812,813,814,815,816,817,818,819,820,821,822,823,824,825,826,840,841,842,843,844,845,846,847,848,849,850,851,852,853,854,855,856,857,873,874,875,876,877,878,879,880,881,882,883,884,885,886,887,888,907,908,909,910,911,912,913,914,915,916,917,918,941,942,943,944,945,946,947,948] },
+        usa: { name: "USA", pixels: [70,71,72,73,74,75,76,77,78,79,80,81,82,83,84,85,86,87,88,89,90,91,102,105,106,109,110,115,116,117,123,134,137,138,141,148,151,152,155,166,169,170,173,176,177,180,183,184,187,198,201,202,205,208,209,212,215,219,230,233,234,237,240,241,242,243,244,251,262,266,269,270,274,275,276,280,283,294,295,301,302,303,307,308,311,312,315,326,327,328,329,333,334,335,336,337,340,343,344,345,346,347,358,359,360,361,362,365,368,369,372,375,376,377,378,379,390,392,393,394,395,396,397,400,401,404,405,406,407,408,409,411,422,425,426,427,428,429,432,433,436,437,438,439,440,443,454,457,459,460,461,462,467,468,469,470,472,475,486,489,492,493,494,495,498,499,500,501,504,507,518,521,524,526,527,528,529,530,531,533,536,539,550,553,556,559,560,561,562,565,568,571,582,585,588,591,594,597,600,603,614,617,620,623,626,629,632,635,646,647,649,652,655,658,661,664,666,667,679,680,681,684,687,690,693,696,697,698,712,713,716,719,722,725,728,729,745,746,748,751,754,757,759,760,778,779,780,783,786,789,790,791,811,812,815,818,821,822,844,845,847,850,852,853,877,878,879,882,883,884,910,911,914,915,943,944,945,946] },
+        uruguay: { name: "Uruguay", pixels: [72,74,77,79,82,84,87,89,105,110,115,120,136,138,141,143,146,148,151,153,199,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,231,250,263,267,270,271,272,273,274,275,278,282,295,298,300,302,303,306,307,309,311,314,327,331,334,336,337,339,342,346,359,362,364,366,368,369,371,373,375,378,391,395,398,399,400,401,402,403,406,410,423,426,428,430,432,433,435,437,439,442,455,459,462,467,470,474,487,490,492,494,495,496,497,498,499,501,503,506,519,523,526,531,534,538,551,555,558,560,561,562,563,566,570,583,590,594,595,602,615,622,624,625,626,627,634,647,666,679,682,683,684,685,688,689,692,693,694,695,698,711,719,722,730,743,746,747,748,750,752,753,755,757,758,759,762,776,782,784,785,787,793,808,811,812,815,818,821,822,825,841,848,849,856,874,875,876,885,886,887,909,910,911,914,915,916,944,945] },
+        uzbekistan: { name: "Uzbekistan", pixels: [80,81,110,111,112,113,114,115,140,141,142,143,144,145,146,147,148,149,170,171,172,173,174,175,176,177,178,179,180,181,182,183,200,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,260,261,262,263,264,265,267,268,270,275,280,281,282,283,284,285,291,292,293,294,295,296,297,299,300,302,304,305,306,307,309,310,312,313,314,315,316,317,318,323,324,325,326,327,328,329,331,332,334,336,337,338,339,341,342,344,345,346,347,348,349,350,355,356,357,358,359,360,361,363,364,366,370,371,376,377,378,379,380,381,382,387,388,389,390,391,392,393,395,396,398,400,401,402,403,405,406,408,409,410,411,412,413,414,420,421,422,423,424,425,427,428,430,432,433,434,435,437,438,440,441,442,443,444,445,452,453,454,455,456,457,462,464,465,466,467,469,470,472,473,474,475,476,477,484,485,486,487,488,489,490,491,492,493,494,495,496,497,498,499,500,501,502,503,504,505,506,507,508,509,517,518,519,520,521,522,523,524,525,526,527,528,529,530,531,532,533,534,535,536,537,538,539,540,549,550,551,552,553,554,555,556,557,558,563,564,565,566,567,568,569,570,571,572,582,583,584,585,586,587,588,589,591,592,593,594,596,597,598,599,600,601,602,603,614,615,616,617,618,619,620,622,623,626,627,629,630,631,632,633,634,635,647,648,649,650,651,653,654,656,657,659,660,662,663,664,665,666,679,680,681,682,683,685,687,690,692,694,695,696,697,698,712,713,714,715,717,719,722,724,726,727,728,729,745,746,747,749,750,752,753,755,756,758,759,760,778,779,780,782,783,786,787,789,790,791,811,812,813,815,816,817,818,820,821,822,844,845,846,851,852,853,877,878,879,880,881,882,883,884,910,911,912,913,914,915,944,945] }
+    };
+    const teamNames = Object.keys(teamLogos);
+    let currentTeamIdx = 0, currentTrans = 0;
+    const transitions = ['wave', 'spiral', 'random', 'rows', 'columns', 'diagonal'];
+    // Populate team dropdown
+    const teamSelect = document.getElementById("team-select");
+    teamNames.forEach((key, idx) => {
+        const opt = document.createElement("option");
+        opt.value = key;
+        opt.textContent = teamLogos[key].name;
+        teamSelect.appendChild(opt);
+    });
+    teamSelect.onchange = () => {
+        currentTeamIdx = teamNames.indexOf(teamSelect.value);
+        currentTrans = (currentTrans + 1) % transitions.length;
+        showLogo(teamNames[currentTeamIdx], transitions[currentTrans]);
+    };
+
+    function getDelay(pid, type) {
+        const idx = pid - 1, row = Math.floor(idx / GRID_SIZE), col = idx % GRID_SIZE, cr = GRID_SIZE/2;
+        if (type === 'wave') return Math.sqrt((row-cr)**2 + (col-cr)**2) * 25;
+        if (type === 'spiral') return (Math.atan2(row-cr, col-cr) + Math.PI) * 50 + Math.sqrt((row-cr)**2 + (col-cr)**2) * 30;
+        if (type === 'random') return Math.random() * 800;
+        if (type === 'rows') return row * 60 + Math.random() * 20;
+        if (type === 'columns') return col * 60 + Math.random() * 20;
+        if (type === 'diagonal') return (row + col) * 30;
+        return 0;
+    }
+
+    function showLogo(name, trans) {
+        const logoSet = new Set(teamLogos[name].pixels);
+        for (let pid = 1; pid <= 1024; pid++) {
+            const idx = pid - 1, row = Math.floor(idx / GRID_SIZE), col = idx % GRID_SIZE;
+            // Logo pixels should be WHITE (solid), rest should be transparent (show fluid)
+            const shouldBeWhite = logoSet.has(pid);
+            const isWhite = vectorStates[col][row];
+            if (shouldBeWhite !== isWhite)
+                setTimeout(() => flipVector(col, row, shouldBeWhite), getDelay(pid, trans));
+        }
+    }
+
+    document.getElementById('random-btn').onclick = () => { currentTeamIdx = Math.floor(Math.random() * teamNames.length); teamSelect.value = teamNames[currentTeamIdx]; 
+        currentTeamIdx = (currentTeamIdx + 1) % teamNames.length; 
+        currentTrans = (currentTrans + 1) % transitions.length; 
+        showLogo(teamNames[currentTeamIdx], transitions[currentTrans]); 
+    };
+    showLogo(teamNames[currentTeamIdx], 'wave');
+
+    function flipVector(i, j, forceState = null) {
+        if (animatingVectors.has(`${i}-${j}`)) return;
+        const v = vectors[i][j], cur = vectorStates[i][j], next = forceState !== null ? forceState : !cur;
+        if (next === cur && forceState === null) return;
+        vectorStates[i][j] = next; 
+        animatingVectors.add(`${i}-${j}`);
+        
+        const target = next ? 0 : Math.PI, start = v.rotation.x, t0 = performance.now();
+        const cube = v.children[0];
+        
+        // Solid cube = opaque blocks fluid, Flipped = transparent shows fluid
+        if (next) {
+            cube.material = whiteMat.clone();
+            cube.visible = true;
+        } else {
+            cube.material = transparentMat.clone();
+            cube.visible = false; // Hide completely to show fluid
+        }
+        
+        (function anim() {
+            const p = Math.min((performance.now() - t0) / 400, 1), e = 1 - (1 - p) ** 3;
+            v.rotation.x = start + (target - start) * e; 
+            v.position.y = Math.sin(p * Math.PI) * 0.5;
+            
+            // Fade visibility during animation
+            if (!next) {
+                cube.visible = p < 0.5;
+            } else {
+                cube.visible = p > 0.5;
+            }
+            
+            if (p < 1) requestAnimationFrame(anim);
+            else { 
+                v.rotation.x = target; 
+                v.position.y = 0;
+                cube.visible = next; // Final state: visible if white, invisible if black
+                animatingVectors.delete(`${i}-${j}`); 
+            }
+        })();
+    }
+
+    const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
+    
+    // We need invisible collision meshes for clicking on "empty" spaces
+    const collisionGroup = new THREE.Group();
+    scene.add(collisionGroup);
+    
+    for (let j = 0; j < GRID_SIZE; j++) {
+        for (let i = 0; i < GRID_SIZE; i++) {
+            const collider = new THREE.Mesh(
+                new THREE.BoxGeometry(CELL_SIZE, CELL_SIZE * 2, CELL_SIZE),
+                new THREE.MeshBasicMaterial({ visible: false })
+            );
+            collider.position.x = i * (CELL_SIZE + GAP) - offset;
+            collider.position.z = j * (CELL_SIZE + GAP) - offset;
+            collider.position.y = CELL_SIZE / 2;
+            collider.userData = { row: i, col: j, pixelId: j * GRID_SIZE + i + 1 };
+            collisionGroup.add(collider);
+        }
+    }
+    
+    renderer.domElement.onclick = e => {
+        mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+        raycaster.setFromCamera(mouse, camera);
+        
+        const hits = raycaster.intersectObjects(collisionGroup.children);
+        if (hits.length > 0) {
+            const u = hits[0].object.userData;
+            flipVector(u.row, u.col);
+        }
+    };
+    
+    let camH = 80;
+    renderer.domElement.onwheel = e => { 
+        camH = Math.max(40, Math.min(150, camH + e.deltaY * 0.08)); 
+        camera.position.y = camH; 
+    };
+
+    document.getElementById('refresh-btn').onclick = () => { 
+        location.reload();
+    };
+    
+    // Shape toggle - switch between cubes and spheres
+    const shapeBtn = document.getElementById('shape-btn');
+    shapeBtn.onclick = () => {
+        isSpheres = !isSpheres;
+        currentGeometry = isSpheres ? sphereGeometry : cubeGeometry;
+        shapeBtn.textContent = isSpheres ? 'Cubes' : 'Spheres';
+        
+        // Update all meshes with new geometry
+        for (let i = 0; i < GRID_SIZE; i++) {
+            for (let j = 0; j < GRID_SIZE; j++) {
+                const mesh = vectors[i][j].children[0];
+                mesh.geometry = currentGeometry;
+            }
+        }
+    };
+    
+    // Dark/Light toggle - flips all cube states
+    let isDarkMode = true;
+    const modeToggle = document.getElementById('mode-toggle');
+    modeToggle.onclick = () => {
+        isDarkMode = !isDarkMode;
+        modeToggle.classList.toggle('active', !isDarkMode);
+        
+        // Invert all cubes with animation
+        for (let i = 0; i < GRID_SIZE; i++) {
+            for (let j = 0; j < GRID_SIZE; j++) {
+                setTimeout(() => flipVector(i, j), (i + j) * 3);
+            }
+        }
+    };
+    
+    // Scale slider - resize the grid
+    const scaleSlider = document.getElementById('scale-slider');
+    scaleSlider.oninput = () => {
+        const scale = parseFloat(scaleSlider.value);
+        gridGroup.scale.set(scale, scale, scale);
+        collisionGroup.scale.set(scale, scale, scale);
+        shadowPlane.scale.set(scale, scale, scale);
+    };
+    
+    // Rotation slider - rotate the grid 360 degrees
+    const rotateSlider = document.getElementById('rotate-slider');
+    rotateSlider.oninput = () => {
+        const rotation = parseFloat(rotateSlider.value) * Math.PI / 180;
+        gridGroup.rotation.y = rotation;
+        collisionGroup.rotation.y = rotation;
+    };
+    document.getElementById('wave-btn').onclick = () => { 
+        const c = GRID_SIZE/2; 
+        for (let i = 0; i < GRID_SIZE; i++) 
+            for (let j = 0; j < GRID_SIZE; j++) 
+                setTimeout(() => flipVector(i, j), Math.sqrt((i-c)**2+(j-c)**2)*30); 
+    };
+
+    // Animation loop
+    (function animate() { 
+        requestAnimationFrame(animate);
+        fluidStep();
+        renderer.render(scene, camera); 
+    })();
+    
+    onresize = () => { 
+        camera.aspect = innerWidth/innerHeight; 
+        camera.updateProjectionMatrix(); 
+        renderer.setSize(innerWidth, innerHeight); 
+    };
+    </script>
+</body>
+</html>

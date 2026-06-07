@@ -1,3 +1,28 @@
 .page {
-  padding: 0;
+  padding: 0 0 80px;
+}
+
+.body {
+  padding: 0 24px;
+}
+
+.notFound {
+  padding: 48px 0 16px;
+  color: var(--dim);
+  font-size: 15px;
+}
+
+.back {
+  display: inline-block;
+  margin-top: 40px;
+  color: var(--dim);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.12s;
+}
+
+.back:hover { color: var(--green); }
+
+@media (max-width: 560px) {
+  .body { padding: 0 14px; }
 }

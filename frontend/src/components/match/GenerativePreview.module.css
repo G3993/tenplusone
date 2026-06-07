@@ -36,7 +36,7 @@
 
 .btn:hover {
   background: var(--green);
-  color: #000;
+  color: var(--bg);
 }
 
 .btn:disabled {

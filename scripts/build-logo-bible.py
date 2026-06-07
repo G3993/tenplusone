@@ -1,0 +1,163 @@
+#!/usr/bin/env python3
+"""
+Build the iFC Logo Bible inside the Obsidian vault — the source-of-truth notes
+that index every crest and its full asset lifecycle.
+
+Writes (under <vault>/iFC Logo System/):
+  iFC Logo Bible.md      master index: system spec + lifecycle + 48-team table
+  Pipeline.md            content + merch pipeline map
+  Teams/<slug>.md        per-team note embedding all variations + lifecycle links
+
+Assets themselves are produced by build-logo-system.py (run that first).
+"""
+from __future__ import annotations
+import json, re
+from pathlib import Path
+
+REPO = Path(__file__).resolve().parents[1]
+VAULT = Path("/Users/lu/Documents/Gonzalo Gelso/tenplusone/iFC Logo System")
+SITE = "https://www.internetfc.com"
+
+teams_ts = (REPO / "frontend/src/data/teams.ts").read_text()
+rows = re.findall(
+    r"name:\s*(?:'([^']*)'|\"([^\"]*)\"),\s*slug:\s*'([^']*)',\s*code:\s*'([^']*)',\s*group:\s*'([^']*)'",
+    teams_ts,
+)
+TEAMS = [{"name": a or b, "slug": s, "code": c, "group": g} for a, b, s, c, g in rows]
+TEAMS.sort(key=lambda t: t["name"])
+
+pixels = json.loads((REPO / "scripts/team_pixels.json").read_text())
+KEY_TO_SLUG = {
+    "bosnia": "bosnia-herzegovina", "cabo_verde": "cabo-verde", "dr_congo": "dr-congo",
+    "ivory_coast": "cote-d-ivoire", "new_zealand": "new-zealand", "saudi_arabia": "saudi-arabia",
+    "south_africa": "south-africa", "south_korea": "south-korea", "turkey": "turkiye",
+    "usa": "united-states",
+}
+slug_pixels = {KEY_TO_SLUG.get(k, k): len(v["pixels"]) for k, v in pixels.items()}
+
+
+def w(path: Path, text: str):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text)
+
+
+# ---- per-team notes ----
+for t in TEAMS:
+    s, name = t["slug"], t["name"]
+    px = slug_pixels.get(s, "?")
+    w(VAULT / "Teams" / f"{s}.md", f"""# {name} — iFC Crest
+
+`{t['code']}` · group {t['group']} · slug `{s}`
+
+## Variations
+Every variation is normalized to the iFC 45-unit frame with a 2-unit (4.44%)
+transparent inset, bbox-fit + centered — uniform margins across all 48 crests.
+Each comes in **4 variants** (logo black, logo white, cutout black, cutout
+white) at **3 fidelities**: vector SVG · PNG 4500² @300DPI · PNG Large 6000² @300DPI.
+
+**Logo — black / white (vector)**
+![[Final Logos/SVG/Black/{s}.svg]] ![[Final Logos/SVG/White/{s}.svg]]
+
+**Cutout — black / white (stencil · solid square, logo punched transparent)**
+![[Final Logos/SVG/Cutout Black/{s}.svg]] ![[Final Logos/SVG/Cutout White/{s}.svg]]
+
+**Print PNG · standard (4500×4500 @ 300 DPI · 15"×15")** — black / white / cutout·b / cutout·w
+![[Final Logos/PNG/Black/{s}.png]] ![[Final Logos/PNG/White/{s}.png]]
+![[Final Logos/PNG/Cutout Black/{s}.png]] ![[Final Logos/PNG/Cutout White/{s}.png]]
+
+**Print PNG · large (6000×6000 @ 300 DPI · 20"×20" · all-over / large print)**
+`Final Logos/PNG Large/{{Black,White,Cutout Black,Cutout White}}/{s}.png`
+
+## Pixel source
+32×32 grid · {px} pixels. Canonical data: [[team_pixels.json]] (key matches the
+package slug). This is the mask used for the animated + 3D lifecycle stages.
+
+## Lifecycle
+- **Pixels / animated** — pixel-by-pixel mask, controllable on the iFC PixelGrid.
+- **3D billboard** — {SITE}/team/{s}
+- **Web variations + downloads** — {SITE}/logos
+- **Merch** — upload the Print PNG to Printify (shop *IFC*) → Shopify → {SITE}/shop
+
+[[iFC Logo Bible]] · [[Pipeline]]
+""")
+
+# ---- master index table ----
+table = "\n".join(
+    f"| [[Teams/{t['slug']}\\|{t['name']}]] | `{t['code']}` | {t['group']} | "
+    f"{slug_pixels.get(t['slug'], '?')} | "
+    f"![[Final Logos/SVG/Black/{t['slug']}.svg\\|40]] | "
+    f"![[Final Logos/SVG/Cutout Black/{t['slug']}.svg\\|40]] |"
+    for t in TEAMS
+)
+
+w(VAULT / "iFC Logo Bible.md", f"""# iFC Logo Bible
+
+The source of truth for every iFC nation crest and its full asset lifecycle.
+48 nations, one rule: every crest fit to the same **45-unit frame with a 2-unit
+(4.44%) transparent inset**, bbox-fit + centered, so margins are identical
+everywhere — on screen, in print, on merch.
+
+## The system
+- **Grid** — each crest is authored as a 32×32 pixel mask ([[team_pixels.json]]).
+- **Frame** — normalized to 45 units, 2-unit pad on every side (inner 41 units).
+- **Color** — black `#000000` is canonical; white `#ffffff` is the dark-surface mirror.
+
+## Lifecycle stages (per crest)
+1. **Pixels** — the 32×32 mask. Drives everything downstream.
+2. **SVG (black / white)** — infinite-scale vector. `Final Logos/SVG/`.
+3. **Cutout** — solid square with the logo punched out transparent (stencil /
+   overlay / foil). `Final Logos/Cutout/`.
+4. **Print PNG** — 4500×4500 @ 300 DPI, padding baked in. `Final Logos/PNG/`.
+5. **Animated** — the same pixel mask, animated cell-by-cell on the iFC PixelGrid.
+6. **3D** — billboard pixel-grid per team at {SITE}/team/<slug>.
+
+See [[Pipeline]] for content (Higgsfield) + merch (Printify → Shopify → site).
+
+## All 48 nations
+| Nation | Code | Grp | Px | Black | Cutout |
+|---|---|---|---|---|---|
+{table}
+
+_Generated by `scripts/build-logo-bible.py` from `scripts/team_pixels.json`._
+""")
+
+# ---- pipeline doc ----
+w(VAULT / "Pipeline.md", f"""# iFC Logo Pipeline
+
+How the [[iFC Logo Bible|logo system]] flows into content and merch.
+
+```
+team_pixels.json  (32×32 mask · source of truth)
+        │
+        ▼  scripts/build-logo-system.py
+Final Logos/ ──┬── SVG/        vectors    → print at any size/DPI
+               ├── PNG/        4500² 300DPI → standard apparel
+               └── PNG Large/  6000² 300DPI → all-over / large print
+                  each above × 4 variants:
+                  Black · White · Cutout Black · Cutout White
+        │
+        ├────────────► CONTENT
+        │              this vault → Google Drive (sync folder)
+        │              → Higgsfield (generate reveals, motion, marketing)
+        │
+        └────────────► MERCH
+                       Print PNG → Printify (shop *IFC*, id 26998008)
+                       → Shopify (Internet Soccer Club)
+                       → {SITE}/shop  (sold as merch)
+```
+
+## Content path (Higgsfield)
+1. Sync this `iFC Logo System` folder to Google Drive.
+2. Point Higgsfield at the Drive folder (or upload the PNG/SVG per team).
+3. Generate crest reveals / motion / marketing per nation.
+
+## Merch path (Printify → Shopify → site)
+1. `Final Logos/PNG/<slug>.png` is the print file (300 DPI, uniform padding).
+2. Upload to Printify shop **IFC** (`PRINTIFY_SHOP_ID=26998008`).
+3. Printify → Shopify publish → live on {SITE}/shop.
+
+Uniform 45/2 framing means every upload lands with the same margins — no
+per-product re-aligning.
+""")
+
+print(f"Bible built: {len(TEAMS)} team notes + index + pipeline → {VAULT}")

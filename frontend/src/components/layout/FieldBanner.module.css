@@ -1,0 +1,7 @@
+.field {
+  position: relative;
+  width: 100%;
+  height: clamp(280px, 46vh, 520px);
+  overflow: hidden;
+  background: #000;
+}

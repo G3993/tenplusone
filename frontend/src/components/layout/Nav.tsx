@@ -1,30 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
-import { useSlipStore } from '../../stores/slip';
-import { useCartStore } from '../../stores/cart';
-import { CartDrawer } from '../merch/CartDrawer';
 import { Wordmark } from './Wordmark';
 import styles from './Nav.module.css';
 
 const NAV_LINKS = [
-  { to: '/matches', label: 'matches' },
-  { to: '/groups', label: 'groups' },
-  { to: '/bracket', label: 'bracket' },
-  { to: '/outrights', label: 'outrights' },
-  { to: '/merch', label: 'merch' },
+  { to: '/wc26', label: 'WC*26' },
+  { to: '/teams', label: 'TEAMS' },
 ];
 
 export function Nav() {
   const location = useLocation();
-  const betCount = useSlipStore((s) => s.bets.length);
-  const cartCount = useCartStore((s) => s.itemCount);
-  const [cartOpen, setCartOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // collapse the mobile menu whenever the route changes
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   return (
-    <>
-      <nav className={styles.nav}>
-        <Link to="/matches" className={styles.navBrand} aria-label="iFC home"><Wordmark /></Link>
+    <nav className={styles.nav}>
+      <Link to="/" className={styles.navBrand} aria-label="iFC home"><Wordmark size={18} /></Link>
 
+      <div
+        className={`${styles.backdrop} ${menuOpen ? styles.backdropOpen : ''}`}
+        onClick={() => setMenuOpen(false)}
+        aria-hidden="true"
+      />
+
+      <div className={`${styles.menu} ${menuOpen ? styles.menuOpen : ''}`}>
         {NAV_LINKS.map(({ to, label }) => (
           <Link
             key={to}
@@ -34,27 +37,24 @@ export function Nav() {
             {label}
           </Link>
         ))}
+      </div>
 
-        <Link
-          to="/slip"
-          className={`${styles.navLink} ${styles.navSlip} ${location.pathname === '/slip' ? styles.active : ''}`}
-        >
-          bet slip
-          {betCount > 0 && <span className={styles.navBadge}>{betCount}</span>}
-        </Link>
+      <Link
+        to="/merch"
+        className={styles.cartCta}
+        onClick={() => setMenuOpen(false)}
+      >
+        SHOP
+      </Link>
 
-        <button
-          className={`${styles.navLink} ${styles.cartBtn}`}
-          onClick={() => setCartOpen(true)}
-        >
-          cart
-          {cartCount > 0 && <span className={styles.navBadge}>{cartCount}</span>}
-        </button>
-
-        <Link to="/grid" className={styles.navGridLink}>MATCHES</Link>
-      </nav>
-
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} />
-    </>
+      <button
+        className={styles.menuBtn}
+        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen((o) => !o)}
+      >
+        {menuOpen ? '×' : '≡'}
+      </button>
+    </nav>
   );
 }

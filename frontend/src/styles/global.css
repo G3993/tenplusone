@@ -15,6 +15,16 @@ body {
 
 ::selection { background: var(--bright); color: var(--bg); }
 
+html { scroll-behavior: smooth; }
+
+/* consistent keyboard focus on every interactive element */
+a:focus-visible,
+button:focus-visible {
+  outline: 1px solid var(--green);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
 /* text utilities */
 .comment { color: var(--dim); }
 .bold { color: var(--bright); font-weight: 700; }
@@ -35,6 +45,16 @@ body {
 }
 
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .cursor { opacity: 1; }
+}
 
 /* toast */
 .toast {

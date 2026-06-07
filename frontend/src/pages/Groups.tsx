@@ -7,33 +7,38 @@ import styles from './Groups.module.css';
 export function Groups() {
   return (
     <div className={styles.wrap}>
-      <div className={styles.grid} role="grid" aria-label="World Cup 2026 groups">
+      <div className={styles.grid} aria-label="World Cup 2026 groups">
         {GROUPS.map((g) => (
-          <div key={g.id} style={{ display: 'contents' }} role="row">
-            <div className={styles['row-label']} role="rowheader">{g.id}</div>
-            {g.teams.map((teamName, i) => {
-              const team = getTeamByName(teamName);
-              return (
-                <Link
-                  key={teamName}
-                  to={team ? `/team/${team.slug}` : '#'}
-                  className={styles.cell}
-                  role="gridcell"
-                  aria-label={`Group ${g.id} pot ${i + 1}: ${teamName}`}
-                >
-                  <span className={styles.logo}>
-                    {team
-                      ? <TeamLogo team={team} variant="white" size={56} />
-                      : <span style={{ fontSize: 32 }}>{g.flags[i]}</span>}
-                  </span>
-                  <span className={styles.text}>
-                    <span className={styles.name}>{teamName}</span>
-                    <span className={styles.meta}>{team?.code ?? '—'}</span>
-                  </span>
-                </Link>
-              );
-            })}
-          </div>
+          <section key={g.id} className={styles.group} aria-label={`Group ${g.id}`}>
+            <header className={styles.groupHead}>
+              <span className={styles.groupTag}>group</span>
+              <span className={styles.groupId}>{g.id}</span>
+            </header>
+            <div className={styles.teams}>
+              {g.teams.map((teamName, i) => {
+                const team = getTeamByName(teamName);
+                return (
+                  <Link
+                    key={teamName}
+                    to={team ? `/team/${team.slug}` : '#'}
+                    className={styles.cell}
+                    aria-label={`Group ${g.id} pot ${i + 1}: ${teamName}`}
+                  >
+                    <span className={styles.pot}>{i + 1}</span>
+                    <span className={styles.logo}>
+                      {team
+                        ? <TeamLogo team={team} variant="white" size={44} />
+                        : <span style={{ fontSize: 26 }}>{g.flags[i]}</span>}
+                    </span>
+                    <span className={styles.text}>
+                      <span className={styles.name}>{teamName}</span>
+                      <span className={styles.meta}>{team?.code ?? '—'}</span>
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
         ))}
       </div>
     </div>

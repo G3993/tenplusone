@@ -1,0 +1,153 @@
+.calendar {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 48px 16px 0;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--hairline);
+  flex-wrap: wrap;
+}
+
+.title {
+  color: var(--bright);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+}
+
+.meta {
+  color: var(--dim);
+  font-size: 12px;
+}
+
+.countdown {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 700;
+}
+
+.countdownLabel {
+  color: var(--dim);
+  font-weight: 400;
+}
+
+.month + .month {
+  margin-top: 32px;
+}
+
+.monthName {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 10px;
+}
+
+/* minimal-line grid calendar: 1px hairlines, surface cells */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  width: 100%;
+}
+
+.weekday {
+  background: var(--surface);
+  padding: 8px 10px;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.cell {
+  background: var(--surface);
+  min-height: 140px;
+  padding: 12px 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.empty {
+  background: var(--bg);
+}
+
+.date {
+  font-size: 11px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 2px;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 6px;
+  transition: color 0.1s;
+}
+
+.game:hover .teams { color: var(--green); }
+
+.teams {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bright);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  min-width: 0;
+}
+
+.side {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.sideLogo {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.v {
+  color: var(--dim);
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.time {
+  font-size: 11px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 700px) {
+  .calendar { padding: 36px 14px 0; }
+  /* days stack into a readable two-column agenda on phones */
+  .grid { grid-template-columns: 1fr 1fr; }
+  .weekday { display: none; }
+  .cell { min-height: 0; }
+  .empty { display: none; }
+}

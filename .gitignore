@@ -1,2 +1,7 @@
 .gstack/
 .vercel
+node_modules/
+
+# Printify secrets — never commit
+scripts/.printify-token
+.env.printify

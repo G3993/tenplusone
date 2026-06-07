@@ -1,29 +1,41 @@
-import { useParams } from 'react-router';
-import { getTeamBySlug } from '../data/teams';
-import { TeamHeader } from '../components/team/TeamHeader';
+import type { CSSProperties } from 'react';
+import { useParams, Link } from 'react-router';
+import { getTeamBySlug, teamAccent } from '../data/teams';
+import { TeamHero } from '../components/team/TeamHero';
 import { TeamCloset } from '../components/team/TeamCloset';
-import { Line, useLineCounter } from '../components/layout/Line';
+import { TeamStats } from '../components/team/TeamStats';
+import { TeamWatch } from '../components/team/TeamWatch';
+import { TeamLogoGrid } from '../components/team/TeamLogoGrid';
 import styles from './Team.module.css';
 
 export function Team() {
   const { slug } = useParams<{ slug: string }>();
-  const nextLn = useLineCounter();
   const team = slug ? getTeamBySlug(slug) : undefined;
 
   if (!team) {
     return (
       <div className={styles.page}>
-        <Line n={nextLn()}>
-          <span className="dim">{'// team not found'}</span>
-        </Line>
+        <div className={styles.body}>
+          <p className={styles.notFound}>team not found</p>
+          <Link to="/teams" className={styles.back}>← all teams</Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={styles.page}>
-      <TeamHeader team={team} />
-      <TeamCloset teamSlug={team.slug} />
+    <div
+      className={styles.page}
+      style={{ '--accent': teamAccent(team) } as CSSProperties}
+    >
+      <TeamHero team={team} />
+      <div className={styles.body}>
+        <TeamCloset teamSlug={team.slug} />
+        <TeamStats team={team} />
+        <TeamWatch team={team} />
+        <TeamLogoGrid team={team} />
+        <Link to="/teams" className={styles.back}>← all teams</Link>
+      </div>
     </div>
   );
 }

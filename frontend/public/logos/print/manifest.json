@@ -1,0 +1,637 @@
+{
+  "grid_units": 45,
+  "padding_units": 2,
+  "inner_units": 41,
+  "dpi": 300,
+  "raster_sizes_px": [
+    "4500",
+    "3000"
+  ],
+  "vector_master": "master.svg",
+  "logos": {
+    "algeria": {
+      "source_svg": "logos/algeria.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/algeria.svg",
+        "logos/print/master.svg/white/algeria.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/algeria.png",
+        "logos/print/4500/white/algeria.png",
+        "logos/print/3000/black/algeria.png",
+        "logos/print/3000/white/algeria.png"
+      ]
+    },
+    "argentina": {
+      "source_svg": "logos/argentina.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/argentina.svg",
+        "logos/print/master.svg/white/argentina.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/argentina.png",
+        "logos/print/4500/white/argentina.png",
+        "logos/print/3000/black/argentina.png",
+        "logos/print/3000/white/argentina.png"
+      ]
+    },
+    "australia": {
+      "source_svg": "logos/australia.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/australia.svg",
+        "logos/print/master.svg/white/australia.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/australia.png",
+        "logos/print/4500/white/australia.png",
+        "logos/print/3000/black/australia.png",
+        "logos/print/3000/white/australia.png"
+      ]
+    },
+    "austria": {
+      "source_svg": "logos/austria.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/austria.svg",
+        "logos/print/master.svg/white/austria.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/austria.png",
+        "logos/print/4500/white/austria.png",
+        "logos/print/3000/black/austria.png",
+        "logos/print/3000/white/austria.png"
+      ]
+    },
+    "belgium": {
+      "source_svg": "logos/belgium.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/belgium.svg",
+        "logos/print/master.svg/white/belgium.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/belgium.png",
+        "logos/print/4500/white/belgium.png",
+        "logos/print/3000/black/belgium.png",
+        "logos/print/3000/white/belgium.png"
+      ]
+    },
+    "bosnia-herzegovina": {
+      "source_svg": "logos/bosnia-herzegovina.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/bosnia-herzegovina.svg",
+        "logos/print/master.svg/white/bosnia-herzegovina.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/bosnia-herzegovina.png",
+        "logos/print/4500/white/bosnia-herzegovina.png",
+        "logos/print/3000/black/bosnia-herzegovina.png",
+        "logos/print/3000/white/bosnia-herzegovina.png"
+      ]
+    },
+    "brazil": {
+      "source_svg": "logos/brazil.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/brazil.svg",
+        "logos/print/master.svg/white/brazil.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/brazil.png",
+        "logos/print/4500/white/brazil.png",
+        "logos/print/3000/black/brazil.png",
+        "logos/print/3000/white/brazil.png"
+      ]
+    },
+    "cabo-verde": {
+      "source_svg": "logos/cabo-verde.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/cabo-verde.svg",
+        "logos/print/master.svg/white/cabo-verde.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/cabo-verde.png",
+        "logos/print/4500/white/cabo-verde.png",
+        "logos/print/3000/black/cabo-verde.png",
+        "logos/print/3000/white/cabo-verde.png"
+      ]
+    },
+    "canada": {
+      "source_svg": "logos/canada.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/canada.svg",
+        "logos/print/master.svg/white/canada.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/canada.png",
+        "logos/print/4500/white/canada.png",
+        "logos/print/3000/black/canada.png",
+        "logos/print/3000/white/canada.png"
+      ]
+    },
+    "colombia": {
+      "source_svg": "logos/colombia.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/colombia.svg",
+        "logos/print/master.svg/white/colombia.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/colombia.png",
+        "logos/print/4500/white/colombia.png",
+        "logos/print/3000/black/colombia.png",
+        "logos/print/3000/white/colombia.png"
+      ]
+    },
+    "cote-d-ivoire": {
+      "source_svg": "logos/cote-d-ivoire.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/cote-d-ivoire.svg",
+        "logos/print/master.svg/white/cote-d-ivoire.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/cote-d-ivoire.png",
+        "logos/print/4500/white/cote-d-ivoire.png",
+        "logos/print/3000/black/cote-d-ivoire.png",
+        "logos/print/3000/white/cote-d-ivoire.png"
+      ]
+    },
+    "croatia": {
+      "source_svg": "logos/croatia.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/croatia.svg",
+        "logos/print/master.svg/white/croatia.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/croatia.png",
+        "logos/print/4500/white/croatia.png",
+        "logos/print/3000/black/croatia.png",
+        "logos/print/3000/white/croatia.png"
+      ]
+    },
+    "curacao": {
+      "source_svg": "logos/curacao.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/curacao.svg",
+        "logos/print/master.svg/white/curacao.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/curacao.png",
+        "logos/print/4500/white/curacao.png",
+        "logos/print/3000/black/curacao.png",
+        "logos/print/3000/white/curacao.png"
+      ]
+    },
+    "czechia": {
+      "source_svg": "logos/czechia.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/czechia.svg",
+        "logos/print/master.svg/white/czechia.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/czechia.png",
+        "logos/print/4500/white/czechia.png",
+        "logos/print/3000/black/czechia.png",
+        "logos/print/3000/white/czechia.png"
+      ]
+    },
+    "dr-congo": {
+      "source_svg": "logos/dr-congo.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/dr-congo.svg",
+        "logos/print/master.svg/white/dr-congo.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/dr-congo.png",
+        "logos/print/4500/white/dr-congo.png",
+        "logos/print/3000/black/dr-congo.png",
+        "logos/print/3000/white/dr-congo.png"
+      ]
+    },
+    "ecuador": {
+      "source_svg": "logos/ecuador.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/ecuador.svg",
+        "logos/print/master.svg/white/ecuador.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/ecuador.png",
+        "logos/print/4500/white/ecuador.png",
+        "logos/print/3000/black/ecuador.png",
+        "logos/print/3000/white/ecuador.png"
+      ]
+    },
+    "egypt": {
+      "source_svg": "logos/egypt.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/egypt.svg",
+        "logos/print/master.svg/white/egypt.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/egypt.png",
+        "logos/print/4500/white/egypt.png",
+        "logos/print/3000/black/egypt.png",
+        "logos/print/3000/white/egypt.png"
+      ]
+    },
+    "england": {
+      "source_svg": "logos/england.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/england.svg",
+        "logos/print/master.svg/white/england.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/england.png",
+        "logos/print/4500/white/england.png",
+        "logos/print/3000/black/england.png",
+        "logos/print/3000/white/england.png"
+      ]
+    },
+    "france": {
+      "source_svg": "logos/france.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/france.svg",
+        "logos/print/master.svg/white/france.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/france.png",
+        "logos/print/4500/white/france.png",
+        "logos/print/3000/black/france.png",
+        "logos/print/3000/white/france.png"
+      ]
+    },
+    "germany": {
+      "source_svg": "logos/germany.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/germany.svg",
+        "logos/print/master.svg/white/germany.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/germany.png",
+        "logos/print/4500/white/germany.png",
+        "logos/print/3000/black/germany.png",
+        "logos/print/3000/white/germany.png"
+      ]
+    },
+    "ghana": {
+      "source_svg": "logos/ghana.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/ghana.svg",
+        "logos/print/master.svg/white/ghana.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/ghana.png",
+        "logos/print/4500/white/ghana.png",
+        "logos/print/3000/black/ghana.png",
+        "logos/print/3000/white/ghana.png"
+      ]
+    },
+    "haiti": {
+      "source_svg": "logos/haiti.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/haiti.svg",
+        "logos/print/master.svg/white/haiti.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/haiti.png",
+        "logos/print/4500/white/haiti.png",
+        "logos/print/3000/black/haiti.png",
+        "logos/print/3000/white/haiti.png"
+      ]
+    },
+    "iran": {
+      "source_svg": "logos/iran.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/iran.svg",
+        "logos/print/master.svg/white/iran.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/iran.png",
+        "logos/print/4500/white/iran.png",
+        "logos/print/3000/black/iran.png",
+        "logos/print/3000/white/iran.png"
+      ]
+    },
+    "iraq": {
+      "source_svg": "logos/iraq.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/iraq.svg",
+        "logos/print/master.svg/white/iraq.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/iraq.png",
+        "logos/print/4500/white/iraq.png",
+        "logos/print/3000/black/iraq.png",
+        "logos/print/3000/white/iraq.png"
+      ]
+    },
+    "japan": {
+      "source_svg": "logos/japan.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/japan.svg",
+        "logos/print/master.svg/white/japan.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/japan.png",
+        "logos/print/4500/white/japan.png",
+        "logos/print/3000/black/japan.png",
+        "logos/print/3000/white/japan.png"
+      ]
+    },
+    "jordan": {
+      "source_svg": "logos/jordan.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/jordan.svg",
+        "logos/print/master.svg/white/jordan.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/jordan.png",
+        "logos/print/4500/white/jordan.png",
+        "logos/print/3000/black/jordan.png",
+        "logos/print/3000/white/jordan.png"
+      ]
+    },
+    "mexico": {
+      "source_svg": "logos/mexico.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/mexico.svg",
+        "logos/print/master.svg/white/mexico.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/mexico.png",
+        "logos/print/4500/white/mexico.png",
+        "logos/print/3000/black/mexico.png",
+        "logos/print/3000/white/mexico.png"
+      ]
+    },
+    "morocco": {
+      "source_svg": "logos/morocco.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/morocco.svg",
+        "logos/print/master.svg/white/morocco.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/morocco.png",
+        "logos/print/4500/white/morocco.png",
+        "logos/print/3000/black/morocco.png",
+        "logos/print/3000/white/morocco.png"
+      ]
+    },
+    "netherlands": {
+      "source_svg": "logos/netherlands.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/netherlands.svg",
+        "logos/print/master.svg/white/netherlands.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/netherlands.png",
+        "logos/print/4500/white/netherlands.png",
+        "logos/print/3000/black/netherlands.png",
+        "logos/print/3000/white/netherlands.png"
+      ]
+    },
+    "new-zealand": {
+      "source_svg": "logos/new-zealand.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/new-zealand.svg",
+        "logos/print/master.svg/white/new-zealand.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/new-zealand.png",
+        "logos/print/4500/white/new-zealand.png",
+        "logos/print/3000/black/new-zealand.png",
+        "logos/print/3000/white/new-zealand.png"
+      ]
+    },
+    "norway": {
+      "source_svg": "logos/norway.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/norway.svg",
+        "logos/print/master.svg/white/norway.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/norway.png",
+        "logos/print/4500/white/norway.png",
+        "logos/print/3000/black/norway.png",
+        "logos/print/3000/white/norway.png"
+      ]
+    },
+    "panama": {
+      "source_svg": "logos/panama.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/panama.svg",
+        "logos/print/master.svg/white/panama.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/panama.png",
+        "logos/print/4500/white/panama.png",
+        "logos/print/3000/black/panama.png",
+        "logos/print/3000/white/panama.png"
+      ]
+    },
+    "paraguay": {
+      "source_svg": "logos/paraguay.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/paraguay.svg",
+        "logos/print/master.svg/white/paraguay.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/paraguay.png",
+        "logos/print/4500/white/paraguay.png",
+        "logos/print/3000/black/paraguay.png",
+        "logos/print/3000/white/paraguay.png"
+      ]
+    },
+    "portugal": {
+      "source_svg": "logos/portugal.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/portugal.svg",
+        "logos/print/master.svg/white/portugal.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/portugal.png",
+        "logos/print/4500/white/portugal.png",
+        "logos/print/3000/black/portugal.png",
+        "logos/print/3000/white/portugal.png"
+      ]
+    },
+    "qatar": {
+      "source_svg": "logos/qatar.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/qatar.svg",
+        "logos/print/master.svg/white/qatar.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/qatar.png",
+        "logos/print/4500/white/qatar.png",
+        "logos/print/3000/black/qatar.png",
+        "logos/print/3000/white/qatar.png"
+      ]
+    },
+    "saudi-arabia": {
+      "source_svg": "logos/saudi-arabia.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/saudi-arabia.svg",
+        "logos/print/master.svg/white/saudi-arabia.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/saudi-arabia.png",
+        "logos/print/4500/white/saudi-arabia.png",
+        "logos/print/3000/black/saudi-arabia.png",
+        "logos/print/3000/white/saudi-arabia.png"
+      ]
+    },
+    "scotland": {
+      "source_svg": "logos/scotland.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/scotland.svg",
+        "logos/print/master.svg/white/scotland.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/scotland.png",
+        "logos/print/4500/white/scotland.png",
+        "logos/print/3000/black/scotland.png",
+        "logos/print/3000/white/scotland.png"
+      ]
+    },
+    "senegal": {
+      "source_svg": "logos/senegal.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/senegal.svg",
+        "logos/print/master.svg/white/senegal.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/senegal.png",
+        "logos/print/4500/white/senegal.png",
+        "logos/print/3000/black/senegal.png",
+        "logos/print/3000/white/senegal.png"
+      ]
+    },
+    "south-africa": {
+      "source_svg": "logos/south-africa.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/south-africa.svg",
+        "logos/print/master.svg/white/south-africa.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/south-africa.png",
+        "logos/print/4500/white/south-africa.png",
+        "logos/print/3000/black/south-africa.png",
+        "logos/print/3000/white/south-africa.png"
+      ]
+    },
+    "south-korea": {
+      "source_svg": "logos/south-korea.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/south-korea.svg",
+        "logos/print/master.svg/white/south-korea.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/south-korea.png",
+        "logos/print/4500/white/south-korea.png",
+        "logos/print/3000/black/south-korea.png",
+        "logos/print/3000/white/south-korea.png"
+      ]
+    },
+    "spain": {
+      "source_svg": "logos/spain.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/spain.svg",
+        "logos/print/master.svg/white/spain.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/spain.png",
+        "logos/print/4500/white/spain.png",
+        "logos/print/3000/black/spain.png",
+        "logos/print/3000/white/spain.png"
+      ]
+    },
+    "sweden": {
+      "source_svg": "logos/sweden.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/sweden.svg",
+        "logos/print/master.svg/white/sweden.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/sweden.png",
+        "logos/print/4500/white/sweden.png",
+        "logos/print/3000/black/sweden.png",
+        "logos/print/3000/white/sweden.png"
+      ]
+    },
+    "switzerland": {
+      "source_svg": "logos/switzerland.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/switzerland.svg",
+        "logos/print/master.svg/white/switzerland.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/switzerland.png",
+        "logos/print/4500/white/switzerland.png",
+        "logos/print/3000/black/switzerland.png",
+        "logos/print/3000/white/switzerland.png"
+      ]
+    },
+    "tunisia": {
+      "source_svg": "logos/tunisia.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/tunisia.svg",
+        "logos/print/master.svg/white/tunisia.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/tunisia.png",
+        "logos/print/4500/white/tunisia.png",
+        "logos/print/3000/black/tunisia.png",
+        "logos/print/3000/white/tunisia.png"
+      ]
+    },
+    "turkiye": {
+      "source_svg": "logos/turkiye.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/turkiye.svg",
+        "logos/print/master.svg/white/turkiye.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/turkiye.png",
+        "logos/print/4500/white/turkiye.png",
+        "logos/print/3000/black/turkiye.png",
+        "logos/print/3000/white/turkiye.png"
+      ]
+    },
+    "united-states": {
+      "source_svg": "logos/united-states.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/united-states.svg",
+        "logos/print/master.svg/white/united-states.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/united-states.png",
+        "logos/print/4500/white/united-states.png",
+        "logos/print/3000/black/united-states.png",
+        "logos/print/3000/white/united-states.png"
+      ]
+    },
+    "uruguay": {
+      "source_svg": "logos/uruguay.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/uruguay.svg",
+        "logos/print/master.svg/white/uruguay.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/uruguay.png",
+        "logos/print/4500/white/uruguay.png",
+        "logos/print/3000/black/uruguay.png",
+        "logos/print/3000/white/uruguay.png"
+      ]
+    },
+    "uzbekistan": {
+      "source_svg": "logos/uzbekistan.svg",
+      "vector_masters": [
+        "logos/print/master.svg/black/uzbekistan.svg",
+        "logos/print/master.svg/white/uzbekistan.svg"
+      ],
+      "raster_masters": [
+        "logos/print/4500/black/uzbekistan.png",
+        "logos/print/4500/white/uzbekistan.png",
+        "logos/print/3000/black/uzbekistan.png",
+        "logos/print/3000/white/uzbekistan.png"
+      ]
+    }
+  }
+}

@@ -1,0 +1,116 @@
+/* ── perspective-field banner ──────────────────────────────────────── */
+.fieldHero {
+  position: relative;
+  width: 100%;
+  height: clamp(280px, 46vh, 520px);
+  overflow: hidden;
+  background: #000;
+}
+
+.home {
+  padding: 4px 24px 8px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* ── hero: centered brand + tagline above the spectrum-cycle video ──── */
+.heroWrap {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 24px 16px;
+  text-align: center;
+}
+
+.brandName {
+  margin: 0 auto 12px;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(20px, 4vw, 34px);
+  line-height: 1.05;
+  letter-spacing: -0.025em;
+  color: var(--bright);
+}
+
+.tagline {
+  font-family: var(--sans);
+  font-size: clamp(12px, 1.5vw, 15px);
+  line-height: 1.5;
+  color: var(--white);
+  max-width: 64rem;
+  margin: 0 auto;
+}
+/* one line on desktop; allowed to wrap on smaller screens */
+@media (min-width: 820px) {
+  .tagline { white-space: nowrap; max-width: none; }
+}
+
+.heroVideo {
+  display: block;
+  margin: 26px auto 0;
+  width: clamp(260px, 60vw, 440px);
+  aspect-ratio: 1 / 1;
+  height: auto;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+/* ── world cup block ───────────────────────────────────────────────── */
+.wc {
+  padding-top: 8px;
+}
+
+.wcTitle {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: clamp(24px, 4.5vw, 40px);
+  letter-spacing: -0.025em;
+  text-transform: uppercase;
+  color: var(--bright);
+  margin: 0 0 10px;
+}
+
+.wcMeta {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--dim);
+  letter-spacing: 0.04em;
+  margin: 0 0 18px;
+  text-align: center;
+}
+
+.wcCountdown {
+  margin: 0 auto 14px;
+}
+
+.wcDrop {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+  text-align: center;
+  margin: 0 0 20px;
+}
+
+.wcKick {
+  font-family: var(--mono);
+  font-size: 13px;
+  margin: 0 0 16px;
+}
+
+.wcKickLabel { color: var(--dim); }
+.wcKickVal { color: var(--green); font-weight: 700; }
+
+.wcBlurb {
+  font-family: var(--sans);
+  font-size: clamp(14px, 2vw, 17px);
+  line-height: 1.55;
+  color: var(--white);
+  max-width: 52ch;
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .home { padding: 40px 18px 8px; }
+  .heroWrap { padding: 32px 18px 8px; }
+}

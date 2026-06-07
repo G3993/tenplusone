@@ -1,49 +1,80 @@
 .wrap {
-  padding: 0 24px;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: 56px repeat(4, minmax(0, 1fr));
-  gap: 1px;
-  background: var(--faint);
-  border: 1px solid var(--faint);
+  padding: 24px;
   width: 100%;
   box-sizing: border-box;
 }
 
-.row-label,
+/* Fully responsive grid of group cards — fills the whole page,
+   with real separation between groups so they read as distinct units. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  width: 100%;
+  box-sizing: border-box;
+  align-items: stretch;
+}
+
+.group {
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.groupHead {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--faint);
+}
+
+.groupTag {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.groupId {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--dim);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.teams {
+  display: flex;
+  flex-direction: column;
+}
+
 .cell {
-  background: var(--bg);
   display: flex;
   align-items: center;
-  min-height: 100px;
-  padding: 12px 16px;
-  min-width: 0;
-}
-
-.row-label {
-  justify-content: center;
-  font-size: 13px;
-  color: var(--white);
-  font-weight: 400;
-  letter-spacing: 0.18em;
-  text-transform: lowercase;
-}
-
-.cell {
-  gap: 14px;
-  cursor: pointer;
-  transition: background 80ms ease;
+  gap: 18px;
+  padding: 16px 20px;
   text-decoration: none;
   color: inherit;
-  overflow: hidden;
+  transition: background 80ms ease;
+}
+
+.cell + .cell {
+  border-top: 1px solid var(--hairline);
 }
 
 .cell:hover {
-  background: #0f0f0f;
+  background: var(--hover-surface);
+}
+
+.pot {
+  font-size: 11px;
+  color: var(--line-num);
+  width: 12px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 .logo {
@@ -51,6 +82,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 52px;
+  height: 52px;
 }
 
 .text {
@@ -61,7 +94,7 @@
 }
 
 .name {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--bright);
   white-space: nowrap;
   overflow: hidden;
@@ -69,27 +102,18 @@
   line-height: 1.2;
 }
 
+.cell:hover .name {
+  color: var(--green);
+}
+
 .meta {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--white);
-  margin-top: 6px;
+  margin-top: 5px;
   letter-spacing: 0.06em;
 }
 
-@media (max-width: 1100px) {
-  .grid { grid-template-columns: 44px repeat(4, minmax(0, 1fr)); }
-  .row-label, .cell { min-height: 84px; padding: 10px; }
-  .row-label { font-size: 12px; }
-  .name { font-size: 14px; }
-  .meta { font-size: 11px; }
-}
-
 @media (max-width: 720px) {
-  .wrap { padding: 0 12px; }
-  .grid { grid-template-columns: 28px repeat(4, minmax(0, 1fr)); }
-  .row-label, .cell { min-height: 64px; padding: 8px; }
-  .row-label { font-size: 11px; letter-spacing: 0.14em; }
-  .cell { gap: 8px; }
-  .name { font-size: 11px; }
-  .meta { font-size: 10px; margin-top: 4px; }
+  .wrap { padding: 14px; }
+  .grid { grid-template-columns: 1fr; }
 }

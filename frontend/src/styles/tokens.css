@@ -1,18 +1,56 @@
 :root {
-  --bg: #000000;
-  --white: #a0a0a0;
-  --bright: #ffffff;
-  --dim: #555555;
-  --faint: #222222;
-  --line-num: #333333;
-  --green: #4ade80;
-  --surface: #0a0a0a;
-  --hairline: #1a1a1a;
+  /* Light theme. Tokens mirror the iFC Brand System "inverted" palette
+     (f4f4f1 paper, single saturated green) so an asset that lives correctly
+     on dark also lives correctly here. */
+  --bg: #f4f4f1;
+  --surface: #ececea;
+  --hairline: #d8d8d4;
+  --faint: #cfcfca;
+  --line-num: #b6b6b0;
+  --dim: #888880;
+  --white: #444440;
+  --bright: #000000;
+  --green: #16a34a;
+
+  --nav-bg: var(--surface);
+  --nav-border: var(--hairline);
+  --overlay-bg: rgba(244, 244, 241, 0.88);
+  --hover-surface: #e2e2df;
+
   --mono: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  --pixel: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
   --sans: 'Sora', 'Helvetica Neue', 'Helvetica', system-ui, sans-serif;
   --display: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
   --font: var(--mono);
   --font-size: 16px;
   --line-height: 1.85;
   --letter-spacing: 0.01em;
+
+  /* The universal logo container rule from the iFC Brand System.
+     Every crest, every wordmark, every icon — 45-unit canvas with a
+     2-unit transparent inset (2/45 = 4.4444…%). Apply to any container
+     that holds a logo so optical alignment survives a swap of assets. */
+  --logo-safe-inset: 4.4444%;
+
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  /* Dark theme — the canonical brand palette. */
+  --bg: #000000;
+  --surface: #0a0a0a;
+  --hairline: #1a1a1a;
+  --faint: #222222;
+  --line-num: #333333;
+  --dim: #555555;
+  --white: #a0a0a0;
+  --bright: #ffffff;
+  --green: #4ade80;
+
+  --nav-bg: var(--surface);
+  --nav-border: var(--hairline);
+  --overlay-bg: rgba(10, 10, 10, 0.88);
+  --hover-surface: #111111;
+
+  color-scheme: dark;
 }

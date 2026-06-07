@@ -1,186 +1,114 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router';
-import { Line, Blank, useLineCounter } from '../components/layout/Line';
-import { PixelGrid } from '../components/grid/PixelGrid';
+import { MatchCrest3D } from '../components/match/MatchCrest3D';
 import { MatchResult } from '../components/match/MatchResult';
+import { MatchCloset } from '../components/match/MatchCloset';
+import { MatchPoll } from '../components/match/MatchPoll';
 import { MATCHES } from '../data/matches';
 import { getTeamByName } from '../data/teams';
-import { getLogoPixels } from '../data/team-logos/index';
-import { fetchMatch, fetchWagerForMatch } from '../lib/api';
-import type { ApiMatch, ApiWager } from '../lib/api';
+import { fetchMatch } from '../lib/api';
+import type { ApiMatch } from '../lib/api';
 import styles from './MatchDetail.module.css';
-
-function pickLabel(pick: string, homeTeam: string, awayTeam: string) {
-  if (pick === 'home') return homeTeam;
-  if (pick === 'away') return awayTeam;
-  return 'Draw';
-}
 
 export function MatchDetail() {
   const { id } = useParams<{ id: string }>();
-  const nextLn = useLineCounter();
 
   const match = MATCHES.find((m) => m.id === id);
 
   const [apiMatch, setApiMatch] = useState<ApiMatch | null>(null);
-  const [wager, setWager] = useState<ApiWager | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
-
-    const email = localStorage.getItem('tenplusone-email');
-
-    Promise.all([
-      fetchMatch(id),
-      email ? fetchWagerForMatch(email, id) : Promise.resolve(null),
-    ])
-      .then(([m, w]) => {
-        setApiMatch(m);
-        setWager(w);
-      })
+    fetchMatch(id)
+      .then((m) => setApiMatch(m))
       .finally(() => setLoading(false));
   }, [id]);
 
   if (!match) {
     return (
-      <>
-        <Line n={nextLn()}>
-          <span className="dim">{'// match not found'}</span>
-        </Line>
-        <Blank n={nextLn()} />
-        <Line n={nextLn()}>
-          <Link to="/matches" className={styles.predictionLink}>
-            {'<- back to matches'}
-          </Link>
-        </Line>
-      </>
+      <div className={styles.page}>
+        <div className={styles.notFound}>match not found</div>
+        <Link to="/matches" className={styles.back}>← back to matches</Link>
+      </div>
     );
   }
 
   const homeTeam = getTeamByName(match.h);
   const awayTeam = getTeamByName(match.a);
 
-  const homePixels = homeTeam
-    ? getLogoPixels(homeTeam.slug, homeTeam.name[0])
-    : getLogoPixels('', match.h[0]);
-  const awayPixels = awayTeam
-    ? getLogoPixels(awayTeam.slug, awayTeam.name[0])
-    : getLogoPixels('', match.a[0]);
-
   // Determine match status from API data, fallback to SCHEDULED
   const status = apiMatch?.status || 'SCHEDULED';
   const homeScore = apiMatch?.score_home;
   const awayScore = apiMatch?.score_away;
 
-  // Map wager status to component prop
-  const wagerStatus = wager
-    ? (wager.status.toLowerCase() as 'pending' | 'won' | 'lost')
-    : null;
-  const wagerPick = wager
-    ? pickLabel(wager.pick, match.h, match.a)
-    : undefined;
-
   return (
-    <>
-      <Line n={nextLn()}>
-        <span className="comment">{'// MATCH DETAIL'}</span>
-      </Line>
-      <Line n={nextLn()}>
-        <span className="comment">
-          {'// '}
-          {match.grp} | {match.d} | {match.t}
-        </span>
-      </Line>
-      <Line n={nextLn()}>
-        <span className="comment">
-          {'// '}
-          {match.v}
-        </span>
-      </Line>
-      <Blank n={nextLn()} />
+    <div className={styles.page}>
+      {/* logos big, up top */}
+      <header className={styles.crests}>
+        {homeTeam ? (
+          <Link to={`/team/${homeTeam.slug}`} className={styles.crest}>
+            <MatchCrest3D slug={homeTeam.slug} name={match.h} size={180} />
+            <span className={styles.crestName}>{match.h}</span>
+          </Link>
+        ) : (
+          <span className={styles.crest}>
+            <span className={styles.crestName}>{match.h}</span>
+          </span>
+        )}
 
-      <PixelGrid
-        logoPixels={homePixels}
-        matchMode={{ awayPixels, switchInterval: 4000 }}
-        height="45vh"
-      />
-
-      <div className={styles.matchOverlay}>
-        <span className={styles.flag}>{homeTeam?.flag}</span>
-        <span>{match.h}</span>
         <span className={styles.vs}>vs</span>
-        <span>{match.a}</span>
-        <span className={styles.flag}>{awayTeam?.flag}</span>
+
+        {awayTeam ? (
+          <Link to={`/team/${awayTeam.slug}`} className={styles.crest}>
+            <MatchCrest3D slug={awayTeam.slug} name={match.a} size={180} />
+            <span className={styles.crestName}>{match.a}</span>
+          </Link>
+        ) : (
+          <span className={styles.crest}>
+            <span className={styles.crestName}>{match.a}</span>
+          </span>
+        )}
+      </header>
+
+      {/* match meta — centered */}
+      <div className={styles.meta}>
+        <div className={styles.group}>{match.grp}</div>
+        <div className={styles.when}>{match.d} · {match.t}</div>
+        <div className={styles.venue}>{match.v}</div>
       </div>
 
-      {loading && (
-        <Line n={nextLn()}>
-          <span className="dim">{'// loading match data...'}</span>
-        </Line>
+      {/* "your call" CTA — the call buttons ARE the odds; sparkline is the live
+          signal. Replaces the old separate read-only odds row. */}
+      {status !== 'FINISHED' && homeTeam && awayTeam && (
+        <MatchPoll matchId={match.id} home={homeTeam} away={awayTeam} odds={match.odds} />
       )}
 
-      {!loading && status === 'FINISHED' && homeScore != null && awayScore != null && (
-        <MatchResult
-          homeTeam={match.h}
-          awayTeam={match.a}
-          homeScore={homeScore}
-          awayScore={awayScore}
-          wagerStatus={wagerStatus}
-          wagerPick={wagerPick}
-          discountCode={wager?.discount_code}
-        />
+      {/* score — centered (no predictions) */}
+      <div className={styles.status}>
+        {loading && <span className={styles.muted}>loading…</span>}
+
+        {!loading && status === 'FINISHED' && homeScore != null && awayScore != null && (
+          <MatchResult
+            homeTeam={match.h}
+            awayTeam={match.a}
+            homeScore={homeScore}
+            awayScore={awayScore}
+          />
+        )}
+
+        {!loading && status === 'LIVE' && homeScore != null && awayScore != null && (
+          <div className={styles.live}>
+            {match.h} {homeScore} – {awayScore} {match.a}
+          </div>
+        )}
+      </div>
+
+      {homeTeam && awayTeam && (
+        <MatchCloset home={homeTeam} away={awayTeam} />
       )}
 
-      {!loading && status === 'LIVE' && homeScore != null && awayScore != null && (
-        <>
-          <Line n={nextLn()}>
-            <span className="bright">
-              {'LIVE: '}
-              {match.h} {homeScore} - {awayScore} {match.a}
-            </span>
-          </Line>
-          {wager && (
-            <Line n={nextLn()}>
-              <span className="dim">your pick: </span>
-              <span className="bright">{wagerPick}</span>
-            </Line>
-          )}
-        </>
-      )}
-
-      {!loading && status === 'SCHEDULED' && (
-        <>
-          {wager ? (
-            <>
-              <Line n={nextLn()}>
-                <span className="dim">{'// your prediction: '}</span>
-                <span className="bright">{wagerPick}</span>
-              </Line>
-              <Line n={nextLn()}>
-                <span className="dim">{'// status: pending -- awaiting kickoff'}</span>
-              </Line>
-            </>
-          ) : (
-            <Line n={nextLn()}>
-              <Link to="/slip" className={styles.predictionLink}>
-                {'// place a prediction on this match ->'}
-              </Link>
-            </Line>
-          )}
-        </>
-      )}
-
-      <Blank n={nextLn()} />
-      <Line n={nextLn()}>
-        <Link to="/matches" className={styles.predictionLink}>
-          {'<- back to matches'}
-        </Link>
-      </Line>
-      <Blank n={nextLn()} />
-      <Line n={nextLn()} className="cursor-line">
-        <span className="cursor" />
-      </Line>
-    </>
+      <Link to="/matches" className={styles.back}>← back to matches</Link>
+    </div>
   );
 }

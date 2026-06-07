@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chrome Fluid Simulation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; overflow: hidden; }
+        #fluid-canvas { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            cursor: crosshair;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="fluid-canvas"></canvas>
+
+    <script>
+    'use strict';
+    
+    // ============== FLUID SIMULATION ==============
+    // Based on Pavel Dobryakov's WebGL Fluid Simulation (MIT License)
+    // Chrome/metallic color scheme
+    
+    const fluidCanvas = document.getElementById('fluid-canvas');
+    fluidCanvas.width = fluidCanvas.clientWidth;
+    fluidCanvas.height = fluidCanvas.clientHeight;
+    
+    const fluidGl = fluidCanvas.getContext('webgl') || fluidCanvas.getContext('experimental-webgl');
+    
+    // WebGL extensions
+    const fluidExt = { 
+        halfFloatTexType: fluidGl.getExtension('OES_texture_half_float')?.HALF_FLOAT_OES || fluidGl.UNSIGNED_BYTE, 
+        formatRGBA: { internalFormat: fluidGl.RGBA, format: fluidGl.RGBA }, 
+        formatRG: { internalFormat: fluidGl.RGBA, format: fluidGl.RGBA }, 
+        formatR: { internalFormat: fluidGl.RGBA, format: fluidGl.RGBA }, 
+        supportLinearFiltering: !!fluidGl.getExtension('OES_texture_half_float_linear') 
+    };
+    
+    fluidGl.clearColor(0.0, 0.0, 0.0, 1.0);
+    
+    // Blit function for rendering
+    const fluidBlit = (() => { 
+        fluidGl.bindBuffer(fluidGl.ARRAY_BUFFER, fluidGl.createBuffer()); 
+        fluidGl.bufferData(fluidGl.ARRAY_BUFFER, new Float32Array([-1,-1,-1,1,1,1,1,-1]), fluidGl.STATIC_DRAW); 
+        fluidGl.bindBuffer(fluidGl.ELEMENT_ARRAY_BUFFER, fluidGl.createBuffer()); 
+        fluidGl.bufferData(fluidGl.ELEMENT_ARRAY_BUFFER, new Uint16Array([0,1,2,0,2,3]), fluidGl.STATIC_DRAW); 
+        fluidGl.vertexAttribPointer(0,2,fluidGl.FLOAT,false,0,0); 
+        fluidGl.enableVertexAttribArray(0); 
+        return t => { 
+            fluidGl.bindFramebuffer(fluidGl.FRAMEBUFFER, t); 
+            fluidGl.drawElements(fluidGl.TRIANGLES, 6, fluidGl.UNSIGNED_SHORT, 0); 
+        }; 
+    })();
+    
+    // ============== CONFIGURATION ==============
+    // Adjust these values to change fluid behavior
+    let fluidConfig = { 
+        TEXTURE_DOWNSAMPLE: 1,      // Lower = higher quality, higher = better performance
+        DENSITY_DISSIPATION: 0.98,  // How fast color fades (0.9 = fast, 0.99 = slow)
+        VELOCITY_DISSIPATION: 0.98, // How fast movement fades
+        PRESSURE_DISSIPATION: 0.8,  // Pressure decay
+        PRESSURE_ITERATIONS: 25,    // Accuracy of pressure solving
+        CURL: 30,                   // Swirl/vortex strength
+        SPLAT_RADIUS: 0.005         // Size of color splats
+    };
+    
+    // Pointer tracking
+    const fluidPointers = [];
+    function fluidPointerPrototype() { 
+        this.id = -1; 
+        this.x = 0; 
+        this.y = 0; 
+        this.dx = 0; 
+        this.dy = 0; 
+        this.down = false; 
+        this.moved = false; 
+        this.color = [30, 0, 300]; 
+    }
+    fluidPointers.push(new fluidPointerPrototype());
+
+    // ============== SHADER PROGRAM CLASS ==============
+    class FluidGLProgram {
+        constructor(vs, fs) {
+            this.uniforms = {};
+            this.program = fluidGl.createProgram();
+            fluidGl.attachShader(this.program, vs);
+            fluidGl.attachShader(this.program, fs);
+            fluidGl.linkProgram(this.program);
+            const uc = fluidGl.getProgramParameter(this.program, fluidGl.ACTIVE_UNIFORMS);
+            for (let i = 0; i < uc; i++) { 
+                const n = fluidGl.getActiveUniform(this.program, i).name; 
+                this.uniforms[n] = fluidGl.getUniformLocation(this.program, n); 
+            }
+        }
+        bind() { fluidGl.useProgram(this.program); }
+    }
+
+    function compileFluidShader(type, source) {
+        const shader = fluidGl.createShader(type);
+        fluidGl.shaderSource(shader, source);
+        fluidGl.compileShader(shader);
+        return shader;
+    }
+
+    // ============== SHADERS ==============
+    const fluidBaseVS = compileFluidShader(fluidGl.VERTEX_SHADER, `
+        precision highp float; 
+        attribute vec2 aPosition; 
+        varying vec2 vUv, vL, vR, vT, vB; 
+        uniform vec2 texelSize; 
+        void main() { 
+            vUv = aPosition * 0.5 + 0.5; 
+            vL = vUv - vec2(texelSize.x, 0.0); 
+            vR = vUv + vec2(texelSize.x, 0.0); 
+            vT = vUv + vec2(0.0, texelSize.y); 
+            vB = vUv - vec2(0.0, texelSize.y); 
+            gl_Position = vec4(aPosition, 0.0, 1.0); 
+        }
+    `);
+    
+    const fluidClearFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `
+        precision highp float; 
+        varying vec2 vUv; 
+        uniform sampler2D uTexture; 
+        uniform float value; 
+        void main() { 
+            gl_FragColor = value * texture2D(uTexture, vUv); 
+        }
+    `);
+    
+    // ============== DISPLAY SHADER (CHROME EFFECT) ==============
+    // Modify this shader to change the visual style
+    const fluidDisplayFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `
+        precision highp float; 
+        varying vec2 vUv; 
+        uniform sampler2D uTexture; 
+        void main() { 
+            vec3 c = texture2D(uTexture, vUv).rgb; 
+            float lum = dot(c, vec3(0.299, 0.587, 0.114)); 
+            
+            // Chrome color palette
+            vec3 darkChrome = vec3(0.15, 0.17, 0.2);
+            vec3 midChrome = vec3(0.5, 0.53, 0.58);
+            vec3 brightChrome = vec3(0.85, 0.88, 0.92);
+            vec3 highlight = vec3(1.0, 1.0, 1.0);
+            
+            // Iridescent angle for subtle color shifts
+            float angle = lum * 10.0 + vUv.x * 4.0 + vUv.y * 3.0;
+            float irid = sin(angle) * 0.03;
+            
+            // Mix colors based on luminance
+            vec3 color = mix(darkChrome, midChrome, smoothstep(0.0, 0.4, lum));
+            color = mix(color, brightChrome, smoothstep(0.3, 0.7, lum));
+            color = mix(color, highlight, smoothstep(0.75, 1.0, lum) * 0.5);
+            
+            // Add iridescence
+            color += vec3(irid, irid * 0.5, -irid);
+            color *= lum * 1.4 + 0.1;
+            
+            gl_FragColor = vec4(color, 1.0); 
+        }
+    `);
+    
+    const fluidSplatFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `
+        precision highp float; 
+        varying vec2 vUv; 
+        uniform sampler2D uTarget; 
+        uniform float aspectRatio; 
+        uniform vec3 color; 
+        uniform vec2 point; 
+        uniform float radius; 
+        void main() { 
+            vec2 p = vUv - point.xy; 
+            p.x *= aspectRatio; 
+            vec3 splat = exp(-dot(p, p) / radius) * color; 
+            vec3 base = texture2D(uTarget, vUv).xyz; 
+            gl_FragColor = vec4(base + splat, 1.0); 
+        }
+    `);
+    
+    const fluidAdvectionFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `
+        precision highp float; 
+        varying vec2 vUv; 
+        uniform sampler2D uVelocity, uSource; 
+        uniform vec2 texelSize; 
+        uniform float dt, dissipation; 
+        void main() { 
+            vec2 coord = vUv - dt * texture2D(uVelocity, vUv).xy * texelSize; 
+            gl_FragColor = dissipation * texture2D(uSource, coord); 
+            gl_FragColor.a = 1.0; 
+        }
+    `);
+    
+    const fluidDivergenceFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `
+        precision highp float; 
+        varying vec2 vUv, vL, vR, vT, vB; 
+        uniform sampler2D uVelocity; 
+        vec2 sampleV(vec2 uv) { 
+            vec2 m = vec2(1.0); 
+            if(uv.x<0.0){uv.x=0.0;m.x=-1.0;} 
+            if(uv.x>1.0){uv.x=1.0;m.x=-1.0;} 
+            if(uv.y<0.0){uv.y=0.0;m.y=-1.0;} 
+            if(uv.y>1.0){uv.y=1.0;m.y=-1.0;} 
+            return m*texture2D(uVelocity,uv).xy; 
+        } 
+        void main() { 
+            float L=sampleV(vL).x, R=sampleV(vR).x, T=sampleV(vT).y, B=sampleV(vB).y; 
+            gl_FragColor = vec4(0.5*(R-L+T-B), 0.0, 0.0, 1.0); 
+        }
+    `);
+    
+    const fluidCurlFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `
+        precision highp float; 
+        varying vec2 vUv, vL, vR, vT, vB; 
+        uniform sampler2D uVelocity; 
+        void main() { 
+            float L=texture2D(uVelocity,vL).y, R=texture2D(uVelocity,vR).y, T=texture2D(uVelocity,vT).x, B=texture2D(uVelocity,vB).x; 
+            gl_FragColor = vec4(R-L-T+B, 0.0, 0.0, 1.0); 
+        }
+    `);
+    
+    const fluidVorticityFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `
+        precision highp float; 
+        varying vec2 vUv, vT, vB; 
+        uniform sampler2D uVelocity, uCurl; 
+        uniform float curl, dt; 
+        void main() { 
+            float T=texture2D(uCurl,vT).x, B=texture2D(uCurl,vB).x, C=texture2D(uCurl,vUv).x; 
+            vec2 force=vec2(abs(T)-abs(B),0.0); 
+            force*=1.0/length(force+0.00001)*curl*C; 
+            vec2 vel=texture2D(uVelocity,vUv).xy; 
+            gl_FragColor=vec4(vel+force*dt,0.0,1.0); 
+        }
+    `);
+    
+    const fluidPressureFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `
+        precision highp float; 
+        varying vec2 vUv, vL, vR, vT, vB; 
+        uniform sampler2D uPressure, uDivergence; 
+        vec2 b(vec2 uv){return min(max(uv,0.0),1.0);} 
+        void main() { 
+            float L=texture2D(uPressure,b(vL)).x, R=texture2D(uPressure,b(vR)).x, T=texture2D(uPressure,b(vT)).x, B=texture2D(uPressure,b(vB)).x, div=texture2D(uDivergence,vUv).x; 
+            gl_FragColor=vec4((L+R+B+T-div)*0.25,0.0,0.0,1.0); 
+        }
+    `);
+    
+    const fluidGradSubFS = compileFluidShader(fluidGl.FRAGMENT_SHADER, `
+        precision highp float; 
+        varying vec2 vUv, vL, vR, vT, vB; 
+        uniform sampler2D uPressure, uVelocity; 
+        vec2 b(vec2 uv){return min(max(uv,0.0),1.0);} 
+        void main() { 
+            float L=texture2D(uPressure,b(vL)).x, R=texture2D(uPressure,b(vR)).x, T=texture2D(uPressure,b(vT)).x, B=texture2D(uPressure,b(vB)).x; 
+            vec2 vel=texture2D(uVelocity,vUv).xy; 
+            vel.xy-=vec2(R-L,T-B); 
+            gl_FragColor=vec4(vel,0.0,1.0); 
+        }
+    `);
+
+    // ============== FRAMEBUFFERS ==============
+    let fluidTextureWidth, fluidTextureHeight, fluidDensity, fluidVelocity, fluidDivergence, fluidCurl, fluidPressure;
+    initFluidFramebuffers();
+
+    const fluidClearProg = new FluidGLProgram(fluidBaseVS, fluidClearFS);
+    const fluidDisplayProg = new FluidGLProgram(fluidBaseVS, fluidDisplayFS);
+    const fluidSplatProg = new FluidGLProgram(fluidBaseVS, fluidSplatFS);
+    const fluidAdvectionProg = new FluidGLProgram(fluidBaseVS, fluidAdvectionFS);
+    const fluidDivergenceProg = new FluidGLProgram(fluidBaseVS, fluidDivergenceFS);
+    const fluidCurlProg = new FluidGLProgram(fluidBaseVS, fluidCurlFS);
+    const fluidVorticityProg = new FluidGLProgram(fluidBaseVS, fluidVorticityFS);
+    const fluidPressureProg = new FluidGLProgram(fluidBaseVS, fluidPressureFS);
+    const fluidGradSubProg = new FluidGLProgram(fluidBaseVS, fluidGradSubFS);
+
+    function initFluidFramebuffers() {
+        fluidTextureWidth = fluidGl.drawingBufferWidth >> fluidConfig.TEXTURE_DOWNSAMPLE;
+        fluidTextureHeight = fluidGl.drawingBufferHeight >> fluidConfig.TEXTURE_DOWNSAMPLE;
+        const texType = fluidExt.halfFloatTexType, rgba = fluidExt.formatRGBA, rg = fluidExt.formatRG, r = fluidExt.formatR;
+        const filtering = fluidExt.supportLinearFiltering ? fluidGl.LINEAR : fluidGl.NEAREST;
+        fluidDensity = createFluidDoubleFBO(2, fluidTextureWidth, fluidTextureHeight, rgba.internalFormat, rgba.format, texType, filtering);
+        fluidVelocity = createFluidDoubleFBO(0, fluidTextureWidth, fluidTextureHeight, rg.internalFormat, rg.format, texType, filtering);
+        fluidDivergence = createFluidFBO(4, fluidTextureWidth, fluidTextureHeight, r.internalFormat, r.format, texType, fluidGl.NEAREST);
+        fluidCurl = createFluidFBO(5, fluidTextureWidth, fluidTextureHeight, r.internalFormat, r.format, texType, fluidGl.NEAREST);
+        fluidPressure = createFluidDoubleFBO(6, fluidTextureWidth, fluidTextureHeight, r.internalFormat, r.format, texType, fluidGl.NEAREST);
+    }
+
+    function createFluidFBO(texId, w, h, internalFormat, format, type, param) {
+        fluidGl.activeTexture(fluidGl.TEXTURE0 + texId);
+        let texture = fluidGl.createTexture();
+        fluidGl.bindTexture(fluidGl.TEXTURE_2D, texture);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_MIN_FILTER, param);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_MAG_FILTER, param);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_WRAP_S, fluidGl.CLAMP_TO_EDGE);
+        fluidGl.texParameteri(fluidGl.TEXTURE_2D, fluidGl.TEXTURE_WRAP_T, fluidGl.CLAMP_TO_EDGE);
+        fluidGl.texImage2D(fluidGl.TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, null);
+        let fbo = fluidGl.createFramebuffer();
+        fluidGl.bindFramebuffer(fluidGl.FRAMEBUFFER, fbo);
+        fluidGl.framebufferTexture2D(fluidGl.FRAMEBUFFER, fluidGl.COLOR_ATTACHMENT0, fluidGl.TEXTURE_2D, texture, 0);
+        fluidGl.viewport(0, 0, w, h); 
+        fluidGl.clear(fluidGl.COLOR_BUFFER_BIT);
+        return [texture, fbo, texId];
+    }
+
+    function createFluidDoubleFBO(texId, w, h, internalFormat, format, type, param) {
+        let fbo1 = createFluidFBO(texId, w, h, internalFormat, format, type, param);
+        let fbo2 = createFluidFBO(texId + 1, w, h, internalFormat, format, type, param);
+        return { 
+            get read() { return fbo1; }, 
+            get write() { return fbo2; }, 
+            swap() { let t = fbo1; fbo1 = fbo2; fbo2 = t; } 
+        };
+    }
+
+    // ============== SIMULATION STEP ==============
+    function fluidStep() {
+        fluidGl.viewport(0, 0, fluidTextureWidth, fluidTextureHeight);
+        
+        // Process pointer input
+        for (let i = 0; i < fluidPointers.length; i++) {
+            const p = fluidPointers[i];
+            if (p.moved) { 
+                fluidSplat(p.x, p.y, p.dx, p.dy, p.color); 
+                p.moved = false; 
+            }
+        }
+        
+        // Curl
+        fluidCurlProg.bind();
+        fluidGl.uniform2f(fluidCurlProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidCurlProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidBlit(fluidCurl[1]);
+        
+        // Vorticity
+        fluidVorticityProg.bind();
+        fluidGl.uniform2f(fluidVorticityProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidVorticityProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidGl.uniform1i(fluidVorticityProg.uniforms.uCurl, fluidCurl[2]);
+        fluidGl.uniform1f(fluidVorticityProg.uniforms.curl, fluidConfig.CURL);
+        fluidGl.uniform1f(fluidVorticityProg.uniforms.dt, 0.016);
+        fluidBlit(fluidVelocity.write[1]); 
+        fluidVelocity.swap();
+        
+        // Divergence
+        fluidDivergenceProg.bind();
+        fluidGl.uniform2f(fluidDivergenceProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidDivergenceProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidBlit(fluidDivergence[1]);
+        
+        // Clear pressure
+        fluidClearProg.bind();
+        let pTexId = fluidPressure.read[2];
+        fluidGl.activeTexture(fluidGl.TEXTURE0 + pTexId);
+        fluidGl.bindTexture(fluidGl.TEXTURE_2D, fluidPressure.read[0]);
+        fluidGl.uniform1i(fluidClearProg.uniforms.uTexture, pTexId);
+        fluidGl.uniform1f(fluidClearProg.uniforms.value, fluidConfig.PRESSURE_DISSIPATION);
+        fluidBlit(fluidPressure.write[1]); 
+        fluidPressure.swap();
+        
+        // Pressure iterations
+        fluidPressureProg.bind();
+        fluidGl.uniform2f(fluidPressureProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidPressureProg.uniforms.uDivergence, fluidDivergence[2]);
+        pTexId = fluidPressure.read[2];
+        fluidGl.uniform1i(fluidPressureProg.uniforms.uPressure, pTexId);
+        fluidGl.activeTexture(fluidGl.TEXTURE0 + pTexId);
+        for (let i = 0; i < fluidConfig.PRESSURE_ITERATIONS; i++) { 
+            fluidGl.bindTexture(fluidGl.TEXTURE_2D, fluidPressure.read[0]); 
+            fluidBlit(fluidPressure.write[1]); 
+            fluidPressure.swap(); 
+        }
+        
+        // Gradient subtraction
+        fluidGradSubProg.bind();
+        fluidGl.uniform2f(fluidGradSubProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidGradSubProg.uniforms.uPressure, fluidPressure.read[2]);
+        fluidGl.uniform1i(fluidGradSubProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidBlit(fluidVelocity.write[1]); 
+        fluidVelocity.swap();
+        
+        // Advection
+        fluidAdvectionProg.bind();
+        fluidGl.uniform2f(fluidAdvectionProg.uniforms.texelSize, 1.0/fluidTextureWidth, 1.0/fluidTextureHeight);
+        fluidGl.uniform1i(fluidAdvectionProg.uniforms.uVelocity, fluidVelocity.read[2]);
+        fluidGl.uniform1i(fluidAdvectionProg.uniforms.uSource, fluidVelocity.read[2]);
+        fluidGl.uniform1f(fluidAdvectionProg.uniforms.dt, 0.016);
+        fluidGl.uniform1f(fluidAdvectionProg.uniforms.dissipation, fluidConfig.VELOCITY_DISSIPATION);
+        fluidBlit(fluidVelocity.write[1]); 
+        fluidVelocity.swap();
+        
+        fluidGl.uniform1i(fluidAdvectionProg.uniforms.uSource, fluidDensity.read[2]);
+        fluidGl.uniform1f(fluidAdvectionProg.uniforms.dissipation, fluidConfig.DENSITY_DISSIPATION);
+        fluidBlit(fluidDensity.write[1]); 
+        fluidDensity.swap();
+        
+        // Display
+        fluidGl.viewport(0, 0, fluidGl.drawingBufferWidth, fluidGl.drawingBufferHeight);
+        fluidDisplayProg.bind();
+        fluidGl.uniform1i(fluidDisplayProg.uniforms.uTexture, fluidDensity.read[2]);
+        fluidBlit(null);
+    }
+
+    function fluidSplat(x, y, dx, dy, color) {
+        fluidSplatProg.bind();
+        fluidGl.uniform1i(fluidSplatProg.uniforms.uTarget, fluidVelocity.read[2]);
+        fluidGl.uniform1f(fluidSplatProg.uniforms.aspectRatio, fluidCanvas.width / fluidCanvas.height);
+        fluidGl.uniform2f(fluidSplatProg.uniforms.point, x / fluidCanvas.width, 1.0 - y / fluidCanvas.height);
+        fluidGl.uniform3f(fluidSplatProg.uniforms.color, dx, -dy, 1.0);
+        fluidGl.uniform1f(fluidSplatProg.uniforms.radius, fluidConfig.SPLAT_RADIUS);
+        fluidBlit(fluidVelocity.write[1]); 
+        fluidVelocity.swap();
+        
+        fluidGl.uniform1i(fluidSplatProg.uniforms.uTarget, fluidDensity.read[2]);
+        fluidGl.uniform3f(fluidSplatProg.uniforms.color, color[0]*0.3, color[1]*0.3, color[2]*0.3);
+        fluidBlit(fluidDensity.write[1]); 
+        fluidDensity.swap();
+    }
+
+    // ============== INPUT HANDLERS ==============
+    let lastMouseX = 0, lastMouseY = 0;
+    let colorPhase = 0;
+    
+    // Color generator - modify this for different color schemes
+    function getNextColor() {
+        colorPhase += 0.15;
+        // Chrome/silver colors
+        const base = 0.6 + Math.random() * 0.4;
+        return [base, base, base];
+        
+        // Alternative: Rainbow colors
+        // return [
+        //     Math.sin(colorPhase) * 0.5 + 0.5,
+        //     Math.sin(colorPhase + 2.094) * 0.5 + 0.5,
+        //     Math.sin(colorPhase + 4.189) * 0.5 + 0.5
+        // ];
+    }
+    
+    // Mouse events
+    window.addEventListener('mousemove', e => { 
+        const dx = e.clientX - lastMouseX;
+        const dy = e.clientY - lastMouseY;
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+        
+        if (fluidPointers[0].down && (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5)) {
+            fluidPointers[0].moved = true;
+            fluidPointers[0].dx = dx * 10; 
+            fluidPointers[0].dy = dy * 10; 
+            fluidPointers[0].x = e.clientX; 
+            fluidPointers[0].y = e.clientY;
+            fluidPointers[0].color = getNextColor();
+        }
+    });
+    
+    window.addEventListener('mousedown', e => { 
+        fluidPointers[0].down = true; 
+        fluidPointers[0].color = getNextColor();
+        lastMouseX = e.clientX;
+        lastMouseY = e.clientY;
+    });
+    
+    window.addEventListener('mouseup', () => { 
+        fluidPointers[0].down = false; 
+    });
+    
+    // Touch events
+    window.addEventListener('touchstart', e => {
+        const touches = e.targetTouches;
+        for (let i = 0; i < touches.length; i++) {
+            if (i >= fluidPointers.length) {
+                fluidPointers.push(new fluidPointerPrototype());
+            }
+            fluidPointers[i].down = true;
+            fluidPointers[i].x = touches[i].clientX;
+            fluidPointers[i].y = touches[i].clientY;
+            fluidPointers[i].color = getNextColor();
+        }
+    }, { passive: true });
+    
+    window.addEventListener('touchmove', e => {
+        const touches = e.targetTouches;
+        for (let i = 0; i < touches.length; i++) {
+            if (i >= fluidPointers.length) continue;
+            const dx = touches[i].clientX - fluidPointers[i].x;
+            const dy = touches[i].clientY - fluidPointers[i].y;
+            if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+                fluidPointers[i].moved = true;
+                fluidPointers[i].dx = dx * 10;
+                fluidPointers[i].dy = dy * 10;
+                fluidPointers[i].x = touches[i].clientX;
+                fluidPointers[i].y = touches[i].clientY;
+                fluidPointers[i].color = getNextColor();
+            }
+        }
+    }, { passive: true });
+    
+    window.addEventListener('touchend', e => {
+        const touches = e.changedTouches;
+        for (let i = 0; i < touches.length; i++) {
+            for (let j = 0; j < fluidPointers.length; j++) {
+                if (touches[i].identifier === fluidPointers[j].id) {
+                    fluidPointers[j].down = false;
+                }
+            }
+        }
+        if (e.targetTouches.length === 0) {
+            fluidPointers[0].down = false;
+        }
+    }, { passive: true });
+
+    // ============== RESIZE HANDLER ==============
+    window.addEventListener('resize', () => {
+        fluidCanvas.width = window.innerWidth;
+        fluidCanvas.height = window.innerHeight;
+        initFluidFramebuffers();
+    });
+
+    // ============== ANIMATION LOOP ==============
+    (function animate() { 
+        requestAnimationFrame(animate);
+        fluidStep();
+    })();
+    
+    </script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 26px auto 0;
+}

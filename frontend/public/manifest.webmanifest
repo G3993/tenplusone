@@ -1,0 +1,26 @@
+{
+  "name": "internet fc",
+  "short_name": "iFC",
+  "description": "FIFA World Cup 2026 · 48 nations on one 45×45 pixel grid. Browse, predict, own.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0c0e10",
+  "theme_color": "#0c0e10",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "shopping", "entertainment"]
+}

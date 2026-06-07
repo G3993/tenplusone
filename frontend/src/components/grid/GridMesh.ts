@@ -4,12 +4,21 @@ export interface GridMeshConfig {
   gridSize: number;
   cellSize: number;
   gap: number;
+  /** Material color for the cube/sphere cells. Default 0xffffff (white).
+   *  Use a dark non-zero value (e.g. 0x141414) for black-on-light pages —
+   *  pure 0x000000 zeros out the diffuse term and kills face shading. */
+  cellColor: number;
+  cellMetalness: number;
+  cellRoughness: number;
 }
 
 const DEFAULT_CONFIG: GridMeshConfig = {
   gridSize: 32,
   cellSize: 1.3,
   gap: 0.02,
+  cellColor: 0xffffff,
+  cellMetalness: 0.08,
+  cellRoughness: 0.45,
 };
 
 export class GridMesh {
@@ -40,9 +49,9 @@ export class GridMesh {
     this.sphereGeometry = new THREE.SphereGeometry(cellSize * 0.55, 24, 24);
 
     this.material = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      metalness: 0.1,
-      roughness: 0.3,
+      color: this.config.cellColor,
+      metalness: this.config.cellMetalness,
+      roughness: this.config.cellRoughness,
     });
 
     // Shadow-receiving plane
@@ -56,6 +65,12 @@ export class GridMesh {
     scene.add(this.shadowPlane);
 
     this.createInstancedMesh(this.cubeGeometry);
+  }
+
+  /** Live-update the cell material color (shared across all instances). */
+  setCellColor(color: number): void {
+    this.config.cellColor = color;
+    this.material.color.setHex(color);
   }
 
   private createInstancedMesh(geometry: THREE.BufferGeometry): void {

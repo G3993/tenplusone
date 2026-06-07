@@ -1,0 +1,21 @@
+.spinWrap {
+  display: inline-block;
+  perspective: 520px;
+}
+
+.spin {
+  transform-style: preserve-3d;
+  animation-name: ifcSpinY;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+@keyframes ifcSpinY {
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; }
+}

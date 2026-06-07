@@ -33,9 +33,11 @@ interface MerchIconProps {
   kind: MerchKind;
   size?: number;
   className?: string;
+  /** Accessible label. If omitted, the icon is purely decorative. */
+  label?: string;
 }
 
-export function MerchIcon({ kind, size = 64, className }: MerchIconProps) {
+export function MerchIcon({ kind, size = 64, className, label }: MerchIconProps) {
   const rects = ICONS[kind] ?? ICONS.tee;
   return (
     <svg
@@ -46,8 +48,11 @@ export function MerchIcon({ kind, size = 64, className }: MerchIconProps) {
       fill="currentColor"
       className={className}
       style={{ display: 'block' }}
-      aria-hidden="true"
+      role={label ? 'img' : undefined}
+      aria-label={label}
+      aria-hidden={label ? undefined : true}
     >
+      {label && <title>{label}</title>}
       {rects.map(([x, y, w, h, bg], i) => (
         <rect
           key={i}

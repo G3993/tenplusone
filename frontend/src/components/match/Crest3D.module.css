@@ -1,0 +1,31 @@
+.stage {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 700px;
+  perspective-origin: 50% 45%;
+}
+
+.crest {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transform-style: preserve-3d;
+  will-change: transform;
+  animation: crest3d 7s ease-in-out infinite;
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.35));
+}
+
+/* combined turntable spin + vertical bob + tilt (single keyframe so the
+   transforms don't clobber each other) */
+@keyframes crest3d {
+  0%   { transform: translateY(0)     rotateX(8deg)  rotateY(-20deg); }
+  25%  { transform: translateY(-9px)  rotateX(-4deg) rotateY(0deg); }
+  50%  { transform: translateY(-2px)  rotateX(8deg)  rotateY(20deg); }
+  75%  { transform: translateY(-9px)  rotateX(-4deg) rotateY(0deg); }
+  100% { transform: translateY(0)     rotateX(8deg)  rotateY(-20deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crest { animation: none; }
+}

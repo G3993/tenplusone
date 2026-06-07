@@ -17,7 +17,7 @@
 }
 
 .slipSelect option {
-  background: #0a0a0a;
+  background: var(--surface);
   color: var(--bright);
 }
 

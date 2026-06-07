@@ -1,0 +1,260 @@
+.preview {
+  padding: 16px 24px 96px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* size control bar above the grid */
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.barTitle {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.sizer {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sizerLabel {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.slider {
+  width: 140px;
+  max-width: 40vw;
+  min-width: 64px;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+
+.sizerVal {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--bright);
+  min-width: 38px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* animation picker above the grid */
+.animBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.animBtn {
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--hairline);
+  padding: 7px 13px;
+  font-family: var(--mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.animBtn:hover { color: var(--bright); border-color: var(--bright); }
+.animBtn[aria-pressed='true'] { color: var(--green); border-color: var(--green); }
+
+/* flat teams grid — every nation, crest animating spectrum <-> pattern */
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(224px, 100%), 1fr));
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  align-items: stretch;
+  width: 100%;
+}
+
+.teamCell {
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 12px 20px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.1s;
+}
+
+.teamCell:hover { background: var(--hover-surface); }
+
+.crestBox {
+  width: 140px;
+  height: 140px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.teamName {
+  font-size: 12px;
+  color: var(--bright);
+  text-align: center;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teamCell:hover .teamName { color: var(--green); }
+
+.teamCode {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* full-page divided grid — same hairline system as the teams page */
+.grid {
+  display: grid;
+  /* never wider than the viewport: a column shrinks to 100% before it
+     would overflow, so the grid stays responsive at any width */
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  align-items: stretch;
+  width: 100%;
+}
+
+.group {
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.groupHead {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--hairline);
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.1s;
+}
+
+.groupHead:hover { background: var(--hover-surface); }
+
+.groupLabel {
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-weight: 500;
+}
+
+.groupGo {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--dim);
+}
+
+.groupHead:hover .groupGo { color: var(--green); }
+
+.groupTeams {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.groupRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.1s;
+}
+
+.groupRow + .groupRow {
+  border-top: 1px solid var(--hairline);
+}
+
+.groupRow:hover { background: var(--hover-surface); }
+
+.groupLogo {
+  width: var(--gp, 22px);
+  height: var(--gp, 22px);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--gp, 22px) * 0.75);
+}
+
+.groupName {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--gtext, 13px);
+  color: var(--bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.groupRow:hover .groupName { color: var(--green); }
+
+.groupCode {
+  font-size: 10px;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* bottom CTA into the full World Cup page */
+.cta {
+  display: block;
+  margin: 28px auto 0;
+  width: fit-content;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--bg);
+  background: var(--bright);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  padding: 12px 28px;
+  border-radius: 999px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.cta:hover {
+  background: var(--green);
+  color: var(--bg);
+}
+
+@media (max-width: 560px) {
+  .preview { padding: 12px 14px 64px; }
+  /* stack groups full-width so names never get cramped on phones */
+  .grid { grid-template-columns: 1fr; }
+  .cta { width: 100%; box-sizing: border-box; text-align: center; }
+}

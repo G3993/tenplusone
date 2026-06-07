@@ -1,13 +1,50 @@
 import { Link } from 'react-router';
-import { Line, Blank, useLineCounter } from '../layout/Line';
-import { Wordmark } from '../layout/Wordmark';
 import { useMatchesStore } from '../../stores/matches';
-import { MATCHES } from '../../data/matches';
+import { MATCHES, type Match } from '../../data/matches';
 import { GROUPS } from '../../data/groups';
 import { OddsButton } from './OddsButton';
+import { MarketSparkline } from './MarketSparkline';
 import { getTeamByName } from '../../data/teams';
 import { TeamLogo } from '../team/TeamLogo';
+import { impliedProbabilities } from '../../lib/market';
 import styles from './MatchList.module.css';
+
+function hash(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function fmt(n: number): string {
+  if (n >= 10000) return `${(n / 1000).toFixed(1)}k`;
+  if (n >= 1000) return `${(n / 1000).toFixed(2)}k`;
+  return String(n);
+}
+
+/** "12.4k picks · 64% on ARG" — deterministic per match. */
+function PickCount({
+  matchId,
+  odds,
+  labels,
+}: {
+  matchId: string;
+  odds: [number, number, number];
+  labels: [string, string, string];
+}) {
+  const probs = impliedProbabilities(odds);
+  const max = Math.max(...probs);
+  const favIdx = probs.indexOf(max);
+  const seed = hash(matchId);
+  const picks = 600 + (seed % 24400);
+  return (
+    <span className={styles.pickCount}>
+      {fmt(picks)} picks &middot; {Math.round(max * 100)}% on {labels[favIdx]}
+    </span>
+  );
+}
 
 const PICK_MAP: Record<string, 'home' | 'draw' | 'away'> = {
   '1': 'home',
@@ -15,8 +52,88 @@ const PICK_MAP: Record<string, 'home' | 'draw' | 'away'> = {
   '2': 'away',
 };
 
+const ROUND_LABELS: Record<string, string> = {
+  R32: 'round of 32',
+  R16: 'round of 16',
+  QF: 'quarterfinal',
+  SF: 'semifinal',
+  '3rd': 'third place',
+  FIN: 'final',
+};
+
+/** Group games → "group A"; knockout games → the round name. */
+function stageLabel(grp: string): string {
+  return ROUND_LABELS[grp] ?? `group ${grp}`;
+}
+
+function TeamSide({ name }: { name: string }) {
+  const team = getTeamByName(name);
+  const linkable = team && team.code !== 'TBD';
+  const inner = (
+    <>
+      {team ? (
+        <TeamLogo team={team} size={58} className={styles.teamLogo} />
+      ) : (
+        <span className={styles.teamLogo} />
+      )}
+      <span className={styles.teamName}>{name}</span>
+    </>
+  );
+  return linkable ? (
+    <Link to={`/team/${team.slug}`} className={styles.teamLink}>{inner}</Link>
+  ) : (
+    <span className={styles.teamLink}>{inner}</span>
+  );
+}
+
+function MatchCard({ m }: { m: Match }) {
+  const homeT = getTeamByName(m.h);
+  const awayT = getTeamByName(m.a);
+  const tokenFor: Record<string, string> = {
+    '1': homeT?.code ?? m.h,
+    'X': 'DRAW',
+    '2': awayT?.code ?? m.a,
+  };
+  return (
+    <div className={styles.card}>
+      <div className={styles.cardTeams}>
+        <TeamSide name={m.h} />
+        <span className={styles.vs}>vs</span>
+        <TeamSide name={m.a} />
+      </div>
+      <Link to={`/match/${m.id}`} className={styles.metaLink}>
+        <span className={styles.metaStage}>{stageLabel(m.grp)}</span>
+        <span className={styles.metaWhen}>{m.d} &middot; {m.t}</span>
+        <span className={styles.metaWhere}>{m.v}</span>
+      </Link>
+      <span className={styles.oddsRow}>
+        {(['1', 'X', '2'] as const).map((label, i) => (
+          <OddsButton
+            key={label}
+            matchId={m.id}
+            pick={PICK_MAP[label]}
+            odds={m.odds[i]}
+            token={tokenFor[label]}
+            homeTeam={m.h}
+            awayTeam={m.a}
+          />
+        ))}
+      </span>
+      <MarketSparkline
+        matchId={m.id}
+        odds={m.odds}
+        labels={[tokenFor['1'], 'X', tokenFor['2']]}
+      />
+      <PickCount
+        matchId={m.id}
+        odds={m.odds}
+        labels={[tokenFor['1'], 'X', tokenFor['2']]}
+      />
+    </div>
+  );
+}
+
 export function MatchList() {
-  const nextLn = useLineCounter();
   const groupFilter = useMatchesStore((s) => s.groupFilter);
   const setGroupFilter = useMatchesStore((s) => s.setGroupFilter);
 
@@ -24,25 +141,10 @@ export function MatchList() {
     ? MATCHES
     : MATCHES.filter((m) => m.grp === groupFilter);
 
-  // Group matches by date
-  const grouped: Record<string, typeof MATCHES> = {};
-  filteredMatches.forEach((m) => {
-    if (!grouped[m.d]) grouped[m.d] = [];
-    grouped[m.d].push(m);
-  });
-
   return (
-    <>
-      <Line n={nextLn()}>
-        <Wordmark />
-        <span className="bold"> · WC 2026</span>
-        <span className="dim"> /matches /groups /bracket /outrights /merch</span>
-      </Line>
-      <Blank n={nextLn()} />
-
-      {/* Group filter */}
-      <Line n={nextLn()}>
-        <span className="comment"># group </span>
+    <div className={styles.wrap}>
+      <div className={styles.filterBar}>
+        <span className={styles.filterLabel}>group</span>
         <span className={styles.filterRow}>
           {['all', ...GROUPS.map((g) => g.id)].map((g) => (
             <button
@@ -50,96 +152,21 @@ export function MatchList() {
               className={`${styles.filterBtn} ${groupFilter === g ? styles.filterBtnActive : ''}`}
               onClick={() => setGroupFilter(g)}
             >
-              {g === 'all' ? '*' : g}
+              {g === 'all' ? 'all' : g}
             </button>
           ))}
         </span>
-      </Line>
-      <Blank n={nextLn()} />
+      </div>
 
-      {/* Matches by date */}
-      {Object.entries(grouped).map(([date, ms]) => (
-        <div key={date}>
-          <Line n={nextLn()}><span className="dim">{date}, 2026</span></Line>
-          <Blank n={nextLn()} />
-          {ms.map((m) => (
-            <div key={m.id}>
-              <Line n={nextLn()}>
-                {(() => {
-                  const homeTeam = getTeamByName(m.h);
-                  const linkable = homeTeam && homeTeam.code !== 'TBD';
-                  return linkable ? (
-                    <Link to={`/team/${homeTeam.slug}`} className={styles.teamLink}>
-                      <TeamLogo team={homeTeam} variant="white" size={24} className={styles.teamLogo} />
-                      {m.h}
-                    </Link>
-                  ) : (
-                    <span className={styles.teamLink}>{m.h}</span>
-                  );
-                })()}
-                <span className="dim"> vs </span>
-                {(() => {
-                  const awayTeam = getTeamByName(m.a);
-                  const linkable = awayTeam && awayTeam.code !== 'TBD';
-                  return linkable ? (
-                    <Link to={`/team/${awayTeam.slug}`} className={styles.teamLink}>
-                      <TeamLogo team={awayTeam} variant="white" size={24} className={styles.teamLogo} />
-                      {m.a}
-                    </Link>
-                  ) : (
-                    <span className={styles.teamLink}>{m.a}</span>
-                  );
-                })()}
-              </Line>
-              <Line n={nextLn()}>
-                <Link to={`/match/${m.id}`} className={styles.teamLink}>
-                  <span className="dim">{m.t} &middot; {m.v} &middot; grp {m.grp}</span>
-                </Link>
-              </Line>
-              <Line n={nextLn()}>
-                <span className={styles.oddsRow}>
-                  {(['1', 'X', '2'] as const).map((label, i) => (
-                    <OddsButton
-                      key={label}
-                      matchId={m.id}
-                      pick={PICK_MAP[label]}
-                      odds={m.odds[i]}
-                      label={label}
-                      homeTeam={m.h}
-                      awayTeam={m.a}
-                    />
-                  ))}
-                </span>
-              </Line>
-              <Blank n={nextLn()} />
-            </div>
+      {filteredMatches.length === 0 ? (
+        <p className={styles.empty}>no matches in group {groupFilter.toUpperCase()}</p>
+      ) : (
+        <div className={styles.matchGrid}>
+          {filteredMatches.map((m) => (
+            <MatchCard key={m.id} m={m} />
           ))}
         </div>
-      ))}
-
-      {/* Knockout rounds */}
-      <Line n={nextLn()}><span className="comment"># -- knockout rounds -------------------</span></Line>
-      <Blank n={nextLn()} />
-      {[
-        ['Round of 32', 'Jun 28 -- Jul 3', '16 matches'],
-        ['Round of 16', 'Jul 4 -- Jul 7', '8 matches'],
-        ['Quarterfinals', 'Jul 9 -- Jul 11', '4 matches'],
-        ['Semifinals', 'Jul 14 -- Jul 15', '2 matches'],
-        ['3rd Place', 'Jul 18', '1 match'],
-        ['Final', 'Jul 19 -- MetLife Stadium, NJ', '1 match'],
-      ].map(([round, dates, count]) => (
-        <Line key={round} n={nextLn()}>
-          <span className="bright">{round}</span>
-          <span className="dim"> &middot; {dates} &middot; {count}</span>
-        </Line>
-      ))}
-
-      <Blank n={nextLn()} />
-      <Line n={nextLn()}><span className="comment"># 48 teams &middot; 104 matches &middot; 16 venues</span></Line>
-      <Line n={nextLn()}><span className="comment"># jun 11 -- jul 19, 2026</span></Line>
-      <Line n={nextLn()}><span className="comment"># united states &middot; canada &middot; mexico</span></Line>
-      <Blank n={nextLn()} />
-      <Line n={nextLn()} className="cursor-line"><span className="cursor" /></Line>
-    </>
+      )}
+    </div>
   );
 }

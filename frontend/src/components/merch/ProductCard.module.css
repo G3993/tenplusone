@@ -1,21 +1,136 @@
+/* Image-dominant tile. The MerchIcon (or eventually real product photo)
+   fills the upper portion; minimal name/price strip sits at the bottom.
+   Hover surfaces a quick "+ add" affordance in the corner. */
+
 .card {
-  display: block;
+  position: relative;
+  display: flex;
+  flex-direction: column;
   text-decoration: none;
   color: inherit;
-  padding: 2px 0;
+  background: var(--surface);
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  transition: background 0.14s, box-shadow 0.14s;
 }
 
-.card:hover .title {
-  color: var(--green);
+.card:hover,
+.card:focus-visible {
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--bright);
+  outline: none;
+}
+
+/* Visual area — takes most of the tile, centered. */
+.media {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  /* White so it matches the Printify mockups' white photo background. */
+  background: #ffffff;
+  color: var(--bright);
+  line-height: 0;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover .media {
+  transform: scale(1.04);
+}
+
+.img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Second product image: stacked over the first, fades in on hover. */
+.imgSecondary {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  object-fit: contain;
+  background: #ffffff;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.card:hover .imgSecondary,
+.card:focus-visible .imgSecondary {
+  opacity: 1;
+}
+
+/* Touch devices have no hover — keep the primary image only. */
+@media (hover: none) {
+  .imgSecondary { display: none; }
+}
+
+/* Bottom metadata strip — sparse, monospace, two columns. */
+.meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px 14px;
+  border-top: 1px solid var(--hairline);
 }
 
 .title {
+  font-size: 12px;
   color: var(--bright);
-  transition: color 0.1s;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 
-.icon {
-  display: inline-block;
+.price {
+  font-size: 12px;
   color: var(--bright);
-  line-height: 0;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* Hover affordance. Tucked top-right; appears on hover/focus only. */
+.add {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 5px 9px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--bright);
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.14s, transform 0.14s;
+  pointer-events: none;
+}
+
+.card:hover .add,
+.card:focus-visible .add {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Touch devices don't get hover — surface the price bar treatment as the
+   only differentiator instead. Keeps tiles readable without dead chrome. */
+@media (hover: none) {
+  .add { display: none; }
+  .card:hover { background: var(--surface); box-shadow: none; }
+  .card:hover .media { transform: none; }
+}
+
+@media (max-width: 640px) {
+  .meta { padding: 10px 12px 12px; }
+  .title, .price { font-size: 11px; }
 }

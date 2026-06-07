@@ -96,31 +96,15 @@ interface TeamInfo {
   code: string;
 }
 
-const FEATURED_TEAMS: TeamInfo[] = [
-  { name: 'Australia', slug: 'australia', code: 'AUS' },
-  { name: 'Belgium', slug: 'belgium', code: 'BEL' },
-  { name: 'Brazil', slug: 'brazil', code: 'BRA' },
-  { name: 'Canada', slug: 'canada', code: 'CAN' },
-  { name: 'Colombia', slug: 'colombia', code: 'COL' },
-  { name: 'Ecuador', slug: 'ecuador', code: 'ECU' },
-  { name: 'England', slug: 'england', code: 'ENG' },
-  { name: 'France', slug: 'france', code: 'FRA' },
-  { name: 'Germany', slug: 'germany', code: 'GER' },
-  { name: 'Japan', slug: 'japan', code: 'JPN' },
-  { name: 'Jordan', slug: 'jordan', code: 'JOR' },
-  { name: 'South Korea', slug: 'south-korea', code: 'KOR' },
-  { name: 'Mexico', slug: 'mexico', code: 'MEX' },
-  { name: 'Netherlands', slug: 'netherlands', code: 'NED' },
-  { name: 'New Zealand', slug: 'new-zealand', code: 'NZL' },
-  { name: 'Norway', slug: 'norway', code: 'NOR' },
-  { name: 'Panama', slug: 'panama', code: 'PAN' },
-  { name: 'Paraguay', slug: 'paraguay', code: 'PAR' },
-  { name: 'Portugal', slug: 'portugal', code: 'POR' },
-  { name: 'Saudi Arabia', slug: 'saudi-arabia', code: 'KSA' },
-  { name: 'Spain', slug: 'spain', code: 'ESP' },
-  { name: 'Uruguay', slug: 'uruguay', code: 'URU' },
-  { name: 'United States', slug: 'united-states', code: 'USA' },
-];
+// Catalog covers every WC26 nation. Driven off the canonical roster in
+// data/teams.ts so adding/removing a team there propagates here automatically
+// — no duplicate list to keep in sync.
+import { TEAMS } from './teams';
+const FEATURED_TEAMS: TeamInfo[] = TEAMS.map((t) => ({
+  name: t.name,
+  slug: t.slug,
+  code: t.code,
+})).sort((a, b) => a.name.localeCompare(b.name));
 
 function generateProducts(): MockProduct[] {
   const products: MockProduct[] = [];
@@ -135,7 +119,7 @@ function generateProducts(): MockProduct[] {
         id: productId,
         title: `${team.name} ${merch.label}`,
         handle,
-        description: `Official iFC World Cup 2026 ${merch.label.toLowerCase()} — ${team.name} edition. Limited run.`,
+        description: `Official iFC World Cup 2026 ${merch.label.toLowerCase()} · ${team.name} edition. Limited run.`,
         productType: merch.type,
         images: [
           {

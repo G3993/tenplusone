@@ -1,1 +1,264 @@
-/* ProductGrid uses Line components; minimal custom styles needed */
+/* Shop layout. Full-bleed grid with hairline gutters, minimal head chrome.
+   No editorial framing — the products are the page. */
+
+/* The shop reads as a clean, premium white storefront regardless of the
+   global dark/light theme. Rather than toggle the global theme store, we
+   pin the light palette tokens to the shop root; every descendant (header,
+   filters, ProductCard) already consumes these tokens, so the whole page
+   inverts to white with dark text in one place. */
+.wrap {
+  width: 100%;
+  box-sizing: border-box;
+
+  --bg: #ffffff;
+  --surface: #f6f6f4;
+  --hairline: #e4e4e0;
+  --faint: #efefec;
+  --dim: #6b6b64;
+  --white: #444440;
+  --bright: #0a0a0a;
+
+  background: var(--bg);
+  color: var(--bright);
+  /* Even vertical inset top + bottom so the white panel breathes on the
+     dark global chrome above/below it. */
+  padding-block: 8px 40px;
+}
+
+.head {
+  padding: 24px 24px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Featured / All collection tabs. */
+.tabs {
+  display: flex;
+  gap: 18px;
+}
+
+.tab {
+  font-family: var(--font);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 0 0 6px;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.tab:hover { color: var(--bright); }
+.tabActive { color: var(--bright); border-bottom-color: var(--bright); }
+
+.linkBtn {
+  font: inherit;
+  color: var(--bright);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.crumb {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.crumbLabel {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--bright);
+}
+
+.crumbCount {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Horizontally scrollable on mobile so the strip never wraps. */
+.filterBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.select {
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--bright);
+  background: var(--bg);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 9px 30px 9px 12px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 11px center;
+  transition: border-color 0.12s;
+}
+
+.select:hover { border-color: var(--dim); }
+.select:focus-visible { outline: none; border-color: var(--bright); }
+
+.filterToggle, .filterClear {
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--hairline);
+  padding: 7px 14px;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+.filterToggle:hover, .filterClear:hover { color: var(--bright); border-color: var(--bright); }
+
+.filterPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.filterLabel {
+  flex-shrink: 0;
+  width: 48px;
+  font-family: var(--mono, monospace);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.filters {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.filters::-webkit-scrollbar { display: none; }
+
+.filter {
+  flex-shrink: 0;
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid var(--hairline);
+  padding: 7px 12px;
+  font: inherit;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  white-space: nowrap;
+}
+
+.filter:hover {
+  color: var(--bright);
+  border-color: var(--bright);
+}
+
+/* Team chips carry a small crest before the label. */
+.filterTeam {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding-left: 9px;
+}
+
+/* Pixel-art crest (black ink on transparent). Rendered crisp at small size;
+   the 0.55 opacity at rest matches the dimmed label, then lifts on
+   hover/active. On the filled active chip it inverts to read on dark. */
+.filterCrest {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+  image-rendering: -webkit-optimize-contrast;
+  opacity: 0.55;
+  transition: opacity 0.12s, filter 0.12s;
+}
+
+.filterTeam:hover .filterCrest {
+  opacity: 1;
+}
+
+/* Active chip: filled with the bright text color so it reads as the
+   negative-space inversion of the resting state. */
+.filterActive,
+.filterActive:hover {
+  color: var(--bg);
+  border-color: var(--bright);
+  background: var(--bright);
+}
+
+/* Invert the black crest to the chip's background color when the chip is
+   filled, so the crest stays legible on the dark fill. */
+.filterActive .filterCrest {
+  opacity: 1;
+  filter: invert(1);
+}
+
+/* Full-bleed grid with 1px hairline gutters. Each cell carries its own
+   background so the gutters read as hairlines without extra DOM. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--hairline);
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.note {
+  padding: 60px 24px;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+@media (max-width: 960px) {
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .head { padding: 16px 16px 14px; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .crumbLabel { font-size: 10px; }
+  /* Stack each filter row (label above its scrolling chip strip) so the chips
+     get the full width and don't fight the label for space. */
+  .filterPanel { padding: 12px; gap: 14px; }
+  .filterRow { flex-direction: column; align-items: stretch; gap: 6px; }
+  .filterLabel { width: auto; }
+  .filter { padding: 8px 12px; }
+}

@@ -69,9 +69,20 @@ export const useCartStore = create<CartStore>()(
         const { checkoutUrl } = get();
         if (checkoutUrl) {
           window.location.href = checkoutUrl;
-        } else {
-          alert('Mock mode: no Shopify checkout URL available. Configure .env with real Shopify credentials.');
+          return;
         }
+        // Mock mode: no Shopify wired yet. Surface a non-blocking toast
+        // rather than the old alert() so the demo flow stays clean.
+        const banner = document.createElement('div');
+        banner.textContent = 'preview mode · live checkout opens once Shopify is connected';
+        banner.style.cssText = [
+          'position:fixed', 'left:50%', 'bottom:24px', 'transform:translateX(-50%)',
+          'background:var(--surface)', 'color:var(--bright)',
+          'border:1px solid var(--hairline)', 'padding:10px 16px',
+          'font:13px var(--font)', 'border-radius:999px', 'z-index:9999',
+        ].join(';');
+        document.body.appendChild(banner);
+        setTimeout(() => banner.remove(), 4500);
       },
 
       clear: () =>

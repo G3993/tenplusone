@@ -1,27 +1,9 @@
 import { Link } from 'react-router';
-import { MATCHES, OUTRIGHTS } from '../data/matches';
-import { GROUPS } from '../data/groups';
+import { OUTRIGHTS } from '../data/matches';
 import { getTeamByName } from '../data/teams';
 import { TeamLogo } from '../components/team/TeamLogo';
+import { marketSeries } from '../lib/market';
 import styles from './Bracket.module.css';
-
-// ---- group stage (real, scheduled fixtures) ---------------------------
-const GROUP_ORDER = GROUPS.map((g) => g.id);
-const MATCHES_BY_GROUP = GROUP_ORDER.map((id) => ({
-  id,
-  games: MATCHES.filter((m) => m.grp === id),
-})).filter((g) => g.games.length > 0);
-
-function TeamCell({ name }: { name: string }) {
-  const team = getTeamByName(name);
-  if (!team) return <span className={styles.code}>{name}</span>;
-  return (
-    <Link to={`/team/${team.slug}`} className={styles.team}>
-      <TeamLogo team={team} variant="white" size={20} />
-      <span className={styles.code}>{team.code}</span>
-    </Link>
-  );
-}
 
 // ---- knockout bracket (structure only — slots, no projected teams) -----
 type M = { id: string; a: string; b: string };
@@ -69,41 +51,10 @@ function Match({ m }: { m: M }) {
   );
 }
 
-export function Bracket() {
+/** Knockout board only — reused by WC26. */
+export function KnockoutBracket() {
   return (
-    <div className={styles.wrap}>
-      {/* ===================== GROUP STAGE ===================== */}
-      <div className={styles.head}>
-        <span className="bold">group stage</span>
-        <span className="dim"> · 48 teams · 12 groups · jun 11 – jun 27, 2026</span>
-      </div>
-
-      <div className={styles.groups}>
-        {MATCHES_BY_GROUP.map((g) => (
-          <div key={g.id} className={styles.group}>
-            <div className={styles.groupHead}>group {g.id}</div>
-            {g.games.map((m) => (
-              <div key={m.id} className={styles.game}>
-                <TeamCell name={m.h} />
-                <span className="dim">v</span>
-                <TeamCell name={m.a} />
-                <Link to={`/match/${m.id}`} className={styles.gameMeta}>{m.d}</Link>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-
-      <div className={styles.flow}>
-        <span className="comment"># top 2 + 8 best 3rd advance ↓ knockout</span>
-      </div>
-
-      {/* ===================== KNOCKOUT BRACKET ===================== */}
-      <div className={styles.head}>
-        <span className="bold">knockout bracket</span>
-        <span className="dim"> · 32 teams · jun 28 – jul 19, 2026</span>
-      </div>
-
+    <>
       <div className={styles.board}>
         {COLUMNS.map((col) => (
           <div key={col.label} className={styles.col}>
@@ -126,40 +77,93 @@ export function Bracket() {
       </div>
 
       <div className={styles.third}>
-        <span className="comment"># 3rd place playoff · jul 18 — </span>
+        <span className="comment">3rd place playoff &middot; jul 18 &middot; </span>
         <span className="dim">{THIRD.a} vs {THIRD.b}</span>
       </div>
       <div className={styles.note}>
         <span className="comment">
-          # knockout slots resolve after the group stage. 1A = winner group
-          A · 2B = runner-up group B · 3A = third-placed group A
+          knockout slots resolve after the group stage. 1A = winner group
+          A &middot; 2B = runner-up group B &middot; 3A = third-placed group A
         </span>
       </div>
+    </>
+  );
+}
 
-      {/* ===================== OUTRIGHTS ===================== */}
-      <div className={styles.head} style={{ paddingTop: 28 }}>
-        <span className="bold">outrights</span>
-        <span className="dim"> · to win the tournament</span>
-      </div>
-      <ol className={styles.outrights}>
-        {OUTRIGHTS.map((o, i) => {
-          const team = getTeamByName(o.team);
-          return (
-            <li key={o.team} className={styles.outright}>
-              <span className={styles.orRank}>{String(i + 1).padStart(2, '0')}</span>
-              {team ? (
-                <Link to={`/team/${team.slug}`} className={styles.team}>
-                  <TeamLogo team={team} variant="white" size={20} />
-                  <span className={styles.orName}>{o.team}</span>
-                </Link>
-              ) : (
+// --- outright "to win" market chart (same engine as the game charts) ---
+
+const OW = 200;
+const OH = 34;
+const ON = 40;
+
+/** American moneyline → vig-free-ish implied win probability. */
+function americanToProb(odds: string): number {
+  const n = parseInt(odds.replace('+', ''), 10);
+  if (Number.isNaN(n) || n === 0) return 0.04;
+  const p = odds.trim().startsWith('-')
+    ? Math.abs(n) / (Math.abs(n) + 100)
+    : 100 / (n + 100);
+  return Math.min(0.96, Math.max(0.02, p));
+}
+
+function stepPoints(series: number[]): string {
+  const x = (i: number) => (i / (ON - 1)) * OW;
+  const y = (p: number) => OH - (p / 0.35) * OH; // scale: 0–35% fills the box
+  const pts: string[] = [`0,${y(series[0]).toFixed(1)}`];
+  for (let i = 1; i < series.length; i++) {
+    pts.push(`${x(i).toFixed(1)},${y(series[i - 1]).toFixed(1)}`);
+    pts.push(`${x(i).toFixed(1)},${y(series[i]).toFixed(1)}`);
+  }
+  return pts.join(' ');
+}
+
+function OutrightSparkline({ team, odds }: { team: string; odds: string }) {
+  const prob = americanToProb(odds);
+  const series = marketSeries(`outright:${team}`, prob, ON);
+  const last = series[series.length - 1];
+  const yLast = OH - (last / 0.35) * OH;
+
+  const label = `${team} to win: ${(last * 100).toFixed(1)}% implied`;
+
+  return (
+    <span className={styles.orChart} aria-label={label}>
+      <svg
+        className={styles.orChartSvg}
+        viewBox={`0 0 ${OW} ${OH}`}
+        preserveAspectRatio="none"
+        role="img"
+      >
+        <title>{label}</title>
+        <polyline points={stepPoints(series)} className={styles.orLine} />
+        <circle cx={OW} cy={yLast} r="2.5" className={styles.orDot} />
+      </svg>
+      <span className={styles.orPct}>{(last * 100).toFixed(1)}%</span>
+    </span>
+  );
+}
+
+/** Outright (winner) odds — reused by WC26. */
+export function OutrightsList() {
+  return (
+    <ol className={styles.outrights}>
+      {OUTRIGHTS.map((o, i) => {
+        const team = getTeamByName(o.team);
+        return (
+          <li key={o.team} className={styles.outright}>
+            <span className={styles.orRank}>{String(i + 1).padStart(2, '0')}</span>
+            {team ? (
+              <Link to={`/team/${team.slug}`} className={styles.team}>
+                <TeamLogo team={team} variant="white" size={30} />
                 <span className={styles.orName}>{o.team}</span>
-              )}
-              <span className={styles.orOdds}>{o.odds}</span>
-            </li>
-          );
-        })}
-      </ol>
-    </div>
+              </Link>
+            ) : (
+              <span className={styles.orName}>{o.team}</span>
+            )}
+            <OutrightSparkline team={o.team} odds={o.odds} />
+            <span className={styles.orOdds}>{o.odds}</span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
