@@ -11,6 +11,8 @@
 .header {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 8px;
 }
 
@@ -24,7 +26,7 @@
 
 .title {
   font-family: var(--sans);
-  font-size: clamp(26px, 4.5vw, 40px);
+  font-size: clamp(20px, 3.4vw, 30px);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.05;
@@ -47,24 +49,27 @@
   padding: 26px 22px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 8px;
   min-width: 0;
 }
 
 .statValue {
-  font-size: clamp(26px, 4vw, 40px);
+  font-size: clamp(18px, 2.3vw, 24px);
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   line-height: 1;
   color: var(--bright);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .statLabel {
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 500;
   color: var(--dim);
 }
@@ -81,6 +86,7 @@
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--dim);
+  text-align: center;
 }
 
 /* ── group rivals: soft chips ─────────────────────────────────────── */
@@ -120,10 +126,11 @@
 .fixture + .fixture { border-top: 1px solid var(--hairline); }
 
 .fxLink {
-  display: grid;
-  grid-template-columns: 92px 1fr auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 16px;
+  justify-content: center;
+  gap: 8px 16px;
   padding: 18px 22px;
   text-decoration: none;
   color: var(--bright);
@@ -163,6 +170,5 @@
   .hub { margin-top: 40px; gap: 32px; }
   .keyStats { grid-template-columns: 1fr 1fr; }
   .stat { padding: 20px 18px; }
-  .fxLink { grid-template-columns: 1fr auto; gap: 10px; padding: 16px 18px; }
-  .fxDate { grid-column: 1 / -1; }
+  .fxLink { gap: 6px 10px; padding: 16px 18px; }
 }

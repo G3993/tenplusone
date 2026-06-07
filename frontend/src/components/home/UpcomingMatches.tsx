@@ -16,14 +16,6 @@ function stageLabel(grp: string): string {
   return ROUND_LABELS[grp] ?? `group ${grp}`;
 }
 
-/** Deterministic "picks" count per match, for the live-market line. */
-function picksFor(id: string): string {
-  let h = 2166136261;
-  for (let i = 0; i < id.length; i++) { h ^= id.charCodeAt(i); h = Math.imul(h, 16777619); }
-  const n = 600 + ((h >>> 0) % 24400);
-  return n >= 1000 ? `${(n / 1000).toFixed(2)}k` : String(n);
-}
-
 // Bucket the full fixture list into day groups, preserving chronological order
 // (MATCHES is already in official match-number order).
 const DAYS: { date: string; games: Match[] }[] = [];
@@ -56,7 +48,7 @@ function MatchRow({ m }: { m: Match }) {
           awaySlug={away.slug}
           homeColors={teamClashColors(home.slug)}
           awayColors={teamClashColors(away.slug)}
-          height={300}
+          height={250}
           className={styles.clash}
         />
       )}
@@ -87,9 +79,6 @@ function MatchRow({ m }: { m: Match }) {
         <span className={styles.metaHome}>{home?.code ?? m.h} {pct[0]}%</span>
         <span className={styles.metaDraw}>X {pct[1]}%</span>
         <span className={styles.metaAway}>{away?.code ?? m.a} {pct[2]}%</span>
-      </div>
-      <div className={styles.picks}>
-        <span className={styles.dot} /> live odds · {picksFor(m.id)} picks
       </div>
     </Link>
   );

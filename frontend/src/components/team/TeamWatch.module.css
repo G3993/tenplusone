@@ -11,6 +11,8 @@
 .header {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 8px;
 }
 
@@ -24,7 +26,7 @@
 
 .title {
   font-family: var(--sans);
-  font-size: clamp(26px, 4.5vw, 40px);
+  font-size: clamp(20px, 3.4vw, 30px);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.05;
@@ -40,6 +42,8 @@
 .item {
   display: flex;
   align-items: baseline;
+  justify-content: center;
+  text-align: center;
   gap: 20px;
   padding: 18px 4px;
   border-top: 1px solid var(--hairline);

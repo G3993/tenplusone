@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import { impliedProbabilities, marketSeries } from '../../lib/market';
 import styles from './MatchList.module.css';
 
@@ -28,24 +29,28 @@ function stepPoints(series: number[]): string {
  * Prediction-market chart: one stepped line per outcome (home / draw /
  * away) with an end pill showing the current implied probability.
  */
-export function MarketSparkline({ matchId, odds, labels }: Props) {
-  const probs = impliedProbabilities(odds);
-  const outcomes = (['home', 'draw', 'away'] as const).map((key, i) => {
-    const series = marketSeries(`${matchId}:${key}`, probs[i], N);
-    return {
-      key,
-      label: labels[i],
-      series,
-      last: series[series.length - 1],
-      pct: Math.round(series[series.length - 1] * 100),
-    };
-  });
+export const MarketSparkline = memo(function MarketSparkline({ matchId, odds, labels }: Props) {
+  // The series + stepped polylines are pure functions of (matchId, odds,
+  // labels) — memoize on their primitive values so re-renders (tab/filter
+  // switches) don't recompute marketSeries 3× + two 80-point polylines.
+  const { outcomes, label } = useMemo(() => {
+    const probs = impliedProbabilities(odds);
+    const outcomes = (['home', 'draw', 'away'] as const).map((key, i) => {
+      const series = marketSeries(`${matchId}:${key}`, probs[i], N);
+      return {
+        key,
+        label: labels[i],
+        series,
+        points: stepPoints(series),
+        last: series[series.length - 1],
+        pct: Math.round(series[series.length - 1] * 100),
+      };
+    });
+    const label = `live market: ${outcomes.map((o) => `${o.label} ${o.pct}%`).join(', ')}`;
+    return { outcomes, label };
+  }, [matchId, odds[0], odds[1], odds[2], labels[0], labels[1], labels[2]]);
 
   const y = (p: number) => H - p * H;
-
-  const label = `live market: ${outcomes
-    .map((o) => `${o.label} ${o.pct}%`)
-    .join(', ')}`;
 
   return (
     <span className={styles.market} aria-label={label}>
@@ -58,7 +63,7 @@ export function MarketSparkline({ matchId, odds, labels }: Props) {
         <title>{label}</title>
         {outcomes.map((o) => (
           <g key={o.key} className={styles[`mk_${o.key}`]}>
-            <polyline points={stepPoints(o.series)} className={styles.mkLine} />
+            <polyline points={o.points} className={styles.mkLine} />
             <circle cx={W} cy={y(o.last)} r="2.5" className={styles.mkDot} />
           </g>
         ))}
@@ -75,4 +80,4 @@ export function MarketSparkline({ matchId, odds, labels }: Props) {
       </span>
     </span>
   );
-}
+});

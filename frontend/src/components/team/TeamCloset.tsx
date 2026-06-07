@@ -6,15 +6,19 @@ import styles from './TeamCloset.module.css';
 
 interface TeamClosetProps {
   teamSlug: string;
-  /** Override the header title (defaults to "mundial merch"). */
+  /** Override the header title (defaults to "Shop the kit"). */
   title?: string;
+  /** Override the eyebrow line (defaults to "{team} · world cup 2026"). */
+  eyebrow?: string;
+  /** Smaller, uppercase-title header — used on the match page. */
+  compact?: boolean;
   /** Cap the number of items shown — turns the closet into a preview. */
   limit?: number;
   /** With `limit`, render a "view all" link to the full closet. */
   viewAllHref?: string;
 }
 
-export function TeamCloset({ teamSlug, title = 'Shop the kit', limit, viewAllHref }: TeamClosetProps) {
+export function TeamCloset({ teamSlug, title = 'Shop the kit', eyebrow, compact, limit, viewAllHref }: TeamClosetProps) {
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,9 +43,12 @@ export function TeamCloset({ teamSlug, title = 'Shop the kit', limit, viewAllHre
 
   return (
     <div className={styles.closet}>
-      <header className={styles.head}>
-        <span className={styles.eyebrow}>{teamSlug.replace(/-/g, ' ')} · world cup 2026</span>
-        <h2 className={styles.title}>{title}</h2>
+      <header className={`${styles.head} ${compact ? styles.headCompact : ''}`}>
+        {(() => {
+          const eb = eyebrow ?? `${teamSlug.replace(/-/g, ' ')} · world cup 2026`;
+          return eb ? <span className={styles.eyebrow}>{eb}</span> : null;
+        })()}
+        <h2 className={`${styles.title} ${compact ? styles.titleCompact : ''}`}>{title}</h2>
       </header>
 
       {loading && <div className={styles.note}>loading products…</div>}

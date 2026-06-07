@@ -22,9 +22,8 @@ export function Groups() {
                     key={teamName}
                     to={team ? `/team/${team.slug}` : '#'}
                     className={styles.cell}
-                    aria-label={`Group ${g.id} pot ${i + 1}: ${teamName}`}
+                    aria-label={`Group ${g.id}: ${teamName}`}
                   >
-                    <span className={styles.pot}>{i + 1}</span>
                     <span className={styles.logo}>
                       {team
                         ? <TeamLogo team={team} variant="white" size={44} />
@@ -32,7 +31,6 @@ export function Groups() {
                     </span>
                     <span className={styles.text}>
                       <span className={styles.name}>{teamName}</span>
-                      <span className={styles.meta}>{team?.code ?? '—'}</span>
                     </span>
                   </Link>
                 );

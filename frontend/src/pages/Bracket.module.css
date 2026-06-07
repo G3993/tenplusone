@@ -8,11 +8,27 @@
   font-size: 14px;
 }
 
+/* stage section labels */
+.stageLabel {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--green);
+  padding: 4px 0 16px;
+}
+
 /* group stage */
 .groups {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 20px;
+}
+
+.gameV {
+  font-size: 11px;
+  color: var(--dim);
+  padding: 0 2px;
 }
 
 .group {

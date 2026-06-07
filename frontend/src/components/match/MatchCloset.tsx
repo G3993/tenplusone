@@ -16,7 +16,9 @@ export function MatchCloset({ home, away }: MatchClosetProps) {
       <div id={`closet-${home.slug}`} style={{ scrollMarginTop: 80 }}>
         <TeamCloset
           teamSlug={home.slug}
-          title={`${home.name.toLowerCase()} closet`}
+          title={home.name}
+          eyebrow=""
+          compact
           limit={3}
           viewAllHref={`/team/${home.slug}`}
         />
@@ -24,7 +26,9 @@ export function MatchCloset({ home, away }: MatchClosetProps) {
       <div id={`closet-${away.slug}`} style={{ scrollMarginTop: 80 }}>
         <TeamCloset
           teamSlug={away.slug}
-          title={`${away.name.toLowerCase()} closet`}
+          title={away.name}
+          eyebrow=""
+          compact
           limit={3}
           viewAllHref={`/team/${away.slug}`}
         />

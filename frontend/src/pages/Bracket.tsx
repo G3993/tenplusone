@@ -1,9 +1,57 @@
 import { Link } from 'react-router';
-import { OUTRIGHTS } from '../data/matches';
+import { OUTRIGHTS, MATCHES, type Match } from '../data/matches';
 import { getTeamByName } from '../data/teams';
 import { TeamLogo } from '../components/team/TeamLogo';
 import { marketSeries } from '../lib/market';
 import styles from './Bracket.module.css';
+
+// ---- group stage (each group's games, shown before the knockout board) ----
+const GROUP_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
+
+function GroupGame({ m }: { m: Match }) {
+  const home = getTeamByName(m.h);
+  const away = getTeamByName(m.a);
+  return (
+    <Link to={`/match/${m.id}`} className={styles.game}>
+      {home && <TeamLogo team={home} variant="white" size={20} />}
+      <span className={styles.code}>{home?.code ?? m.h}</span>
+      <span className={styles.gameV}>v</span>
+      {away && <TeamLogo team={away} variant="white" size={20} />}
+      <span className={styles.code}>{away?.code ?? m.a}</span>
+      <span className={styles.gameMeta}>{m.d}</span>
+    </Link>
+  );
+}
+
+/** Group-stage board — every group's fixtures, ahead of the knockout bracket. */
+export function GroupStage() {
+  const byGroup: Record<string, Match[]> = {};
+  for (const m of MATCHES) {
+    if (!/^[A-L]$/.test(m.grp)) continue;
+    (byGroup[m.grp] ??= []).push(m);
+  }
+  return (
+    <>
+      <div className={styles.stageLabel}>group stage</div>
+      <div className={styles.groups}>
+        {GROUP_LETTERS.map((letter) => {
+          const games = byGroup[letter] ?? [];
+          if (!games.length) return null;
+          return (
+            <section key={letter} className={styles.group} aria-label={`Group ${letter}`}>
+              <div className={styles.groupHead}>group {letter}</div>
+              {games.map((m) => <GroupGame key={m.id} m={m} />)}
+            </section>
+          );
+        })}
+      </div>
+      <div className={styles.flow}>
+        <span className="comment">winners &amp; runners-up advance to the knockout bracket ↓</span>
+      </div>
+      <div className={styles.stageLabel}>knockout</div>
+    </>
+  );
+}
 
 // ---- knockout bracket (structure only — slots, no projected teams) -----
 type M = { id: string; a: string; b: string };

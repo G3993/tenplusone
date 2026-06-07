@@ -29,6 +29,22 @@
   color: var(--bright);
 }
 
+/* compact header (match page): smaller, gap tightened */
+.headCompact {
+  gap: 5px;
+  margin-bottom: 16px;
+}
+.headCompact .eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+}
+/* uppercase team name, much smaller than the team-page title */
+.titleCompact {
+  font-size: clamp(17px, 2.6vw, 23px);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
 .note {
   color: var(--dim);
   font-size: 14px;

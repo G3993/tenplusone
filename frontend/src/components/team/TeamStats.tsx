@@ -56,7 +56,7 @@ export function TeamStats({ team }: { team: TeamData }) {
 
       {fixtures.length > 0 && (
         <div className={styles.block}>
-          <h3 className={styles.blockTitle}>Fixtures</h3>
+          <h3 className={styles.blockTitle}>Matches</h3>
           <ul className={styles.fixtures}>
             {fixtures.map((m) => {
               const isHome = m.h === team.name;

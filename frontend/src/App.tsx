@@ -9,31 +9,57 @@ import { Home } from './pages/Home';
 import { useCartStore } from './stores/cart';
 
 // Code-split everything off the landing path. Home stays eager so the
-// first paint never waits on a network chunk.
-const WC26 = lazy(() => import('./pages/WC26').then((m) => ({ default: m.WC26 })));
-const Teams = lazy(() => import('./pages/Teams').then((m) => ({ default: m.Teams })));
-const BetSlipPage = lazy(() => import('./pages/BetSlipPage').then((m) => ({ default: m.BetSlipPage })));
-const Merch = lazy(() => import('./pages/Merch').then((m) => ({ default: m.Merch })));
-const Logos = lazy(() => import('./pages/Logos').then((m) => ({ default: m.Logos })));
-const ProductDetail = lazy(() => import('./pages/ProductDetail'));
-const Team = lazy(() => import('./pages/Team').then((m) => ({ default: m.Team })));
-const MatchDetail = lazy(() => import('./pages/MatchDetail').then((m) => ({ default: m.MatchDetail })));
-const AdminGenerate = lazy(() => import('./pages/AdminGenerate').then((m) => ({ default: m.AdminGenerate })));
-const RenderCrest = lazy(() => import('./pages/RenderCrest').then((m) => ({ default: m.RenderCrest })));
-const Privacy = lazy(() => import('./pages/Privacy'));
-const Terms = lazy(() => import('./pages/Terms'));
-const About = lazy(() => import('./pages/About'));
-const Shipping = lazy(() => import('./pages/Shipping'));
-const FAQ = lazy(() => import('./pages/FAQ'));
-const Contact = lazy(() => import('./pages/Contact'));
-const NotFound = lazy(() => import('./pages/NotFound'));
+// first paint never waits on a network chunk. Each chunk is a named loader so
+// it can be BOTH lazy-mounted and prefetched on idle/hover (see warmRoutes) —
+// that way the first navigation to a route doesn't pay a cold network fetch.
+const load = {
+  WC26: () => import('./pages/WC26'),
+  Teams: () => import('./pages/Teams'),
+  BetSlipPage: () => import('./pages/BetSlipPage'),
+  Merch: () => import('./pages/Merch'),
+  Logos: () => import('./pages/Logos'),
+  ProductDetail: () => import('./pages/ProductDetail'),
+  Team: () => import('./pages/Team'),
+  MatchDetail: () => import('./pages/MatchDetail'),
+  AdminGenerate: () => import('./pages/AdminGenerate'),
+  RenderCrest: () => import('./pages/RenderCrest'),
+  Privacy: () => import('./pages/Privacy'),
+  Terms: () => import('./pages/Terms'),
+  About: () => import('./pages/About'),
+  Shipping: () => import('./pages/Shipping'),
+  FAQ: () => import('./pages/FAQ'),
+  Contact: () => import('./pages/Contact'),
+  NotFound: () => import('./pages/NotFound'),
+};
+
+const WC26 = lazy(() => load.WC26().then((m) => ({ default: m.WC26 })));
+const Teams = lazy(() => load.Teams().then((m) => ({ default: m.Teams })));
+const BetSlipPage = lazy(() => load.BetSlipPage().then((m) => ({ default: m.BetSlipPage })));
+const Merch = lazy(() => load.Merch().then((m) => ({ default: m.Merch })));
+const Logos = lazy(() => load.Logos().then((m) => ({ default: m.Logos })));
+const ProductDetail = lazy(load.ProductDetail);
+const Team = lazy(() => load.Team().then((m) => ({ default: m.Team })));
+const MatchDetail = lazy(() => load.MatchDetail().then((m) => ({ default: m.MatchDetail })));
+const AdminGenerate = lazy(() => load.AdminGenerate().then((m) => ({ default: m.AdminGenerate })));
+const RenderCrest = lazy(() => load.RenderCrest().then((m) => ({ default: m.RenderCrest })));
+const Privacy = lazy(load.Privacy);
+const Terms = lazy(load.Terms);
+const About = lazy(load.About);
+const Shipping = lazy(load.Shipping);
+const FAQ = lazy(load.FAQ);
+const Contact = lazy(load.Contact);
+const NotFound = lazy(load.NotFound);
+
+// Prefetch the high-traffic route chunks once the landing page is idle, so the
+// first click into them resolves instantly instead of fetching a cold chunk.
+function warmRoutes() {
+  load.WC26(); load.Team(); load.MatchDetail(); load.Merch(); load.ProductDetail(); load.Teams();
+}
 
 function PageFallback() {
-  return (
-    <div style={{ padding: '40px 24px', color: 'var(--dim)', fontSize: 13 }}>
-      loading…
-    </div>
-  );
+  // Layout-stable, low-key — keeps the viewport from collapsing/flashing on the
+  // rare cold transition (most are prewarmed, so this seldom shows).
+  return <div style={{ minHeight: '60vh' }} aria-busy="true" />;
 }
 
 /** Jump to the top of the page on every route change so navigating into a
@@ -49,6 +75,14 @@ function ScrollToTop() {
 export function App() {
   useEffect(() => {
     useCartStore.getState().restoreCart();
+  }, []);
+
+  // Warm common route chunks during idle time after first paint.
+  useEffect(() => {
+    const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number }).requestIdleCallback;
+    if (ric) { const id = ric(warmRoutes, { timeout: 3000 }); return () => (window as unknown as { cancelIdleCallback?: (n: number) => void }).cancelIdleCallback?.(id); }
+    const t = setTimeout(warmRoutes, 1500);
+    return () => clearTimeout(t);
   }, []);
 
   return (
