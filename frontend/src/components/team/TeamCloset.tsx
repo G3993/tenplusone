@@ -48,7 +48,7 @@ export function TeamCloset({ teamSlug, title = 'Shop the kit', eyebrow, compact,
           const eb = eyebrow ?? `${teamSlug.replace(/-/g, ' ')} · world cup 2026`;
           return eb ? <span className={styles.eyebrow}>{eb}</span> : null;
         })()}
-        <h2 className={`${styles.title} ${compact ? styles.titleCompact : ''}`}>{title}</h2>
+        {title ? <h2 className={`${styles.title} ${compact ? styles.titleCompact : ''}`}>{title}</h2> : null}
       </header>
 
       {loading && <div className={styles.note}>loading products…</div>}

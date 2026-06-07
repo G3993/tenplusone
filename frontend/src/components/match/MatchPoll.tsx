@@ -51,8 +51,6 @@ export function MatchPoll({ matchId, home, away, odds }: Props) {
 
   return (
     <section className={styles.poll} aria-label="who wins?">
-      <div className={styles.head}>{pick ? 'locked in' : 'who wins?'}</div>
-
       <div className={styles.options} role="group" aria-label="pick the winner">
         {options.map((o) => (
           <button

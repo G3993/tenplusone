@@ -21,7 +21,7 @@ type Variation =
 // crest, then runs through the rest, looping. It's the first slide so the
 // header is alive on load; swiping reveals each treatment on its own.
 const REEL_MOTIFS: MotifId[] = [
-  'team3d', 'cube', 'teamColors', 'lines', 'chrome', 'mesh', 'pattern', 'abstract', 'internet', 'sweep', 'bauhaus',
+  'team3d', 'cube', 'teamColors', 'lines', 'chrome', 'mesh', 'pattern', 'abstract', 'internet', 'stats', 'bauhaus',
 ];
 const REEL_MS = 600;
 
@@ -176,9 +176,7 @@ export function TeamHero({ team }: { team: TeamData }) {
 
       <h1 className={styles.name}>{team.name}</h1>
       <div className={styles.sub}>
-        <span className={styles.code}>{team.code}</span>
-        <span className={styles.sep}>·</span>
-        <span className={styles.grp}>group {team.group}</span>
+        <span className={styles.code}>WC*26</span>
       </div>
     </header>
   );

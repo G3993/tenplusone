@@ -1,0 +1,316 @@
+/* Penalty Breaker — immersive full-viewport experience.
+   Premium-minimal, Lacoste "Ace Breaker" recolored to iFC: near-black studio,
+   electric-green accent, JetBrains Mono display type, film grain. The page owns
+   its own dark palette so it reads the same regardless of the site theme. */
+
+.root {
+  --pb-bg: #050706;
+  --pb-ink: #ffffff;
+  --pb-dim: #6f7a72;
+  --pb-green: #4ade80;
+  --pb-line: rgba(255, 255, 255, 0.14);
+
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: radial-gradient(120% 90% at 50% 8%, #0c130d 0%, #050706 55%, #020302 100%);
+  color: var(--pb-ink);
+  font-family: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* film grain + vignette, sit above the canvas, never eat pointer events */
+.grain,
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  mix-blend-mode: screen;
+}
+.vignette {
+  background: radial-gradient(120% 100% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+/* ---- shared overlay scaffolding ---- */
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: var(--pb-green);
+  margin-bottom: 22px;
+  padding-left: 0.42em;
+}
+
+.title {
+  font-weight: 800;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  font-size: clamp(48px, 12vw, 152px);
+  margin: 0;
+  text-transform: uppercase;
+}
+.titleSub {
+  display: block;
+  color: var(--pb-dim);
+  -webkit-text-stroke: 1px var(--pb-dim);
+  color: transparent;
+}
+
+.lede {
+  margin: 26px auto 0;
+  max-width: 30ch;
+  color: var(--pb-dim);
+  font-size: clamp(13px, 1.6vw, 15px);
+  line-height: 1.7;
+}
+
+/* primary button — mono, outline, fills green on hover */
+.cta {
+  margin-top: 40px;
+  font-family: inherit;
+  font-size: 15px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--pb-bg);
+  background: var(--pb-green);
+  border: 1px solid var(--pb-green);
+  padding: 18px 46px 18px 50px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, color 0.18s ease;
+  box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.5);
+}
+.cta:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 40px -10px rgba(74, 222, 128, 0.6);
+}
+.ctaGhost {
+  composes: cta;
+  color: var(--pb-ink);
+  background: transparent;
+  border-color: var(--pb-line);
+}
+.ctaGhost:hover {
+  border-color: var(--pb-ink);
+  box-shadow: none;
+}
+
+/* ---- in-game HUD ---- */
+.hud {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.hudTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: clamp(16px, 4vw, 40px);
+}
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.statLabel {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--pb-dim);
+}
+.statValue {
+  font-size: clamp(22px, 4vw, 34px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.statRight {
+  text-align: right;
+  align-items: flex-end;
+}
+.combo {
+  color: var(--pb-green);
+}
+
+/* shot pips */
+.shots {
+  display: flex;
+  gap: 7px;
+  margin-top: 6px;
+}
+.pip {
+  width: 22px;
+  height: 4px;
+  background: var(--pb-line);
+  border-radius: 2px;
+}
+.pipUsed {
+  background: var(--pb-ink);
+}
+.pipScored {
+  background: var(--pb-green);
+}
+
+/* center prompt + power meter */
+.prompt {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(96px, 16vh, 150px);
+  transform: translateX(-50%);
+  text-align: center;
+  width: min(420px, 86vw);
+}
+.promptText {
+  font-size: 13px;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--pb-ink);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+}
+.promptHint {
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--pb-dim);
+}
+.powerWrap {
+  margin-top: 16px;
+  height: 8px;
+  width: 100%;
+  border: 1px solid var(--pb-line);
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.4);
+}
+.powerFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--pb-green), #facc15 70%, #f43f5e);
+  border-radius: 999px;
+  transform-origin: left;
+}
+
+/* flash message on goal/save */
+.flash {
+  position: absolute;
+  left: 50%;
+  top: 38%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  font-size: clamp(40px, 11vw, 120px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  pointer-events: none;
+  animation: flashIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.flashGoal {
+  color: var(--pb-green);
+  text-shadow: 0 0 50px rgba(74, 222, 128, 0.6);
+}
+.flashSave {
+  color: #f43f5e;
+}
+@keyframes flashIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* result screen big number */
+.score {
+  font-size: clamp(72px, 20vw, 240px);
+  font-weight: 800;
+  line-height: 0.86;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--pb-green);
+  text-shadow: 0 0 70px rgba(74, 222, 128, 0.35);
+}
+.resultRow {
+  display: flex;
+  gap: clamp(24px, 6vw, 64px);
+  margin-top: 30px;
+}
+.resultStat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.resultStat b {
+  font-size: clamp(24px, 5vw, 40px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.resultStat span {
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--pb-dim);
+}
+.buttonRow {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 44px;
+}
+
+.fadeIn {
+  animation: fade 0.6s ease both;
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flash,
+  .fadeIn {
+    animation: none;
+  }
+}

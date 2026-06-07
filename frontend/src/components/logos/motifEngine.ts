@@ -1975,7 +1975,7 @@ export function setMotifSeed(n){ fillSeed = n; }
 export function setMatchStats(s){ matchStats = { ...DEFAULT_STATS, ...(s || {}) }; }
 export function setScorers(list){ scorers = Array.isArray(list) ? list.slice() : []; }
 export function renderMotif(canvas, pixels, opts){ return renderFlat(canvas, pixels, opts); }
-export const MOTIF_IDS = ["solid","lines","mesh","cube","teamColors","team3d","stats","sweep","pattern","abstract","internet","chrome","bauhaus"];
+export const MOTIF_IDS = ["solid","lines","mesh","cube","teamColors","team3d","stats","pattern","abstract","internet","chrome","bauhaus"];
 // The same flag palette the team3d / teamColors motifs use (black stripped),
 // as 0–255 RGB triples — for the homepage Pixel Clash to match those colours.
 export function teamClashColors(slug) {

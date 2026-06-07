@@ -1,39 +1,14 @@
-/* Team "stat hub" — editorial, modern, fashion-forward. Uses the Sora sans
-   (not the global mono) so it reads high-end rather than terminal. */
+/* Team "stat hub" — editorial, modern. Uses the Sora sans (not the global
+   mono) so it reads high-end rather than terminal. */
 .hub {
   font-family: var(--sans);
-  margin-top: 56px;
+  margin-top: 48px;
   display: flex;
   flex-direction: column;
   gap: 40px;
 }
 
-.header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 8px;
-}
-
-.eyebrow {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--green);
-}
-
-.title {
-  font-family: var(--sans);
-  font-size: clamp(20px, 3.4vw, 30px);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
-  color: var(--bright);
-}
-
-/* ── key stats: big numbers in a soft card grid ───────────────────── */
+/* ── key stats: compact, all-caps labels in a soft card grid ──────── */
 .keyStats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -46,17 +21,17 @@
 
 .stat {
   background: var(--surface);
-  padding: 26px 22px;
+  padding: 22px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
 }
 
 .statValue {
-  font-size: clamp(18px, 2.3vw, 24px);
+  font-size: clamp(17px, 2.2vw, 23px);
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -69,8 +44,10 @@
 }
 
 .statLabel {
-  font-size: 11.5px;
-  font-weight: 500;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--dim);
 }
 
@@ -82,93 +59,105 @@
 }
 
 .blockTitle {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--dim);
   text-align: center;
 }
 
-/* ── group rivals: soft chips ─────────────────────────────────────── */
-.rivals {
+/* ── group: a grid of all four nations ───────────────────────────── */
+.groupGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-.rival {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
+.gTeam {
   background: var(--surface);
-  border: 1px solid var(--hairline);
-  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 12px;
   text-decoration: none;
   color: var(--bright);
-  transition: border-color 0.15s ease, transform 0.15s ease;
+  transition: background 0.15s ease;
 }
-.rival:hover {
-  border-color: var(--green);
-  transform: translateY(-2px);
-}
-.rivalCrest { display: flex; flex: none; }
-.rivalName { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.gTeam:hover { background: var(--hover-surface); }
+.gSelf { background: color-mix(in srgb, var(--accent, var(--green)) 12%, var(--surface)); }
 
-/* ── fixtures: clean schedule rows ────────────────────────────────── */
+.gCrest { display: flex; height: 44px; align-items: center; }
+.gName {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ── matches: two crests side by side per game ───────────────────── */
 .fixtures {
-  list-style: none;
+  display: flex;
+  flex-direction: column;
   border: 1px solid var(--hairline);
   border-radius: 16px;
   overflow: hidden;
   background: var(--surface);
 }
-.fixture + .fixture { border-top: 1px solid var(--hairline); }
+.fx + .fx { border-top: 1px solid var(--hairline); }
 
-.fxLink {
+.fx {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 8px 16px;
-  padding: 18px 22px;
+  gap: clamp(16px, 5vw, 40px);
+  padding: 18px 20px;
   text-decoration: none;
   color: var(--bright);
   transition: background 0.15s ease;
+  position: relative;
 }
-.fxLink:hover { background: var(--hover-surface); }
+.fx:hover { background: var(--hover-surface); }
 
-.fxDate {
-  font-size: 13px;
+.fxSide {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+.fxSide:last-of-type { flex-direction: row-reverse; }
+.fxCrest { display: flex; flex: none; }
+.fxCode {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.fxV {
+  font-size: 12px;
   font-weight: 500;
   color: var(--dim);
 }
 
-.fxOpp {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  min-width: 0;
-}
-.fxCrest { display: flex; flex: none; }
-.fxVs { font-weight: 500; color: var(--dim); }
-
-.fxOdds {
-  font-size: 13px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  color: var(--white);
-  padding: 5px 12px;
-  border: 1px solid var(--hairline);
-  border-radius: 999px;
+.fxDate {
+  position: absolute;
+  right: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dim);
 }
 
 @media (max-width: 640px) {
-  .hub { margin-top: 40px; gap: 32px; }
+  .hub { margin-top: 36px; gap: 32px; }
   .keyStats { grid-template-columns: 1fr 1fr; }
-  .stat { padding: 20px 18px; }
-  .fxLink { gap: 6px 10px; padding: 16px 18px; }
+  .groupGrid { grid-template-columns: 1fr 1fr; }
+  .stat { padding: 18px 14px; }
+  .fxDate { display: none; }
+  .fxCode { font-size: 14px; }
 }

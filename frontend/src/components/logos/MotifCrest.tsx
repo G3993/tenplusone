@@ -23,12 +23,14 @@ interface MotifCrestProps {
   teamId: string;
   /** Spin the crest in 3D (paints once, rotates via CSS). For the home grid. */
   spin?: boolean;
+  /** Paint a single static frame — no rAF loop, no spin. A still neon crest. */
+  still?: boolean;
   className?: string;
 }
 
 const FPS_MS = 1000 / 14; // throttle — many of these animate at once on the grid
 
-export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId, spin = false, className }: MotifCrestProps) {
+export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId, spin = false, still = false, className }: MotifCrestProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const theme = useThemeStore((s) => s.theme);
 
@@ -53,8 +55,9 @@ export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId
       cv.style.height = size + 'px';
     };
 
-    // Spin mode: single paint, CSS handles the motion.
-    if (spin) { paint(0, false); return; }
+    // Spin mode: single paint, CSS handles the motion. Still mode: single
+    // static paint, no motion at all.
+    if (spin || still) { paint(0, false); return; }
 
     // Otherwise: self-driven, throttled animation loop.
     let raf = 0;
@@ -69,7 +72,7 @@ export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [pixels, seed, size, motif, shape, teamId, theme, spin]);
+  }, [pixels, seed, size, motif, shape, teamId, theme, spin, still]);
 
   if (spin) {
     // Vary speed + phase per team so they don't rotate in lockstep.

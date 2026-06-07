@@ -143,16 +143,19 @@
   min-width: 0;
 }
 .logo { flex: none; }
-.slot { width: 66px; height: 66px; display: inline-block; flex: none; }
+.slot { width: 140px; height: 140px; display: inline-block; flex: none; }
+.crest { flex: none; }
 
-.code {
+/* country name in caps, under each crest */
+.cName {
   font-family: var(--mono);
-  font-size: clamp(18px, 2.8vw, 26px);
-  letter-spacing: 0.02em;
+  font-size: clamp(12px, 1.8vw, 16px);
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  text-transform: uppercase;
   color: var(--bright);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-align: center;
+  max-width: 100%;
 }
 
 .v {

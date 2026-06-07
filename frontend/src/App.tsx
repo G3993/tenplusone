@@ -18,6 +18,7 @@ const load = {
   BetSlipPage: () => import('./pages/BetSlipPage'),
   Merch: () => import('./pages/Merch'),
   Logos: () => import('./pages/Logos'),
+  Play: () => import('./pages/Play'),
   ProductDetail: () => import('./pages/ProductDetail'),
   Team: () => import('./pages/Team'),
   MatchDetail: () => import('./pages/MatchDetail'),
@@ -37,6 +38,7 @@ const Teams = lazy(() => load.Teams().then((m) => ({ default: m.Teams })));
 const BetSlipPage = lazy(() => load.BetSlipPage().then((m) => ({ default: m.BetSlipPage })));
 const Merch = lazy(() => load.Merch().then((m) => ({ default: m.Merch })));
 const Logos = lazy(() => load.Logos().then((m) => ({ default: m.Logos })));
+const Play = lazy(() => load.Play().then((m) => ({ default: m.Play })));
 const ProductDetail = lazy(load.ProductDetail);
 const Team = lazy(() => load.Team().then((m) => ({ default: m.Team })));
 const MatchDetail = lazy(() => load.MatchDetail().then((m) => ({ default: m.MatchDetail })));
@@ -100,6 +102,7 @@ export function App() {
             <Route path="/shop" element={<Merch />} />
             <Route path="/merch/:handle" element={<ProductDetail />} />
             <Route path="/logos" element={<Logos />} />
+            <Route path="/play" element={<Play />} />
             <Route path="/team/:slug" element={<Team />} />
             <Route path="/match/:id" element={<MatchDetail />} />
             <Route path="/admin/generate/:matchId" element={<AdminGenerate />} />

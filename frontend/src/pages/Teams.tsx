@@ -19,7 +19,7 @@ const MAX_MOBILE = 320;
 // Motif styles applied across every crest. 'off' = the plain mark; 'cycle'
 // auto-rotates through all the others. spectrum/b&w/outline render via
 // SpectrumCrest; the rest are ports of the generator's motifs via MotifCrest.
-// (sweep / bauhaus / stats are intentionally hidden for now.)
+// (bauhaus is intentionally hidden for now; sweep/minesweeper is retired.)
 type Motif = 'off' | 'cycle' | 'spectrum' | 'mono' | 'outline' | MotifId;
 const MOTIFS: { key: Motif; label: string }[] = [
   { key: 'cycle', label: 'cycle' },
@@ -35,10 +35,11 @@ const MOTIFS: { key: Motif; label: string }[] = [
   { key: 'abstract', label: 'abstract' },
   { key: 'internet', label: 'internet' },
   { key: 'chrome', label: 'chrome' },
+  { key: 'stats', label: 'stats' },
 ];
 
 // The motifs the 'cycle' mode rotates through, in order.
-const CYCLE_LIST: Motif[] = ['spectrum', 'mono', 'outline', 'lines', 'mesh', 'cube', 'teamColors', 'pattern', 'abstract', 'internet', 'chrome'];
+const CYCLE_LIST: Motif[] = ['spectrum', 'mono', 'outline', 'lines', 'mesh', 'cube', 'teamColors', 'pattern', 'abstract', 'internet', 'chrome', 'stats'];
 
 // Color treatment for the SpectrumCrest-backed motifs only.
 const VARIANT: Record<'spectrum' | 'mono' | 'outline', 'spectrum' | 'mono' | 'outline'> = {

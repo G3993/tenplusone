@@ -30,10 +30,11 @@ export function Team() {
     >
       <TeamHero team={team} />
       <div className={styles.body}>
-        <TeamCloset teamSlug={team.slug} />
+        <TeamCloset teamSlug={team.slug} title="" eyebrow="WC*26" />
         <TeamStats team={team} />
-        <TeamWatch team={team} />
         <TeamLogoGrid team={team} />
+        {/* players to watch lives at the very bottom now */}
+        <TeamWatch team={team} />
         <Link to="/teams" className={styles.back}>← all teams</Link>
       </div>
     </div>

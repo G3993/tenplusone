@@ -3,18 +3,10 @@ import { Link } from 'react-router';
 import { MATCHES, type Match } from '../../data/matches';
 import { getTeamByName } from '../../data/teams';
 import { getLogoPixels } from '../../data/team-logos/index.ts';
-import { PixelClash } from './PixelClash';
-import { teamClashColors } from '../logos/motifEngine';
+import { MotifCrest } from '../logos/MotifCrest';
+import { teamSeed } from '../logos/spectrumMotif';
 import { impliedProbabilities } from '../../lib/market';
 import styles from './UpcomingMatches.module.css';
-
-const ROUND_LABELS: Record<string, string> = {
-  R32: 'round of 32', R16: 'round of 16', QF: 'quarterfinal',
-  SF: 'semifinal', '3rd': 'third place', FIN: 'final',
-};
-function stageLabel(grp: string): string {
-  return ROUND_LABELS[grp] ?? `group ${grp}`;
-}
 
 // Bucket the full fixture list into day groups, preserving chronological order
 // (MATCHES is already in official match-number order).
@@ -25,10 +17,27 @@ for (const m of MATCHES) {
   else DAYS.push({ date: m.d, games: [m] });
 }
 
-function Side({ name }: { name: string }) {
+/** A team crest in the static neon-3D (team3d) treatment + caps country name. */
+function Crest({ name }: { name: string }) {
   const team = getTeamByName(name);
-  // No crest here — the pixel-clash field below IS the logo treatment.
-  return <span className={styles.side}><span className={styles.code}>{team?.code ?? name}</span></span>;
+  return (
+    <span className={styles.side}>
+      {team ? (
+        <MotifCrest
+          still
+          motif="team3d"
+          teamId={team.slug}
+          seed={teamSeed(team.slug)}
+          pixels={getLogoPixels(team.slug, team.name[0])}
+          size={140}
+          className={styles.crest}
+        />
+      ) : (
+        <span className={styles.slot} />
+      )}
+      <span className={styles.cName}>{(team?.name ?? name).toUpperCase()}</span>
+    </span>
+  );
 }
 
 function MatchRow({ m }: { m: Match }) {
@@ -39,28 +48,14 @@ function MatchRow({ m }: { m: Match }) {
 
   return (
     <Link to={`/match/${m.id}`} className={styles.match}>
-      {/* PIXEL CLASH — both crests as pixel armies firing across the gap */}
-      {home && away && (
-        <PixelClash
-          homePixels={getLogoPixels(home.slug, home.name[0])}
-          awayPixels={getLogoPixels(away.slug, away.name[0])}
-          homeSlug={home.slug}
-          awaySlug={away.slug}
-          homeColors={teamClashColors(home.slug)}
-          awayColors={teamClashColors(away.slug)}
-          height={250}
-          className={styles.clash}
-        />
-      )}
-
-      {/* team names + match info, below the clashing crests */}
+      {/* static neon-3D crests, country name in caps under each */}
       <div className={styles.teams}>
-        <Side name={m.h} />
+        <Crest name={m.h} />
         <span className={styles.v}>v</span>
-        <Side name={m.a} />
+        <Crest name={m.a} />
       </div>
       <div className={styles.info}>
-        {[stageLabel(m.grp), m.d, m.t, m.v].filter(Boolean).join(' · ')}
+        {[m.d, m.t, m.v].filter(Boolean).join(' · ')}
       </div>
 
       {/* live prediction signal — pixelized odds meter (32 cells, brand grid) */}

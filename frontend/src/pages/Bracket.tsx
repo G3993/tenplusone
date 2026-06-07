@@ -5,25 +5,30 @@ import { TeamLogo } from '../components/team/TeamLogo';
 import { marketSeries } from '../lib/market';
 import styles from './Bracket.module.css';
 
-// ---- group stage (each group's games, shown before the knockout board) ----
+// ---- group stage (each group = a bracket column of its fixtures) -----------
 const GROUP_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L'];
 
-function GroupGame({ m }: { m: Match }) {
+/** A single group game as a bracket box — same look as the knockout matches. */
+function GroupMatchBox({ m }: { m: Match }) {
   const home = getTeamByName(m.h);
   const away = getTeamByName(m.a);
   return (
-    <Link to={`/match/${m.id}`} className={styles.game}>
-      {home && <TeamLogo team={home} variant="white" size={20} />}
-      <span className={styles.code}>{home?.code ?? m.h}</span>
-      <span className={styles.gameV}>v</span>
-      {away && <TeamLogo team={away} variant="white" size={20} />}
-      <span className={styles.code}>{away?.code ?? m.a}</span>
-      <span className={styles.gameMeta}>{m.d}</span>
+    <Link to={`/match/${m.id}`} className={styles.match}>
+      <span className={styles.matchId}>{m.d}</span>
+      <span className={styles.slot}>
+        {home && <TeamLogo team={home} variant="white" size={18} />}
+        <span className={styles.code}>{home?.code ?? m.h}</span>
+      </span>
+      <span className={styles.slot}>
+        {away && <TeamLogo team={away} variant="white" size={18} />}
+        <span className={styles.code}>{away?.code ?? m.a}</span>
+      </span>
     </Link>
   );
 }
 
-/** Group-stage board — every group's fixtures, ahead of the knockout bracket. */
+/** Group-stage board — every group is a column of its fixtures, in the same
+ *  branch/bracket style as the knockout board below it. */
 export function GroupStage() {
   const byGroup: Record<string, Match[]> = {};
   for (const m of MATCHES) {
@@ -33,15 +38,17 @@ export function GroupStage() {
   return (
     <>
       <div className={styles.stageLabel}>group stage</div>
-      <div className={styles.groups}>
+      <div className={styles.board}>
         {GROUP_LETTERS.map((letter) => {
           const games = byGroup[letter] ?? [];
           if (!games.length) return null;
           return (
-            <section key={letter} className={styles.group} aria-label={`Group ${letter}`}>
-              <div className={styles.groupHead}>group {letter}</div>
-              {games.map((m) => <GroupGame key={m.id} m={m} />)}
-            </section>
+            <div key={letter} className={styles.col} aria-label={`Group ${letter}`}>
+              <div className={styles.colHead}>group {letter}</div>
+              <div className={styles.colBody}>
+                {games.map((m) => <GroupMatchBox key={m.id} m={m} />)}
+              </div>
+            </div>
           );
         })}
       </div>
