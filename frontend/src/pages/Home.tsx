@@ -19,7 +19,6 @@ export function Home() {
         <section className={styles.wc}>
           <p className={styles.wcMeta}>world cup 2026 &middot; usa &middot; canada &middot; mexico</p>
           <Countdown big className={styles.wcCountdown} />
-          <p className={styles.wcDrop}>[ collection drops soon ]</p>
         </section>
       </div>
       <HomePreview />

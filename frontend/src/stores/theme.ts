@@ -5,10 +5,11 @@ export type Theme = 'dark' | 'light';
 const STORAGE_KEY = 'ifc-theme';
 
 function readInitial(): Theme {
-  if (typeof document === 'undefined') return 'light';
+  if (typeof document === 'undefined') return 'dark';
+  // light only if the user has explicitly chosen it; dark is the default
   return document.documentElement.getAttribute('data-theme') === 'dark'
     ? 'dark'
-    : 'light';
+    : (localStorage.getItem(STORAGE_KEY) === 'light' ? 'light' : 'dark');
 }
 
 function apply(theme: Theme) {

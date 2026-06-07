@@ -40,7 +40,7 @@
       // apply saved theme before paint to avoid a flash
       try {
         var t = localStorage.getItem('ifc-theme');
-        if (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) t = 'dark';
+        if (!t) t = 'dark'; // dark is the default
         if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
       } catch (e) {}
     </script>
