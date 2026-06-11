@@ -28,20 +28,31 @@
 }
 
 .crestName {
-  font-size: 15px;
+  font-family: var(--display);
+  font-size: 26px;
   letter-spacing: 0.04em;
-  text-transform: lowercase;
-  color: var(--dim);
+  text-transform: uppercase;
+  color: #ffffff;
   transition: color 0.15s ease;
 }
 
-.crest:hover .crestName { color: var(--bright); }
+.crest:hover .crestName { color: var(--green); }
 
 .vs {
   align-self: center;
-  font-size: 15px;
+  font-size: 20px;
   font-style: italic;
   color: var(--dim);
+}
+
+/* On mobile the two 180px crests + gap are wider than the viewport and clip
+   at the edges — shrink the crest canvases so the whole match-up fits. */
+@media (max-width: 560px) {
+  .crests { gap: clamp(14px, 5vw, 34px); padding: 8px 0 28px; }
+  .crest canvas {
+    width: clamp(104px, 33vw, 150px) !important;
+    height: clamp(104px, 33vw, 150px) !important;
+  }
 }
 
 /* everything below the crests is centered */
@@ -51,7 +62,7 @@
 }
 
 .group {
-  font-size: 12px;
+  font-size: 18px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--dim);
@@ -65,7 +76,7 @@
 }
 
 .venue {
-  font-size: 13px;
+  font-size: 22px;
   color: var(--dim);
 }
 
@@ -82,7 +93,7 @@
 }
 
 .liveHead {
-  font-size: 11px;
+  font-size: 16px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--dim);
@@ -106,7 +117,7 @@
 }
 
 .muted {
-  font-size: 14px;
+  font-size: 20px;
   color: var(--dim);
 }
 
@@ -125,7 +136,7 @@
   border-radius: 2px;
   color: var(--green);
   text-decoration: none;
-  font-size: 14px;
+  font-size: 20px;
   transition: border-color 0.15s ease;
 }
 
@@ -137,7 +148,7 @@
   margin-top: 48px;
   color: var(--dim);
   text-decoration: none;
-  font-size: 13px;
+  font-size: 18px;
   transition: color 0.15s ease;
 }
 
@@ -147,5 +158,5 @@
   text-align: center;
   padding: 96px 0 24px;
   color: var(--dim);
-  font-size: 15px;
+  font-size: 20px;
 }

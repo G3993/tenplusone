@@ -9,18 +9,52 @@
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1px;
-  background: var(--hairline);
-  border: 1px solid var(--hairline);
+  gap: 26px;
   width: 100%;
   box-sizing: border-box;
   align-items: stretch;
 }
 
+/* each group is a 3D neon block (CTA family): scanline face + isometric
+   top/right extrusion */
 .group {
-  background: var(--surface);
+  --d: 6px;
+  position: relative;
+  border: 1px solid #35d06b;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.12) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    #04100a;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.14);
   display: flex;
   flex-direction: column;
+}
+.group::before,
+.group::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.45) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #0a2c17;
+  border: 1px solid #2aa957;
+}
+/* top face */
+.group::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+/* right face */
+.group::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
 }
 
 .groupHead {
@@ -28,20 +62,20 @@
   align-items: baseline;
   gap: 8px;
   padding: 14px 18px;
-  border-bottom: 1px solid var(--faint);
+  border-bottom: 1px solid rgba(53, 208, 107, 0.4);
 }
 
 .groupTag {
-  font-size: 11px;
+  font-size: 18px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--dim);
+  color: var(--green);
 }
 
 .groupId {
-  font-size: 11px;
+  font-size: 18px;
   font-weight: 500;
-  color: var(--dim);
+  color: var(--green);
   letter-spacing: 0.18em;
   text-transform: uppercase;
 }
@@ -62,15 +96,15 @@
 }
 
 .cell + .cell {
-  border-top: 1px solid var(--hairline);
+  border-top: 1px solid rgba(53, 208, 107, 0.3);
 }
 
 .cell:hover {
-  background: var(--hover-surface);
+  background: rgba(74, 222, 128, 0.08);
 }
 
 .pot {
-  font-size: 11px;
+  font-size: 16px;
   color: var(--line-num);
   width: 12px;
   flex-shrink: 0;
@@ -94,7 +128,8 @@
 }
 
 .name {
-  font-size: 15px;
+  font-size: 19px;
+  text-transform: uppercase;
   color: var(--bright);
   white-space: nowrap;
   overflow: hidden;
@@ -107,7 +142,7 @@
 }
 
 .meta {
-  font-size: 11px;
+  font-size: 16px;
   color: var(--white);
   margin-top: 5px;
   letter-spacing: 0.06em;

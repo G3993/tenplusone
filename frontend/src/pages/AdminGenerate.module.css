@@ -30,7 +30,7 @@
 
 .field label {
   font-family: var(--font);
-  font-size: 11px;
+  font-size: 16px;
   color: var(--dim);
   text-transform: uppercase;
   letter-spacing: 0.05em;

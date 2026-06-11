@@ -5,7 +5,6 @@
   text-align: center;
   gap: 24px;
   padding: 44px 0;
-  border-bottom: 1px solid var(--hairline);
 }
 
 /* Gallery slider — one crest variation per slide, swipe to flip through. */
@@ -31,7 +30,7 @@
   min-height: 48vh;
 }
 
-/* Pagination dots — the only chrome on the gallery. */
+/* Pagination dots — the crest-variation selector, shown under the logo. */
 .dots {
   display: flex;
   align-items: center;
@@ -58,7 +57,8 @@
 }
 
 .name {
-  font-size: 52px;
+  font-family: var(--display);
+  font-size: 64px;
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--bright);
@@ -71,7 +71,7 @@
   align-items: center;
   justify-content: center;
   gap: 10px;
-  font-size: 15px;
+  font-size: 22px;
   color: var(--dim);
 }
 
@@ -85,7 +85,9 @@
 
 @media (max-width: 560px) {
   .hero { gap: 18px; padding: 24px 0 32px; }
-  .slide { min-height: 40vh; }
+  .slide { min-height: 34vh; }
+  /* slightly smaller crest in the logo gallery on mobile */
+  .slide canvas, .slide img, .slide svg { width: 300px !important; height: 300px !important; }
   .name { font-size: 34px; }
-  .sub { font-size: 14px; }
+  .sub { font-size: 18px; }
 }

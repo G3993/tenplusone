@@ -46,7 +46,14 @@ export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId
       setMotif(motif);
       setMotifDark(theme === 'dark');
       setMotifShape(shape);
-      setMotifSeed(seed);
+      // B&W ('solid') and the ASCII 'internet' effect animate by reshuffling
+      // their patch styles — the generator bumps fillSeed every 450ms; mirror
+      // that here so they visibly morph.
+      setMotifSeed(
+        (motif === 'solid' || motif === 'internet') && animate
+          ? seed + Math.floor(time / 0.45)
+          : seed,
+      );
       renderMotif(cv, enginePixels, {
         cell, off: 'rgba(0,0,0,0)', bg: 'rgba(0,0,0,0)', applyFill: true,
         teamId, time, animate,

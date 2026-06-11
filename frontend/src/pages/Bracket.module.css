@@ -5,12 +5,12 @@
 
 .head {
   padding: 4px 0 20px;
-  font-size: 14px;
+  font-size: 20px;
 }
 
 /* stage section labels */
 .stageLabel {
-  font-size: 12px;
+  font-size: 20px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   font-weight: 700;
@@ -26,7 +26,7 @@
 }
 
 .gameV {
-  font-size: 11px;
+  font-size: 16px;
   color: var(--dim);
   padding: 0 2px;
 }
@@ -38,7 +38,7 @@
 }
 
 .groupHead {
-  font-size: 11px;
+  font-size: 16px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--dim);
@@ -60,7 +60,7 @@
 
 .gameMeta {
   margin-left: auto;
-  font-size: 11px;
+  font-size: 16px;
   color: var(--dim);
   text-decoration: none;
 }
@@ -71,7 +71,7 @@
 
 .flow {
   padding: 26px 0;
-  font-size: 13px;
+  font-size: 18px;
   text-align: center;
 }
 
@@ -90,7 +90,7 @@
 }
 
 .colHead {
-  font-size: 11px;
+  font-size: 18px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--dim);
@@ -106,35 +106,69 @@
   gap: 8px;
 }
 
+/* bracket boxes in the CTA style: 3D neon-green scanline blocks with the
+   isometric top/right extrusion, square corners */
 .match {
+  --d: 5px;
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 1px;
   margin: 0 12px;
-  border: 1px solid var(--faint);
-  background: var(--bg);
-  border-radius: 10px;
-  overflow: hidden;
+  border: 1px solid #35d06b;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.12) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    #04100a;
+  border-radius: 0;
   text-decoration: none;
   color: inherit;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.14);
   transition: border-color 0.12s, box-shadow 0.12s;
+}
+.match::before,
+.match::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.45) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #0a2c17;
+  border: 1px solid #2aa957;
+}
+/* top face */
+.match::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+/* right face */
+.match::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
 }
 
 .match:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.3);
 }
 
 .matchId {
-  font-size: 9px;
+  font-size: 16px;
   letter-spacing: 0.1em;
-  color: var(--line-num);
+  color: #46a96c;
   padding: 3px 8px 2px;
-  border-bottom: 1px solid var(--faint);
+  border-bottom: 1px solid rgba(53, 208, 107, 0.4);
 }
 
 .slot {
-  font-size: 12px;
-  color: var(--white);
+  font-size: 18px;
+  color: #7df2a4;
   padding: 5px 8px;
   display: flex;
   align-items: center;
@@ -142,7 +176,7 @@
 }
 
 .slot + .slot {
-  border-top: 1px solid var(--faint);
+  border-top: 1px solid rgba(53, 208, 107, 0.4);
 }
 
 .team {
@@ -158,7 +192,7 @@
 }
 
 .code {
-  font-size: 12px;
+  font-size: 18px;
   letter-spacing: 0.04em;
 }
 
@@ -182,7 +216,7 @@
 
 .third {
   padding: 18px 0 6px;
-  font-size: 13px;
+  font-size: 18px;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -195,108 +229,207 @@
 
 .note {
   padding: 2px 0 24px;
-  font-size: 12px;
+  font-size: 18px;
   max-width: 640px;
   line-height: 1.6;
 }
 
-/* outrights */
-.outrights {
+/* ── outrights win grid — floating tiles like the homepage team grid:
+   no background, no borders; crest + name + implied win % ─────────────── */
+.winGrid {
   list-style: none;
-  max-width: 760px;
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+  margin: 0;
+  padding: 0;
 }
 
-.outright {
+.winCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 26px 12px 20px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.winCrest {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
-  border: 1px solid var(--faint);
-  border-radius: 10px;
-  background: var(--surface);
-  transition: border-color 0.12s, box-shadow 0.12s;
+  justify-content: center;
 }
 
-.outright:hover {
-  border-color: var(--green);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
-}
-
-.orRank {
-  font-size: 13px;
-  color: var(--dim);
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-}
-
-.outright .team {
-  flex-shrink: 0;
-  width: 200px;
-  gap: 10px;
-}
-
-.orName {
-  font-size: 16px;
+.winName {
+  font-family: var(--display);
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--bright);
+  text-align: center;
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  transition: color 0.12s;
 }
+.winCell:hover .winName { color: var(--green); }
 
-/* live "to win" market chart */
-.orChart {
-  flex: 1;
-  min-width: 60px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.orChartSvg {
-  flex: 1;
-  height: 34px;
-  min-width: 0;
-  display: block;
-}
-
-.orLine {
-  fill: none;
-  stroke: var(--green);
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-}
-
-.orDot {
-  fill: var(--green);
-}
-
-.orPct {
-  font-size: 12px;
+.winPct {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 700;
   color: var(--green);
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-  width: 44px;
-  text-align: right;
 }
 
-.outright .team:hover .orName {
-  color: var(--green);
+@media (max-width: 860px) {
+  .winGrid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 560px) {
+  .winGrid { grid-template-columns: repeat(2, 1fr); }
 }
 
-.orOdds {
-  font-size: 16px;
+/* ── winner-prediction hero ──────────────────────────────────────────── */
+.orWrap {
+  width: 100%;
+  margin: 0;
+  padding: 0 24px 8px;
+  box-sizing: border-box;
+}
+
+.orHero {
+  text-align: center;
+  padding: 8px 0 30px;
+}
+
+.orTrophy {
+  font-size: 40px;
+  line-height: 1;
+  margin-bottom: 10px;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.25));
+}
+
+.orHeroTitle {
+  font-family: var(--display, inherit);
+  font-weight: 800;
+  font-size: clamp(52px, 10vw, 80px);
+  letter-spacing: -0.025em;
   color: var(--bright);
+  margin: 0 0 8px;
+}
+
+.orHeroSub {
+  font-size: 26px;
+  line-height: 1.55;
+  color: var(--dim);
+  max-width: 46ch;
+  margin: 0 auto;
+}
+
+/* top-three podium */
+.podium {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 0 auto 28px;
+  align-items: end;
+}
+
+.podiumCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--white);
+  padding: 22px 14px;
+  border: 1px solid var(--faint);
+  border-radius: 14px;
+  background: var(--surface);
+  transition: transform 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+
+.podiumCard:hover {
+  transform: translateY(-3px);
+  border-color: var(--green);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+}
+
+/* the winner sits highest + gets a gold accent; silver/bronze step down */
+.podium1 { order: 2; padding-top: 30px; border-color: #d4af37; background: linear-gradient(180deg, rgba(212,175,55,0.10), var(--surface)); }
+.podium2 { order: 1; }
+.podium3 { order: 3; }
+
+.podiumRank {
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-weight: 700;
+}
+
+.podiumName {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--bright);
+  text-align: center;
+}
+
+.podiumPct {
+  font-size: 24px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-  width: 60px;
-  text-align: right;
-  font-weight: 600;
+  color: var(--green);
+  line-height: 1;
+}
+
+.podiumOdds {
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* mobile: bigger knockout boxes + readable text */
+@media (max-width: 720px) {
+  .col { min-width: 168px; }
+  .colHead { font-size: 16px; }
+  .matchId { font-size: 20px; padding: 5px 10px 4px; }
+  .slot { font-size: 17px; padding: 8px 10px; }
+  .code { font-size: 17px; }
 }
 
 @media (max-width: 560px) {
-  .outright .team { width: 96px; }
-  .orChartSvg { display: none; }
-  .orChart { flex: 0 0 auto; min-width: 0; }
+  .orWrap { padding: 0 14px 8px; }
+  .podium { gap: 7px; }
+  .podiumCard { padding: 14px 7px; border-radius: 10px; }
+  .podium1 { padding-top: 20px; }
+  .podiumName { font-size: 18px; }
+  .podiumPct { font-size: 18px; }
+  .podiumOdds { font-size: 16px; }
+}
+
+/* ── bracket connectors ──────────────────────────────────────────────── */
+/* Knockout board: link each match to the next round with elbow lines so the
+   columns read as a real single-elimination tree instead of loose boxes. */
+.bracketBoard .col { position: relative; }
+.bracketBoard .match { position: relative; }
+
+
+/* Group board: each group is its own little bracket — a vertical spine down
+   the column with a tick out to every fixture. */
+.groupBoard .colBody {
+  position: relative;
+  padding-left: 12px;
+}
+.groupBoard .colBody::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 16px;
+  bottom: 16px;
+  width: 1px;
+  background: var(--faint);
 }

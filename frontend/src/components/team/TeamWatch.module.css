@@ -17,7 +17,8 @@
 }
 
 .eyebrow {
-  font-size: 12px;
+  font-family: var(--display);
+  font-size: 19px;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -33,47 +34,66 @@
   color: var(--bright);
 }
 
+/* full squad as a dense two-column table inside a bordered container */
 .list {
   list-style: none;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 44px;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+  padding: 4px 20px;
 }
 
 .item {
   display: flex;
   align-items: baseline;
-  justify-content: center;
-  text-align: center;
-  gap: 20px;
-  padding: 18px 4px;
-  border-top: 1px solid var(--hairline);
+  gap: 14px;
+  padding: 13px 4px;
+  border-bottom: 1px solid var(--hairline);
+  text-align: left;
 }
-.item:last-child { border-bottom: 1px solid var(--hairline); }
+/* drop the divider on the final row of each column so it doesn't double the
+   container's bottom border */
+.item:last-child,
+.item:nth-last-child(2):nth-child(odd) {
+  border-bottom: none;
+}
 
 .num {
   flex: none;
-  width: 28px;
-  font-size: 13px;
-  font-weight: 600;
+  width: 38px;
+  text-align: right;
+  font-size: 20px;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--green);
 }
 
 .player {
-  font-size: clamp(19px, 2.8vw, 26px);
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  flex: 1;
+  min-width: 0;
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: -0.005em;
   color: var(--bright);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.fact {
-  font-size: 15.5px;
-  font-weight: 400;
-  line-height: 1.5;
-  color: var(--white);
+.pos {
+  flex: none;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim);
 }
 
 @media (max-width: 640px) {
   .watch { margin-top: 36px; }
-  .item { gap: 14px; padding: 15px 2px; }
+  .list { grid-template-columns: 1fr; column-gap: 0; }
+  .item { gap: 12px; padding: 10px 2px; }
+  .player { font-size: 18px; }
 }

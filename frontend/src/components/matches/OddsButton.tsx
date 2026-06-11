@@ -1,4 +1,4 @@
-import { useSlipStore } from '../../stores/slip';
+import { useNavigate } from 'react-router';
 import { toAmerican } from '../../lib/odds';
 import styles from './MatchList.module.css';
 
@@ -12,34 +12,45 @@ interface OddsButtonProps {
   awayTeam: string;
   /** Display-only: render the odds as static stats, no add-to-slip. */
   readOnly?: boolean;
+  /** Optional sub-label shown inside the box under the odds (e.g. team code). */
+  sub?: string;
 }
 
-export function OddsButton({ matchId, pick, odds, token, homeTeam, awayTeam, readOnly = false }: OddsButtonProps) {
-  const bets = useSlipStore((s) => s.bets);
-  const toggleBet = useSlipStore((s) => s.toggleBet);
+export function OddsButton({ matchId, pick, odds, token, readOnly = false, sub }: OddsButtonProps) {
+  const navigate = useNavigate();
 
-  const isPicked = bets.some((b) => b.matchId === matchId && b.pick === pick);
-
+  // Clicking a pick opens the match page with that side preselected (the
+  // closet there filters to the picked team). No persistent slip state, so
+  // cards never show a stale "already picked" press.
   const handleClick = () => {
-    toggleBet({ matchId, pick, odds, homeTeam, awayTeam });
+    navigate(`/match/${matchId}?pick=${pick}`);
   };
+
+  const content = sub ? (
+    <>
+      <span className={styles.oddVal}>{toAmerican(odds)}</span>
+      <span className={styles.oddSub}>{sub}</span>
+    </>
+  ) : (
+    toAmerican(odds)
+  );
+  const cls = `${styles.oddBtn} ${sub ? styles.oddBtnStacked : ''}`;
 
   if (readOnly) {
     return (
-      <span className={styles.oddBtn} aria-label={`${token} at ${toAmerican(odds)}`}>
-        {toAmerican(odds)}
+      <span className={cls} aria-label={`${token} at ${toAmerican(odds)}`}>
+        {content}
       </span>
     );
   }
 
   return (
     <button
-      className={`${styles.oddBtn} ${isPicked ? styles.oddBtnPicked : ''}`}
+      className={cls}
       onClick={handleClick}
-      aria-pressed={isPicked}
       aria-label={`Predict ${token} at ${toAmerican(odds)}`}
     >
-      {toAmerican(odds)}
+      {content}
     </button>
   );
 }

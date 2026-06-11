@@ -17,12 +17,17 @@
   --overlay-bg: rgba(244, 244, 241, 0.88);
   --hover-surface: #e2e2df;
 
+  /* main nav bar height — the WC26 sticky sub-nav docks directly below it.
+     Keep .nav's forced height in sync with this. */
+  --nav-h: 62px;
+
   --mono: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
   --pixel: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
-  --sans: 'Sora', 'Helvetica Neue', 'Helvetica', system-ui, sans-serif;
-  --display: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
-  --font: var(--mono);
-  --font-size: 16px;
+  /* body + sans copy in the bitmap face site-wide */
+  --sans: 'PP NeueBit', 'Sora', 'Helvetica Neue', 'Helvetica', system-ui, sans-serif;
+  --display: 'PP NeueBit', 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  --font: 'PP NeueBit', 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
+  --font-size: 32px;
   --line-height: 1.85;
   --letter-spacing: 0.01em;
 
@@ -53,4 +58,9 @@
   --hover-surface: #111111;
 
   color-scheme: dark;
+}
+
+/* nav is shorter on mobile (the SHOP pill collapses to a text link) */
+@media (max-width: 700px) {
+  :root, :root[data-theme='dark'] { --nav-h: 46px; }
 }

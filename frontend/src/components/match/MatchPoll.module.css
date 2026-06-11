@@ -1,7 +1,7 @@
 .poll {
   width: 100%;
-  max-width: 320px;
-  margin: 24px auto 0;
+  max-width: 340px;
+  margin: 22px auto 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -10,7 +10,7 @@
 }
 
 .head {
-  font-size: 10px;
+  font-size: 16px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--dim);
@@ -18,58 +18,104 @@
 
 .options {
   display: flex;
-  gap: 6px;
+  gap: 10px;
   width: 100%;
 }
 
+/* match the match-card odds box: 3D tetris-neon block, value over abbr */
 .opt {
+  --d: 5px;
+  position: relative;
   flex: 1 1 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 9px 6px;
-  border: 1px solid var(--hairline);
-  /* pixel-world UI: sharp module corners + a faint 8px pitch grid */
+  justify-content: center;
+  gap: 3px;
+  padding: 9px 8px;
+  border: 1px solid #35d06b;
   border-radius: 0;
-  background-color: transparent;
-  color: var(--bright);
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.28) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    #06130a;
+  color: #7df2a4;
   font: inherit;
   letter-spacing: 0.02em;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.18);
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+
+.opt::before,
+.opt::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.45) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #0a2c17;
+  border: 1px solid #2aa957;
+  transition: inherit;
+}
+.opt::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+.opt::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
+}
+
+.optOdds {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
 }
 
 .optLabel {
-  font-size: 9.5px;
-  color: var(--dim);
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
 }
 
-.optOdds {
-  font-size: 13px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
-}
-
 .opt:hover {
-  border-color: var(--green);
-  color: var(--green);
+  --d: 2px;
+  transform: translate(3px, -3px);
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.35);
 }
-.opt:hover .optLabel { color: var(--green); }
 
+/* picked: pressed nearly flat and lit solid */
 .optActive,
 .optActive:hover {
-  border-color: var(--green);
-  background-color: var(--green);
-  color: var(--bg);
+  --d: 1px;
+  transform: translate(4px, -4px);
+  border-color: #4ade80;
+  background: #3fd97a;
+  color: #04130a;
+  text-shadow: none;
+  box-shadow: 0 0 18px rgba(74, 222, 128, 0.5);
 }
-.optActive .optLabel { color: var(--bg); }
+.optActive .optLabel { color: #04130a; }
 
 .kitCta {
   margin-top: 2px;
@@ -83,7 +129,7 @@
   background-size: 8px 8px;
   color: var(--green);
   font: inherit;
-  font-size: 13px;
+  font-size: 18px;
   text-transform: lowercase;
   letter-spacing: 0.02em;
   cursor: pointer;

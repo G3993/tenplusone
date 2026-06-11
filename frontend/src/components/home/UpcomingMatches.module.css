@@ -1,6 +1,9 @@
+/* side padding matches the HomePreview team grid (24px) so the matches panel
+   below lines up to exactly the same width as the four-column crest grid. */
 .wrap {
   width: 100%;
-  padding: 0 0 44px;
+  padding: 0 24px 44px;
+  box-sizing: border-box;
 }
 
 .head {
@@ -9,15 +12,19 @@
   align-items: center;
   text-align: center;
   gap: 6px;
-  padding: 24px 24px 0;
-  border-top: 1px solid var(--hairline);
-  margin-bottom: 14px;
+  padding: 24px 0 0;
+  margin-bottom: 18px;
+}
+
+/* chromeless wrapper — no border or fill; holds day navigator + cards */
+.panel {
+  touch-action: pan-y;
 }
 
 .title {
   font-family: var(--display);
   font-weight: 800;
-  font-size: clamp(18px, 3vw, 26px);
+  font-size: clamp(36px, 6vw, 52px);
   letter-spacing: -0.02em;
   text-transform: uppercase;
   color: var(--bright);
@@ -26,7 +33,7 @@
 
 .all {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 18px;
   letter-spacing: 0.04em;
   color: var(--green);
   text-decoration: none;
@@ -34,31 +41,67 @@
 }
 .all:hover { text-decoration: underline; }
 
-/* ── day navigator: one day at a time, click to move ──────────────── */
+/* ── day navigator: panel header, swipe or click to move ──────────── */
 .nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 24px 16px;
+  /* no side padding — the arrows' outer edges align with the match cards */
+  padding: 16px 0;
 }
 
+/* arrows in the CTA's 3D tetris-neon style — small extruded scanline blocks */
 .navBtn {
+  --d: 4px;
+  position: relative;
   flex: none;
   width: 40px;
   height: 40px;
-  border: 1px solid var(--hairline);
-  border-radius: 2px;
-  background: transparent;
-  color: var(--bright);
+  border: 1px solid #35d06b;
+  border-radius: 0;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    #04100a;
+  color: #7df2a4;
   font-family: var(--mono);
   font-size: 16px;
   cursor: pointer;
-  transition: border-color 0.12s, color 0.12s, background 0.12s;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.16);
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+  transition: transform 0.13s ease, box-shadow 0.13s ease, opacity 0.13s ease;
+}
+.navBtn::before,
+.navBtn::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.35) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #08210f;
+  border: 1px solid #2aa957;
+  transition: inherit;
+}
+.navBtn::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+.navBtn::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
 }
 .navBtn:hover:not(:disabled) {
-  border-color: var(--green);
-  color: var(--green);
+  --d: 2px;
+  transform: translate(2px, -2px);
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.32);
 }
 .navBtn:disabled { opacity: 0.3; cursor: not-allowed; }
 
@@ -69,138 +112,54 @@
   gap: 3px;
   flex: 1 1 auto;
   text-align: center;
-  font-family: var(--mono);
-  font-size: 15px;
+  font-family: var(--display);
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--bright);
 }
 .navCount {
-  font-size: 10px;
+  font-family: var(--display);
+  font-size: 18px;
   font-weight: 400;
   letter-spacing: 0.1em;
   color: var(--dim);
 }
 
-/* ── full-width match rows ────────────────────────────────────────── */
+/* ── outlined match containers (card markup lives in MatchPreview) ─── */
 .matches {
   display: flex;
   flex-direction: column;
+  gap: 34px;
 }
 
-.match {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  width: 100%;
-  padding: 48px 24px;
-  border-top: 1px solid var(--hairline);
-  text-decoration: none;
-  color: inherit;
-  transition: background 0.12s;
-}
-.match:last-child { border-bottom: 1px solid var(--hairline); }
-
-/* all game info, centered under the crests */
-.info {
-  text-align: center;
+/* CTA to the full World Cup matches page — matches the MERCH SHOP outline CTA. */
+.cta {
+  display: block;
+  margin: 56px auto 0;
+  width: fit-content;
   font-family: var(--mono);
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--dim);
-}
-
-/* the pixel-clash field — no hover state */
-.clash {
-  width: 100%;
-  margin: 2px 0;
-}
-.clash canvas {
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-/* matches the clash canvas width (≈2.2×span, capped ~600 on desktop, full on
-   mobile) so each name centers under its logo */
-.teams {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  width: 100%;
-  max-width: 506px;
-  margin: 0 auto;
-  padding: 10px 0;
-}
-
-/* crest on top, team code beneath it */
-.side {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-.logo { flex: none; }
-.slot { width: 140px; height: 140px; display: inline-block; flex: none; }
-.crest { flex: none; }
-
-/* country name in caps, under each crest */
-.cName {
-  font-family: var(--mono);
-  font-size: clamp(12px, 1.8vw, 16px);
-  letter-spacing: 0.04em;
-  line-height: 1.15;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--bright);
-  text-align: center;
-  max-width: 100%;
+  background: transparent;
+  text-decoration: none;
+  padding: 16px 34px;
+  border: 1px solid var(--hairline, rgba(255, 255, 255, 0.3));
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
 }
-
-.v {
-  font-family: var(--mono);
-  font-size: 11px;
-  color: var(--dim);
+.cta:hover {
+  color: var(--bg);
+  background: var(--bright);
+  border-color: var(--bright);
 }
-
-/* live prediction signal — pixelized odds meter, contained + centered */
-.signal {
-  display: flex;
-  width: 100%;
-  max-width: 420px;
-  margin: 0 auto;
-  gap: 2px;
-}
-.px {
-  flex: 1 1 0;
-  height: 9px;
-  /* crisp square pixels, no rounding — matches the 32-grid crest language */
-}
-.pxHome { background: var(--green); }
-.pxDraw { background: var(--faint, rgba(255, 255, 255, 0.22)); }
-.pxAway { background: var(--dim); }
-
-/* three-way market read, centered under the meter (reference vibe) */
-.signalMeta {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 28px;
-  font-family: var(--mono);
-  font-size: 13px;
-  letter-spacing: 0.03em;
-  color: var(--dim);
-  font-variant-numeric: tabular-nums;
-}
-.metaHome { color: var(--green); }
-.metaDraw { color: var(--dim); }
-.metaAway { color: var(--bright); }
 
 @media (max-width: 560px) {
-  .head { padding: 22px 16px 0; }
-  .nav { padding: 0 16px 14px; }
-  .match { padding: 40px 16px; gap: 22px; }
-  .teams { gap: clamp(20px, 14vw, 60px); }
-  .signalMeta { gap: 18px; font-size: 12px; }
+  .wrap { padding: 0 14px 44px; }
+  .head { padding: 22px 0 0; }
+  .nav { padding: 14px 0; }
+  .cta { width: 100%; box-sizing: border-box; text-align: center; }
 }

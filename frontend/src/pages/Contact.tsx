@@ -35,31 +35,31 @@ export default function Contact() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.title}>contact</div>
-      <div className={styles.updated}>email replies within one business day</div>
+      <div className={styles.title}>Contact</div>
+      <div className={styles.updated}>Email replies within one business day.</div>
 
       <div className={styles.section}>
         <p className={styles.p}>
-          email us directly at{' '}
-          <a href="mailto:hello@internetfc.com" style={{ color: 'var(--bright)' }}>hello@internetfc.com</a>,
-          or use the form below. we read every message.
+          Email us directly at{' '}
+          <a href="mailto:team.internetfc@gmail.com" style={{ color: 'var(--bright)' }}>team.internetfc@gmail.com</a>,
+          or use the form below. We read every message.
         </p>
       </div>
 
       <form className={styles.contactForm} onSubmit={onSubmit}>
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>your name</span>
+          <span className={styles.fieldLabel}>Your name</span>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className={styles.input}
-            placeholder="optional"
+            placeholder="Optional"
           />
         </label>
 
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>email</span>
+          <span className={styles.fieldLabel}>Email</span>
           <input
             type="email"
             required
@@ -71,30 +71,30 @@ export default function Contact() {
         </label>
 
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>topic</span>
+          <span className={styles.fieldLabel}>Topic</span>
           <select
             value={topic}
             onChange={(e) => setTopic(e.target.value)}
             className={styles.input}
           >
-            <option value="order">order status</option>
-            <option value="return">returns &amp; exchanges</option>
-            <option value="defect">printing defect</option>
-            <option value="bulk">bulk &amp; team orders</option>
-            <option value="press">press &amp; partnerships</option>
-            <option value="other">something else</option>
+            <option value="order">Order status</option>
+            <option value="return">Returns &amp; exchanges</option>
+            <option value="defect">Printing defect</option>
+            <option value="bulk">Bulk &amp; team orders</option>
+            <option value="press">Press &amp; partnerships</option>
+            <option value="other">Something else</option>
           </select>
         </label>
 
         <label className={styles.field}>
-          <span className={styles.fieldLabel}>message</span>
+          <span className={styles.fieldLabel}>Message</span>
           <textarea
             required
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={6}
             className={styles.textarea}
-            placeholder="how can we help?"
+            placeholder="How can we help?"
           />
         </label>
 
@@ -104,22 +104,22 @@ export default function Contact() {
             className={styles.cta}
             disabled={status === 'sending'}
           >
-            {status === 'sending' ? 'sending...' : 'send message'}
+            {status === 'sending' ? 'Sending...' : 'Send message'}
           </button>
           {status === 'ok' && (
             <span style={{ color: 'var(--green)', fontSize: 13 }}>
-              &check; got it. we&rsquo;ll reply within a business day.
+              &check; Got it. We&rsquo;ll reply within a business day.
             </span>
           )}
           {status === 'error' && (
             <span style={{ color: 'var(--green)', fontSize: 13 }}>
-              email is faster: hello@internetfc.com
+              Email is faster: team.internetfc@gmail.com
             </span>
           )}
         </div>
       </form>
 
-      <Link to="/" className={styles.back}>&larr; back to home</Link>
+      <Link to="/" className={styles.back}>&larr; Back to home</Link>
     </div>
   );
 }

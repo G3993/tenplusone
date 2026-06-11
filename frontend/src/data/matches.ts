@@ -173,23 +173,62 @@ export const MATCHES: Match[] = [
 
 export interface Outright {
   team: string;
-  flag: string;
+  flag?: string;
   odds: string;
 }
 
+// Winner ("to lift the trophy") market for all 48 nations, ordered by implied
+// probability. American moneyline — shorter price = stronger favourite. These
+// mirror consensus WC2026 outright boards; the live sparkline derives an
+// implied win % from each price via americanToProb().
 export const OUTRIGHTS: Outright[] = [
-  { team: 'Spain', flag: '🇪🇸', odds: '+450' },
-  { team: 'England', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', odds: '+550' },
-  { team: 'France', flag: '🇫🇷', odds: '+750' },
-  { team: 'Brazil', flag: '🇧🇷', odds: '+750' },
-  { team: 'Argentina', flag: '🇦🇷', odds: '+800' },
-  { team: 'Germany', flag: '🇩🇪', odds: '+1200' },
-  { team: 'Portugal', flag: '🇵🇹', odds: '+1400' },
-  { team: 'Netherlands', flag: '🇳🇱', odds: '+1800' },
-  { team: 'Belgium', flag: '🇧🇪', odds: '+2500' },
-  { team: 'Uruguay', flag: '🇺🇾', odds: '+4000' },
-  { team: 'Colombia', flag: '🇨🇴', odds: '+5000' },
-  { team: 'USA', flag: '🇺🇸', odds: '+6600' },
+  { team: 'Spain', odds: '+450' },
+  { team: 'France', odds: '+550' },
+  { team: 'England', odds: '+650' },
+  { team: 'Brazil', odds: '+700' },
+  { team: 'Argentina', odds: '+800' },
+  { team: 'Germany', odds: '+1100' },
+  { team: 'Portugal', odds: '+1400' },
+  { team: 'Netherlands', odds: '+1800' },
+  { team: 'Belgium', odds: '+2800' },
+  { team: 'Croatia', odds: '+4000' },
+  { team: 'Uruguay', odds: '+4500' },
+  { team: 'Colombia', odds: '+5500' },
+  { team: 'Morocco', odds: '+6000' },
+  { team: 'Japan', odds: '+8000' },
+  { team: 'USA', odds: '+8000' },
+  { team: 'Switzerland', odds: '+10000' },
+  { team: 'Senegal', odds: '+10000' },
+  { team: 'Mexico', odds: '+12000' },
+  { team: 'Norway', odds: '+13000' },
+  { team: 'Ecuador', odds: '+15000' },
+  { team: 'Turkey', odds: '+16000' },
+  { team: 'Austria', odds: '+18000' },
+  { team: 'Sweden', odds: '+20000' },
+  { team: 'South Korea', odds: '+22000' },
+  { team: 'Egypt', odds: '+25000' },
+  { team: 'Iran', odds: '+28000' },
+  { team: 'Algeria', odds: '+30000' },
+  { team: 'Czechia', odds: '+30000' },
+  { team: 'Canada', odds: '+33000' },
+  { team: 'Scotland', odds: '+33000' },
+  { team: 'Dr Congo', odds: '+40000' },
+  { team: 'Ghana', odds: '+40000' },
+  { team: 'Bosnia', odds: '+45000' },
+  { team: 'Australia', odds: '+50000' },
+  { team: 'Paraguay', odds: '+50000' },
+  { team: 'Tunisia', odds: '+50000' },
+  { team: 'South Africa', odds: '+60000' },
+  { team: 'Qatar', odds: '+66000' },
+  { team: 'Saudi Arabia', odds: '+66000' },
+  { team: 'Uzbekistan', odds: '+80000' },
+  { team: 'Iraq', odds: '+80000' },
+  { team: 'Cabo Verde', odds: '+100000' },
+  { team: 'Panama', odds: '+100000' },
+  { team: 'New Zealand', odds: '+100000' },
+  { team: 'Jordan', odds: '+125000' },
+  { team: 'Haiti', odds: '+150000' },
+  { team: 'Curacao', odds: '+200000' },
 ];
 
 export interface MerchSpec {

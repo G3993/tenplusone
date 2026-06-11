@@ -3,6 +3,13 @@
   width: 100%;
 }
 
+/* single-column stack of outlined MatchPreview containers */
+.matchList {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
 .filterBar {
   display: flex;
   align-items: center;
@@ -50,7 +57,7 @@
 }
 
 .cardTeams .teamName {
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -62,7 +69,7 @@
 .cardTeams .vs {
   padding: 0;
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -73,7 +80,7 @@
 
 .pickCount {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 18px;
   color: var(--dim);
 }
 
@@ -82,12 +89,12 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 12px;
+  font-size: 18px;
   line-height: 1.4;
 }
 
 .metaStage {
-  font-size: 11px;
+  font-size: 16px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--green);
@@ -101,7 +108,7 @@
 
 .empty {
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 18px;
   color: var(--dim);
   padding: 24px 0;
 }
@@ -127,34 +134,106 @@
   align-items: center;
   gap: 8px;
   font-family: var(--font);
-  font-size: 13px;
+  font-size: 18px;
 }
 
+/* odds box in the 3D tetris-neon CTA style: scanline face, isometric
+   extrusion (top/right at 45°), hover presses the block in */
 .oddBtn {
+  --d: 5px;
+  position: relative;
   font-family: var(--font);
-  font-size: 13px;
-  color: var(--white);
-  background: none;
-  border: 1px solid var(--dim);
-  border-radius: 8px;
+  font-size: 18px;
+  color: #7df2a4;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.28) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    #06130a;
+  border: 1px solid #35d06b;
+  border-radius: 0;
   padding: 4px 14px;
   cursor: pointer;
-  transition: color 0.1s, border-color 0.1s, background 0.1s;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.18);
+  text-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
 }
 
-.oddBtn:hover {
-  color: var(--green);
-  border-color: var(--green);
+.oddBtn::before,
+.oddBtn::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.45) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #0a2c17;
+  border: 1px solid #2aa957;
+  transition: inherit;
+}
+/* top face */
+.oddBtn::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+/* right face */
+.oddBtn::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
 }
 
-.oddBtnPicked {
-  color: var(--green);
-  border-color: var(--green);
-  background: rgba(74, 222, 128, 0.08);
-  font-weight: 700;
+.oddBtn:hover {
+  --d: 2px;
+  transform: translate(3px, -3px);
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.35);
 }
+
+/* stacked variant — odds value on top, team abbreviation centred beneath */
+.oddBtnStacked {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 16px;
+  min-width: 64px;
+}
+.oddVal {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+}
+.oddSub {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: #46a96c;
+}
+.oddBtnStacked:hover .oddSub { color: inherit; }
+
+/* picked: the block is pressed nearly flat and lights up solid */
+.oddBtnPicked,
+.oddBtnPicked:hover {
+  --d: 1px;
+  transform: translate(4px, -4px);
+  color: #04130a;
+  border-color: #4ade80;
+  background: #3fd97a;
+  font-weight: 700;
+  text-shadow: none;
+  box-shadow: 0 0 18px rgba(74, 222, 128, 0.5);
+}
+.oddBtnPicked .oddSub { color: #04130a; }
 
 .oddBtn:focus-visible,
 .filterBtn:focus-visible,
@@ -203,7 +282,7 @@
 
 .mkPill {
   font-family: var(--font);
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 1.6;
   color: var(--mkc);
@@ -250,7 +329,7 @@
   display: flex;
   align-items: center;
   padding: 0 16px;
-  font-size: 14px;
+  font-size: 20px;
   line-height: 1;
   position: relative;
   top: -1px;
@@ -272,7 +351,7 @@
 /* date · time · location grouped on one subtle meta line, single color */
 .metaLink {
   text-decoration: none;
-  font-size: 12px;
+  font-size: 18px;
   color: var(--dim);
 }
 
@@ -299,7 +378,7 @@
 
 .filterBtn {
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 18px;
   color: var(--dim);
   background: none;
   border: none;
@@ -318,13 +397,13 @@
 }
 
 @media (max-width: 560px) {
-  .oddsRow { gap: 6px; font-size: 12px; flex-wrap: wrap; }
-  .oddBtn { font-size: 12px; padding: 4px 10px; }
-  .teamName { font-size: 15px; }
+  .oddsRow { gap: 6px; font-size: 18px; flex-wrap: wrap; }
+  .oddBtn { font-size: 18px; padding: 4px 10px; }
+  .teamName { font-size: 20px; }
   .vs { padding: 0 10px; }
-  .metaLink { font-size: 11px; }
+  .metaLink { font-size: 16px; }
   .mVenue { display: inline-block; }
   .market { gap: 8px; }
   .marketSvg { width: 200px; height: 46px; }
-  .mkPill { font-size: 10px; }
+  .mkPill { font-size: 16px; }
 }

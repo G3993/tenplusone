@@ -23,7 +23,7 @@
 
 .btn {
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 18px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   padding: 0.5rem 1rem;
@@ -51,7 +51,7 @@
 
 .status {
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 18px;
   color: var(--dim);
   min-height: 1.2em;
 }

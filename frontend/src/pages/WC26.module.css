@@ -8,13 +8,17 @@
 /* sticky section jump-nav — sits just under the main nav */
 .jump {
   position: sticky;
-  top: 49px;
+  top: var(--nav-h);
   z-index: 50;
   display: flex;
+  align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 4px;
-  padding: 10px 24px;
+  /* same height as the primary nav; pills keep their size, centred vertically */
+  height: var(--nav-h);
+  box-sizing: border-box;
+  padding: 0 24px;
   background: var(--overlay-bg);
   backdrop-filter: saturate(150%) blur(8px);
   border-bottom: 1px solid var(--hairline);
@@ -22,14 +26,18 @@
 
 .jumpLink {
   font-family: var(--font);
-  font-size: 12px;
+  /* matches the main-nav link size so the two bars read as one system */
+  font-size: 26px;
+  line-height: 1;
   color: var(--dim);
   background: none;
   border: none;
   cursor: pointer;
   text-decoration: none;
-  padding: 4px 12px;
+  /* equal padding all round so the active pill is vertically centred */
+  padding: 8px 14px;
   border-radius: 999px;
+  text-transform: uppercase;
   transition: color 0.12s, background 0.12s;
 }
 
@@ -45,7 +53,9 @@
 }
 
 .section {
-  padding-top: 16px;
+  padding-top: 44px;
+  /* anchor jumps land below the sticky main-nav + equal-height sub-nav bar */
+  scroll-margin-top: calc(var(--nav-h) * 2);
 }
 
 .secHead {
@@ -66,7 +76,7 @@
 
 .secMeta {
   color: var(--dim);
-  font-size: 13px;
+  font-size: 18px;
 }
 
 /* horizontal padding for sections that don't carry their own */
@@ -78,9 +88,9 @@
 @media (max-width: 560px) {
   .page { padding-bottom: 64px; }
   .hero { padding: 14px 14px 14px; }
-  .jump { top: 0; padding: 8px 14px; gap: 2px; overflow-x: auto; }
-  .jumpLink { padding: 4px 10px; }
-  .section { padding-top: 16px; }
+  .jump { padding: 0 14px; gap: 2px; overflow-x: auto; }
+  .jumpLink { font-size: 17px; padding: 6px 10px; text-transform: uppercase; }
+  .section { padding-top: 28px; scroll-margin-top: calc(var(--nav-h) * 2); }
   .secHead { padding: 0 14px 16px; margin-bottom: 20px; flex-direction: column; gap: 4px; }
   .secTitle { font-size: 21px; }
   .pad { padding: 0 14px; }

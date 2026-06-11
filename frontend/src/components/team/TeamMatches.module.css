@@ -1,0 +1,75 @@
+.wrap {
+  width: 100%;
+  margin-top: 40px;
+}
+
+.head {
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.eyebrow {
+  font-family: var(--display);
+  font-size: 18px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* crest + name stacked, one per side */
+.team {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.name {
+  font-family: var(--mono);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bright);
+  text-align: center;
+}
+
+/* Bordered container, same width + treatment as the stat-hub grid above. */
+.list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--hairline);
+  background: var(--surface);
+}
+
+/* minimal fixture row — two animated crests with a "v" between */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(28px, 10vw, 80px);
+  padding: 26px 24px;
+  border-top: 1px solid var(--hairline);
+  text-decoration: none;
+  transition: background 0.12s;
+}
+.row:first-child { border-top: none; }
+.row:hover { background: rgba(255, 255, 255, 0.03); }
+
+.crest { flex: none; }
+.slot { width: 104px; height: 104px; display: inline-block; flex: none; }
+
+.v {
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+@media (max-width: 560px) {
+  /* shrink crests + gap so both teams always fit within the page width */
+  .row { padding: 22px 10px; gap: clamp(18px, 6vw, 36px); }
+  .crest { width: 84px !important; height: 84px !important; }
+  .slot { width: 84px; height: 84px; }
+}

@@ -1,68 +1,82 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Groups } from './Groups';
 import { MatchList } from '../components/matches/MatchList';
-import { GroupStage, KnockoutBracket, OutrightsList } from './Bracket';
-import { MatchCalendar } from '../components/matches/MatchCalendar';
-import { InViewport } from '../components/util/InViewport';
+import { KnockoutBracket, OutrightsList } from './Bracket';
 import styles from './WC26.module.css';
 
-type TabId = 'groups' | 'matches' | 'bracket' | 'outrights';
+type SectionId = 'matches' | 'groups' | 'bracket' | 'winner';
 
-const TABS: { id: TabId; label: string }[] = [
+const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'matches', label: 'matches' },
   { id: 'groups', label: 'groups' },
   { id: 'bracket', label: 'bracket' },
-  { id: 'outrights', label: 'winner prediction' },
+  { id: 'winner', label: 'predictions' },
 ];
 
+/**
+ * One long page: every section is stacked and rendered at once. The sticky
+ * pill bar is pagination — it scroll-jumps to a section and highlights the one
+ * currently in view (scroll-spy). Winner prediction lives at the very bottom,
+ * below the bracket, as its own section.
+ */
 export function WC26() {
-  const [active, setActive] = useState<TabId>('matches');
+  const [active, setActive] = useState<SectionId>('matches');
+  const refs = useRef<Record<string, HTMLElement | null>>({});
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const vis = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (vis[0]) setActive(vis[0].target.id as SectionId);
+      },
+      // Active when a section's top crosses the upper third of the viewport.
+      { rootMargin: '-20% 0px -70% 0px', threshold: 0 },
+    );
+    SECTIONS.forEach((s) => { const el = refs.current[s.id]; if (el) obs.observe(el); });
+    return () => obs.disconnect();
+  }, []);
+
+  const jump = (id: SectionId) => refs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
   return (
     <div className={styles.page}>
-      {/* sticky tab bar — one section at a time, no endless scroll */}
+      {/* sticky pagination — jumps to + tracks the section in view */}
       <nav className={styles.jump} aria-label="Tournament sections">
-        {TABS.map((t) => (
+        {SECTIONS.map((s) => (
           <button
-            key={t.id}
+            key={s.id}
             type="button"
-            onClick={() => setActive(t.id)}
-            className={`${styles.jumpLink} ${active === t.id ? styles.jumpActive : ''}`}
-            aria-current={active === t.id ? 'page' : undefined}
+            onClick={() => jump(s.id)}
+            className={`${styles.jumpLink} ${active === s.id ? styles.jumpActive : ''}`}
+            aria-current={active === s.id ? 'true' : undefined}
           >
-            {t.label}
+            {s.label}
           </button>
         ))}
       </nav>
 
-      <section className={styles.section}>
-        {active === 'groups' && <Groups />}
-        {active === 'matches' && (
-          <div className={styles.pad}>
-            <MatchList />
-          </div>
-        )}
-        {active === 'bracket' && (
-          <div className={styles.pad}>
-            <GroupStage />
-            <KnockoutBracket />
-          </div>
-        )}
-        {active === 'outrights' && (
-          <div className={styles.pad}>
-            <OutrightsList />
-          </div>
-        )}
+      <section id="matches" ref={(el) => { refs.current.matches = el; }} className={styles.section}>
+        <div className={styles.pad}><MatchList /></div>
       </section>
 
-      {/* Always below the fold — defer its (all-fixtures) mount until scrolled near. */}
-      <InViewport
-        rootMargin="500px"
-        style={{ display: 'block' }}
-        fallback={<div style={{ minHeight: '70vh' }} />}
-      >
-        {() => <MatchCalendar />}
-      </InViewport>
+      <section id="groups" ref={(el) => { refs.current.groups = el; }} className={styles.section}>
+        <Groups />
+      </section>
+
+      <section id="bracket" ref={(el) => { refs.current.bracket = el; }} className={styles.section}>
+        <div className={styles.pad}>
+          <KnockoutBracket />
+        </div>
+      </section>
+
+      {/* winner prediction — its own section at the very bottom, below the
+          bracket. Fully centered: its centered hero is the title (no left
+          section header), so it reads as the eventful finale of the page. */}
+      <section id="winner" ref={(el) => { refs.current.winner = el; }} className={styles.section}>
+        <OutrightsList />
+      </section>
     </div>
   );
 }

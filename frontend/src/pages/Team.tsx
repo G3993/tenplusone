@@ -5,7 +5,8 @@ import { TeamHero } from '../components/team/TeamHero';
 import { TeamCloset } from '../components/team/TeamCloset';
 import { TeamStats } from '../components/team/TeamStats';
 import { TeamWatch } from '../components/team/TeamWatch';
-import { TeamLogoGrid } from '../components/team/TeamLogoGrid';
+import { TeamMatches } from '../components/team/TeamMatches';
+import { MeshGridBG } from '../components/home/MeshGridBG';
 import styles from './Team.module.css';
 
 export function Team() {
@@ -28,12 +29,15 @@ export function Team() {
       className={styles.page}
       style={{ '--accent': teamAccent(team) } as CSSProperties}
     >
+      <MeshGridBG />
       <TeamHero team={team} />
       <div className={styles.body}>
-        <TeamCloset teamSlug={team.slug} title="" eyebrow="WC*26" />
         <TeamStats team={team} />
-        <TeamLogoGrid team={team} />
-        {/* players to watch lives at the very bottom now */}
+        {/* upcoming matches — same width as the stat hub container above */}
+        <TeamMatches team={team} />
+      </div>
+      <div className={styles.body}>
+        <TeamCloset teamSlug={team.slug} eyebrow={`${team.code} Collection`} title="" />
         <TeamWatch team={team} />
         <Link to="/teams" className={styles.back}>← all teams</Link>
       </div>

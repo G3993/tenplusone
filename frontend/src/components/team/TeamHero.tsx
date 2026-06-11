@@ -21,7 +21,7 @@ type Variation =
 // crest, then runs through the rest, looping. It's the first slide so the
 // header is alive on load; swiping reveals each treatment on its own.
 const REEL_MOTIFS: MotifId[] = [
-  'team3d', 'cube', 'teamColors', 'lines', 'chrome', 'mesh', 'pattern', 'abstract', 'internet', 'stats', 'bauhaus',
+  'team3d', 'cube', 'lines', 'chrome', 'mesh', 'pattern', 'abstract', 'internet', 'stats', 'bauhaus',
 ];
 const REEL_MS = 600;
 
@@ -30,7 +30,6 @@ const VARIATIONS: { key: string; v: Variation }[] = [
   { key: 'reel', v: { kind: 'reel' } },
   { key: 'spectrum', v: { kind: 'spectrum', variant: 'spectrum' } },
   { key: 'team3d', v: { kind: 'motif', motif: 'team3d' } },
-  { key: 'teamColors', v: { kind: 'motif', motif: 'teamColors' } },
   { key: 'lines', v: { kind: 'motif', motif: 'lines' } },
   { key: 'mesh', v: { kind: 'motif', motif: 'mesh' } },
   { key: 'chrome', v: { kind: 'motif', motif: 'chrome' } },
@@ -38,7 +37,6 @@ const VARIATIONS: { key: string; v: Variation }[] = [
   { key: 'abstract', v: { kind: 'motif', motif: 'abstract' } },
   { key: 'internet', v: { kind: 'motif', motif: 'internet' } },
   { key: 'mono', v: { kind: 'spectrum', variant: 'mono' } },
-  { key: 'outline', v: { kind: 'spectrum', variant: 'outline' } },
   { key: 'stats', v: { kind: 'motif', motif: 'stats' } },
   { key: 'solid', v: { kind: 'motif', motif: 'solid' } },
   { key: 'normal', v: { kind: 'normal' } },
@@ -176,7 +174,7 @@ export function TeamHero({ team }: { team: TeamData }) {
 
       <h1 className={styles.name}>{team.name}</h1>
       <div className={styles.sub}>
-        <span className={styles.code}>WC*26</span>
+        <span className={styles.code}>WORLDCUP*26</span>
       </div>
     </header>
   );

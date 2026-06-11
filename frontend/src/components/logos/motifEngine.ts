@@ -2,6 +2,7 @@
 /* Ported verbatim from the iFC generator (Downloads/teams 2/index.html) — the
    2D-canvas motif render engine. Keep in sync with the generator so the live
    site matches the print exports. Re-extract on any generator change. */
+import { ROSTERS } from '../../data/rosters';
 
     const GRID = 32, MARGIN = 2;
 
@@ -32,7 +33,7 @@
         ghana:['#ce1126','#fcd116'], panama:['#072357','#da121a'], 'cote-d-ivoire':['#f77f00','#009e60'],
     };
     let activeFill = 'solid';
-    const DEFAULT_STATS = { passes:486, possession:58, goals:2, shots:6, corners:5, cards:2, offsides:3, fouls:11 };
+    const DEFAULT_STATS = { passes:486, possession:58, goals:2, shots:6, corners:5, cards:2, offsides:3, fouls:11, saves:4, var:2 };
     let matchStats = { ...DEFAULT_STATS };
     let scorers = []; // shirt numbers of goal scorers -> number tiles in the Stats grass-minesweeper
 
@@ -86,18 +87,46 @@
             ['cards', Math.max(0, matchStats.cards * 4)],
             ['offsides', Math.max(0, matchStats.offsides * 3)],
             ['fouls', Math.max(1, matchStats.fouls * 2)],
+            ['saves', Math.max(0, (matchStats.saves||0) * 4)],
+            ['var', Math.max(0, (matchStats.var||0) * 5)],
         ];
         const total = w.reduce((s, [, v]) => s + v, 0);
         let cur = pseed(idx, seed) % Math.max(1, total);
         for (const [k, v] of w) { cur -= v; if (cur < 0) return k; }
         return 'passes';
     }
-    const MATCH_STAT_COLOR = { passes:'#23599a', possession:'#11864a', goals:'#e10600', shots:'#f5bd19', corners:'#00d084', cards:'#f5bd19', offsides:'#0057ff', fouls:'#050505' };
+    const MATCH_STAT_COLOR = { passes:'#23599a', possession:'#11864a', goals:'#e10600', shots:'#f5bd19', corners:'#00d084', cards:'#f5bd19', offsides:'#0057ff', fouls:'#050505', saves:'#9333ea', var:'#111827' };
+    // Random contiguous COLOR PATCHES for Team Colors (not per-pixel speckle, not checker).
+    // Voronoi-style: scatter seed points, each pixel takes the nearest seed's color index.
+    let _patchSeeds = null, _patchSeedKey = '';
+    function teamPatchIndex(idx, nColors) {
+        const key = fillSeed + ':' + nColors;
+        if (_patchSeedKey !== key) {
+            _patchSeedKey = key;
+            _patchSeeds = [];
+            const n = Math.max(nColors * 3, 9); // several patches per color
+            for (let i = 0; i < n; i++) {
+                _patchSeeds.push({
+                    c: pseed(i * 7 + 1, fillSeed) % GRID,
+                    r: pseed(i * 7 + 3, fillSeed) % GRID,
+                    col: pseed(i * 13 + 5, fillSeed) % nColors,
+                });
+            }
+        }
+        const c = idx % GRID, r = Math.floor(idx / GRID);
+        let best = 0, bestD = Infinity;
+        for (const s of _patchSeeds) {
+            const dc = c - s.c, dr = r - s.r;
+            const d = dc*dc + dr*dr;
+            if (d < bestD) { bestD = d; best = s.col; }
+        }
+        return best;
+    }
     // Per-pixel color for the active fill mode. idx is 0-based.
     function fillColor(idx, teamId) {
         switch (activeFill) {
             case 'solid': return fillBgDark ? '#eeeeee' : '#111111';
-            case 'teamColors': { const p = teamPaletteFor(teamId); return p[pseed(idx, fillSeed) % p.length]; }
+            case 'teamColors': { const p = teamPaletteFor(teamId); return p[teamPatchIndex(idx, p.length)]; }
             
             case 'stats': return '#16a34a';
             case 'sweep': return '#c0c0c0';
@@ -131,9 +160,31 @@
         }
     }
 
+    // Player surnames used by the Abstract motif's name-label layer.
+    const PLAYER_NAMES = ['MESSI','RONALDO','MBAPPÉ','HAALAND','NEYMAR','MODRIĆ','DE BRUYNE','KANE','BENZEMA','SALAH','SON','VINICIUS','BELLINGHAM','GRIEZMANN','LEWANDOWSKI','PEDRI','RICE','SAKA','FODEN','MARTÍNEZ','DI MARÍA','RÜDIGER','KIMMICH','ØDEGAARD'];
+
     // ----- Motif layer: a tiny glyph drawn inside each filled pixel -----
     const SYMBOL_MOTIFS = ['plus','ring','slash','spark'];
     const INTERNET_MOTIFS = ['0','1','2','3','4','5','6','7','8','9','10','11','12','23','42','99','\u2192','\u2190','\u2191','\u2193','#','@','//','*','\u00A7','\u221E','\u2261','+','=','~','^','|','\u03BB','\u03C0','\u03A3','!','?','&'];
+    // Internet ('ascii') fill: source the glyphs from the team's real squad \u2014
+    // jersey numbers plus the letters of each player's surname \u2014 so the matrix
+    // spells out that nation's roster instead of random symbols. Falls back to
+    // the generic glyph set for any team without roster data.
+    const _rosterTokenCache = {};
+    function rosterTokens(teamId) {
+        if (_rosterTokenCache[teamId]) return _rosterTokenCache[teamId];
+        const roster = (teamId && ROSTERS[teamId]) || null;
+        if (!roster || !roster.length) return (_rosterTokenCache[teamId] = INTERNET_MOTIFS);
+        const toks = [];
+        for (const p of roster) {
+            if (p.n != null) toks.push(String(p.n));
+            const surname = (p.name || '').trim().split(/\s+/).pop() || '';
+            for (const ch of surname.toUpperCase()) {
+                if (/[0-9A-Z\u00C0-\u00D6\u00D8-\u00DE]/.test(ch)) toks.push(ch);
+            }
+        }
+        return (_rosterTokenCache[teamId] = toks.length ? toks : INTERNET_MOTIFS);
+    }
     const MATCH_STAT_MOTIF = { passes:'pass', possession:'possession', goals:'goal', shots:'shot', corners:'corner', cards:'card', offsides:'offside', fouls:'foul' };
     function motifForPixel(idx, teamId) {
         switch (activeFill) {
@@ -141,7 +192,7 @@
             case 'teamColors': return 'plain';
             case 'spectrum': return pseed(idx, fillSeed) % 4 === 0 ? 'slash' : 'plain';
             case 'patchwork': return pseed(idx, fillSeed) % 3 === 0 ? 'checker' : 'plain';
-            case 'internet': return INTERNET_MOTIFS[pseed(idx, fillSeed) % INTERNET_MOTIFS.length];
+            case 'internet': { const toks = rosterTokens(teamId); return toks[pseed(idx, fillSeed) % toks.length]; }
             case 'lines': return 'plain';
             default: return 'plain';
         }
@@ -152,8 +203,11 @@
         const light = ['#f5bd19','#ffcd00','#ffce00','#f1bf00','#ffe600','#fae042','#fcd116','#ffdf00','#ffd400'];
         const ink = light.includes(baseColor) ? '#050505' : '#ffffff';
 
-        // Internet glyphs: render as text characters
-        if (INTERNET_MOTIFS.includes(motif)) {
+        // Internet glyphs: render as text characters. Anything that isn't a
+        // known vector-shape motif is treated as a text token (covers the
+        // generic glyph set and the per-team roster names/numbers).
+        const SHAPE_MOTIFS = ['plus','ring','slash','spark','checker','pass','possession','goal','shot','corner','card','offside','foul'];
+        if (!SHAPE_MOTIFS.includes(motif)) {
             ctx.save();
             ctx.fillStyle = ink;
             ctx.font = `bold ${Math.round(s * 0.55)}px "JetBrains Mono", "SF Mono", "Fira Code", monospace`;
@@ -393,7 +447,8 @@
             const topRow = rows[0], botRow = rows[rows.length - 1];
             const y0 = topRow * cell, y1 = (botRow + 1) * cell;
             const grad = ctx.createLinearGradient(x, y0, x, y1);
-            const steps = 10;
+            const _lsp = statParams();
+            const steps = Math.round(5 + _lsp.density * 16); // more passes → more color bands
             for (let s = 0; s <= steps; s++) {
                 const st = s / steps;
                 const ct = phase + st * (0.7 + mirror * 0.3);
@@ -410,7 +465,7 @@
                     ctx.fill();
                 } else if (shapeMode === 'pixels' || shapeMode === 'outline') {
                     ctx.strokeStyle = ctx.fillStyle;
-                    ctx.lineWidth = Math.max(1, cell * 0.06);
+                    ctx.lineWidth = Math.max(1, cell * (0.04 + _lsp.thickness * 0.08));
                     ctx.strokeRect(x + 0.5, row * cell + 0.5, cell - 1, cell - 1);
                 } else {
                     ctx.fillRect(x, row * cell, barW, cell);
@@ -435,86 +490,156 @@
         const has = (c, r) => c >= 0 && c < GRID && r >= 0 && r < GRID && set.has(r * GRID + c + 1);
 
         // No background — only logo area
-        // Clip to logo shape
-        ctx.save();
-        ctx.beginPath();
-        for (let pid = 1; pid <= GRID * GRID; pid++) {
-            if (!set.has(pid)) continue;
-            const idx = pid - 1, col = idx % GRID, row = Math.floor(idx / GRID);
-            ctx.rect(col * cell, row * cell, cell, cell);
-        }
-        ctx.clip();
 
-        const lineColor = dark ? 'rgba(255,255,255,0.8)' : 'rgba(20,20,20,0.78)';
-        const sp = cell * 0.85;              // net mesh spacing
-        const wob = cell * 0.12;             // sag/wobble amount
-        ctx.strokeStyle = lineColor;
-        ctx.lineWidth = Math.max(0.8, cell * 0.05);
-        ctx.lineCap = 'round';
+        // 3D extrusion offset (depth scales with goals like the other 3D modes)
+        const depth = cell * (0.35 + statParams().complexity * 0.35);
+        const dx = depth * 0.6, dy = -depth; // toward upper-right
 
-        // Organic sag function — net droops like fabric
+        const _nsp = statParams();
+        const sp = cell * (1.15 - _nsp.density * 0.55);  // more passes → tighter weave
+        const wob = cell * 0.12;
+        const lineW = Math.max(0.8, cell * 0.05);
+
         function sag(a, b, seed) {
             const wave = animate ? t * 1.2 : 0;
             return Math.sin(a * 0.05 + b * 0.04 + seed + wave) * wob +
                    Math.sin(a * 0.11 - b * 0.07 + seed * 1.7 + wave * 0.6) * wob * 0.5;
         }
 
-        // Diagonal set 1 (top-left → bottom-right) — the classic net diamond weave
-        for (let d = -H; d < W + sp; d += sp) {
+        // Build the logo clip path (optionally offset for the back layer)
+        function clipLogo(offX, offY) {
             ctx.beginPath();
-            let started = false;
-            for (let s = 0; s <= W + H; s += sp * 0.22) {
-                const x = d + s * 0.7071;
-                const y = s * 0.7071;
-                const off = sag(x, y, 0);
-                const px = x, py = y + off;
-                started ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-                started = true;
+            for (let pid = 1; pid <= GRID * GRID; pid++) {
+                if (!set.has(pid)) continue;
+                const idx = pid - 1, col = idx % GRID, row = Math.floor(idx / GRID);
+                ctx.rect(col * cell + offX, row * cell + offY, cell, cell);
             }
-            ctx.stroke();
-        }
-        // Diagonal set 2 (top-right → bottom-left)
-        for (let d = 0; d < W + H + sp; d += sp) {
-            ctx.beginPath();
-            let started = false;
-            for (let s = 0; s <= W + H; s += sp * 0.22) {
-                const x = d - s * 0.7071;
-                const y = s * 0.7071;
-                const off = sag(x + 400, y + 400, 3.3);
-                const px = x, py = y + off;
-                started ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
-                started = true;
-            }
-            ctx.stroke();
+            ctx.clip();
         }
 
-        // Knots at intersections for a woven look
-        ctx.fillStyle = lineColor;
-        const knotR = Math.max(0.6, cell * 0.045);
-        for (let gx = -H; gx < W + sp; gx += sp) {
-            for (let s = 0; s <= W + H; s += sp) {
-                const x = gx + s * 0.7071;
-                const y = s * 0.7071;
-                const off = sag(x, y, 0);
-                ctx.beginPath(); ctx.arc(x, y + off, knotR, 0, Math.PI * 2); ctx.fill();
+        // Draw the woven net (two diagonal sets + knots) at a given offset & style
+        function drawNet(offX, offY, stroke, knotCol, lw) {
+            ctx.strokeStyle = stroke;
+            ctx.lineWidth = lw;
+            ctx.lineCap = 'round';
+            // diagonal set 1
+            for (let d = -H; d < W + sp; d += sp) {
+                ctx.beginPath(); let started = false;
+                for (let s = 0; s <= W + H; s += sp * 0.22) {
+                    const x = d + s * 0.7071, y = s * 0.7071;
+                    const off = sag(x, y, 0);
+                    started ? ctx.lineTo(x + offX, y + off + offY) : ctx.moveTo(x + offX, y + off + offY);
+                    started = true;
+                }
+                ctx.stroke();
+            }
+            // diagonal set 2
+            for (let d = 0; d < W + H + sp; d += sp) {
+                ctx.beginPath(); let started = false;
+                for (let s = 0; s <= W + H; s += sp * 0.22) {
+                    const x = d - s * 0.7071, y = s * 0.7071;
+                    const off = sag(x + 400, y + 400, 3.3);
+                    started ? ctx.lineTo(x + offX, y + off + offY) : ctx.moveTo(x + offX, y + off + offY);
+                    started = true;
+                }
+                ctx.stroke();
+            }
+            // knots
+            ctx.fillStyle = knotCol;
+            const knotR = Math.max(0.6, cell * 0.045);
+            for (let gx = -H; gx < W + sp; gx += sp) {
+                for (let s = 0; s <= W + H; s += sp) {
+                    const x = gx + s * 0.7071, y = s * 0.7071;
+                    const off = sag(x, y, 0);
+                    ctx.beginPath(); ctx.arc(x + offX, y + off + offY, knotR, 0, Math.PI * 2); ctx.fill();
+                }
             }
         }
 
+        // ---- PASS 1: green back FACE of the extrusion + faint back net on top ----
+        ctx.save();
+        clipLogo(dx, dy);
+        // grass-green back plane (slightly darker than the top walls for depth)
+        ctx.fillStyle = dark ? 'rgba(28,120,58,0.95)' : 'rgba(40,135,62,0.95)';
+        ctx.fillRect(0, 0, W, H);
+        const backStroke = dark ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.4)';
+        drawNet(dx, dy, backStroke, backStroke, lineW * 0.8);
         ctx.restore();
 
-        // Logo boundary outline
-        ctx.strokeStyle = dark ? '#ffffff' : '#111111';
-        ctx.lineWidth = Math.max(1.2, cell * 0.08);
+        // ---- PASS 2: extruded side walls connecting back to front at the boundary ----
+        // Fill the "tube" between front face and back face along the silhouette.
+        ctx.save();
+        const wallEdge = dark ? 'rgba(255,255,255,0.7)' : 'rgba(180,180,180,0.7)';
+        ctx.strokeStyle = wallEdge;
+        ctx.lineWidth = 0.5;
+        const faceTop = dark ? 'rgba(74,222,128,0.95)' : 'rgba(86,200,110,0.98)';
+        const faceSide = dark ? 'rgba(40,160,80,0.92)' : 'rgba(52,150,72,0.95)';
+        const faceBottom = dark ? 'rgba(22,110,52,0.9)' : 'rgba(30,110,50,0.92)';
         for (let row = 0; row < GRID; row++) {
             for (let col = 0; col < GRID; col++) {
                 if (!has(col, row)) continue;
                 const x = col * cell, y = row * cell;
-                if (!has(col, row - 1)) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + cell, y); ctx.stroke(); }
-                if (!has(col, row + 1)) { ctx.beginPath(); ctx.moveTo(x, y + cell); ctx.lineTo(x + cell, y + cell); ctx.stroke(); }
-                if (!has(col - 1, row)) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + cell); ctx.stroke(); }
-                if (!has(col + 1, row)) { ctx.beginPath(); ctx.moveTo(x + cell, y); ctx.lineTo(x + cell, y + cell); ctx.stroke(); }
+                // top edge wall (brightest — catches light)
+                if (!has(col, row - 1)) {
+                    ctx.fillStyle = faceTop;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y); ctx.lineTo(x + dx, y + dy);
+                    ctx.lineTo(x + cell + dx, y + dy); ctx.lineTo(x + cell, y);
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                }
+                // right edge wall (side tone)
+                if (!has(col + 1, row)) {
+                    ctx.fillStyle = faceSide;
+                    ctx.beginPath();
+                    ctx.moveTo(x + cell, y); ctx.lineTo(x + cell + dx, y + dy);
+                    ctx.lineTo(x + cell + dx, y + cell + dy); ctx.lineTo(x + cell, y + cell);
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                }
+                // bottom edge wall (shadow tone)
+                if (!has(col, row + 1)) {
+                    ctx.fillStyle = faceBottom;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + cell); ctx.lineTo(x + dx, y + cell + dy);
+                    ctx.lineTo(x + cell + dx, y + cell + dy); ctx.lineTo(x + cell, y + cell);
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                }
+                // left edge wall (side tone)
+                if (!has(col - 1, row)) {
+                    ctx.fillStyle = faceSide;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y); ctx.lineTo(x + dx, y + dy);
+                    ctx.lineTo(x + dx, y + cell + dy); ctx.lineTo(x, y + cell);
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                }
             }
         }
+        ctx.restore();
+
+        // ---- PASS 3: bright FRONT layer of the net (on the base plane) ----
+        ctx.save();
+        clipLogo(0, 0);
+        // On a light background, lay a faint dark halo so the white net stays visible
+        if (!dark) drawNet(0, 0, 'rgba(120,120,120,0.35)', 'rgba(120,120,120,0.35)', lineW * 1.8);
+        const frontStroke = dark ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.98)';
+        drawNet(0, 0, frontStroke, frontStroke, lineW);
+        ctx.restore();
+
+        // ---- Boundary outlines: back silhouette (faint) + front (bold) ----
+        function outline(offX, offY, stroke, lw) {
+            ctx.strokeStyle = stroke; ctx.lineWidth = lw;
+            for (let row = 0; row < GRID; row++) {
+                for (let col = 0; col < GRID; col++) {
+                    if (!has(col, row)) continue;
+                    const x = col * cell + offX, y = row * cell + offY;
+                    if (!has(col, row - 1)) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + cell, y); ctx.stroke(); }
+                    if (!has(col, row + 1)) { ctx.beginPath(); ctx.moveTo(x, y + cell); ctx.lineTo(x + cell, y + cell); ctx.stroke(); }
+                    if (!has(col - 1, row)) { ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + cell); ctx.stroke(); }
+                    if (!has(col + 1, row)) { ctx.beginPath(); ctx.moveTo(x + cell, y); ctx.lineTo(x + cell, y + cell); ctx.stroke(); }
+                }
+            }
+        }
+        outline(dx, dy, dark ? 'rgba(220,220,220,0.6)' : 'rgba(210,210,210,0.85)', Math.max(0.8, cell * 0.06));
+        outline(0, 0, dark ? '#ffffff' : '#f0f0f0', Math.max(1.4, cell * 0.1));
     }
 
     // ----- 3D isometric renderer: connected blocks form one shape -----
@@ -579,7 +704,7 @@
         }
 
         // SINGLE shared extrusion — every piece sits on the same plane / same depth
-        const depth = cell * 0.42;
+        const depth = cell * (0.28 + statParams().complexity * 0.45); // more goals → deeper 3D
         const ox = depth * 0.62;
         const oy = -depth;
 
@@ -861,6 +986,37 @@
                 ctx.beginPath(); ctx.moveTo(x + cell*0.15, y + cell*0.2); ctx.lineTo(x + cell*0.85, y + cell*0.8); ctx.stroke();
                 ctx.setLineDash([]);
                 ctx.fillStyle = '#f5d800'; ctx.beginPath(); ctx.arc(x + cell*0.78, y + cell*0.28, cell*0.08, 0, Math.PI*2); ctx.fill();
+            } else if (stat === 'saves') {
+                // Save — goalkeeper glove (rounded mitt with fingers)
+                ctx.fillStyle = '#c084fc';
+                ctx.beginPath(); ctx.arc(cx, cy + cell*0.05, cell*0.2, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#9333ea';
+                for (let k = -1; k <= 1; k++) {
+                    ctx.beginPath(); ctx.roundRect(cx + k*cell*0.12 - cell*0.04, cy - cell*0.24, cell*0.08, cell*0.16, cell*0.04); ctx.fill();
+                }
+            } else if (stat === 'var') {
+                // VAR → robotic VR goggles / visor headset
+                ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+                // head strap going around
+                ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = Math.max(1, cell*0.06);
+                ctx.beginPath(); ctx.moveTo(cx - cell*0.28, cy); ctx.lineTo(cx + cell*0.28, cy); ctx.stroke();
+                // goggles body (rounded visor)
+                ctx.fillStyle = '#1f2937';
+                ctx.beginPath(); ctx.roundRect(cx - cell*0.26, cy - cell*0.16, cell*0.52, cell*0.3, cell*0.1); ctx.fill();
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, cell*0.05);
+                ctx.beginPath(); ctx.roundRect(cx - cell*0.26, cy - cell*0.16, cell*0.52, cell*0.3, cell*0.1); ctx.stroke();
+                // two glowing robot eyes/lenses
+                ctx.fillStyle = '#00e5ff';
+                ctx.beginPath(); ctx.arc(cx - cell*0.11, cy, cell*0.075, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(cx + cell*0.11, cy, cell*0.075, 0, Math.PI*2); ctx.fill();
+                // bright eye highlights
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.arc(cx - cell*0.13, cy - cell*0.02, cell*0.025, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(cx + cell*0.09, cy - cell*0.02, cell*0.025, 0, Math.PI*2); ctx.fill();
+                // little antenna nub on top (robot)
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(0.8, cell*0.04);
+                ctx.beginPath(); ctx.moveTo(cx, cy - cell*0.16); ctx.lineTo(cx, cy - cell*0.26); ctx.stroke();
+                ctx.fillStyle = '#e10600'; ctx.beginPath(); ctx.arc(cx, cy - cell*0.28, cell*0.035, 0, Math.PI*2); ctx.fill();
             } else { // fouls
                 // Foul — whistle X
                 ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1.2, cell*0.1);
@@ -1025,69 +1181,91 @@
 
         if (opts.bg && opts.bg !== 'transparent' && opts.bg !== 'rgba(0,0,0,0)') { ctx.fillStyle = opts.bg; ctx.fillRect(0, 0, W, H); }
 
-        // Flood-fill connected groups
-        const groupMap = new Int16Array(GRID * GRID).fill(-1);
-        let groupCount = 0;
-        for (let pid = 1; pid <= GRID * GRID; pid++) {
-            if (!set.has(pid) || groupMap[pid - 1] !== -1) continue;
-            const gid = groupCount++;
-            const stack = [pid - 1];
-            while (stack.length) {
-                const i = stack.pop();
-                if (i < 0 || i >= GRID * GRID || groupMap[i] !== -1 || !set.has(i + 1)) continue;
-                groupMap[i] = gid;
-                const c = i % GRID, r = Math.floor(i / GRID);
-                if (c > 0) stack.push(i - 1);
-                if (c < GRID - 1) stack.push(i + 1);
-                if (r > 0) stack.push(i - GRID);
-                if (r < GRID - 1) stack.push(i + GRID);
-            }
-        }
-
-        // Op-art stripe palettes (Cruz-Diez inspired)
+        // Op-art color palettes (Cruz-Diez inspired)
         const palettes = [
-            ['#1e3a8a', '#fbbf24', '#1e3a8a', '#f97316'],          // blue/yellow/orange
-            ['#16a34a', '#a3e635', '#7c3aed', '#f97316', '#000000'],// green/lime/purple/orange/black
-            ['#1e3a8a', '#e89fc4', '#1e3a8a', '#f97316'],          // blue/pink/orange
-            ['#000000', '#84cc16', '#7c3aed', '#f97316'],          // black/lime/purple/orange
-            ['#dc2626', '#fbbf24', '#1e3a8a', '#16a34a'],          // red/yellow/blue/green
+            ['#1e3a8a', '#fbbf24', '#1e3a8a', '#f97316'],
+            ['#16a34a', '#a3e635', '#7c3aed', '#f97316', '#000000'],
+            ['#1e3a8a', '#e89fc4', '#1e3a8a', '#f97316'],
+            ['#000000', '#84cc16', '#7c3aed', '#f97316'],
+            ['#dc2626', '#fbbf24', '#1e3a8a', '#16a34a'],
         ];
+        const sp = statParams();
+        const tt = animate ? t : 0;
 
-        // Per-group: palette + stripe phase
-        const groupPalette = [], groupStripeW = [];
-        for (let g = 0; g < groupCount; g++) {
-            groupPalette.push(palettes[pseed(g, fillSeed) % palettes.length]);
-            groupStripeW.push(cell * (0.35 + (pseed(g, fillSeed + 3) % 3) * 0.12));
-        }
+        // Like SOLID: partition the logo into ~4x4 patches, each gets its OWN op-art
+        // treatment + palette, so many patterns coexist in one mark instead of uniform stripes.
+        const NUM_STYLES = 8;
+        const patch = 4;
+        const styleFor = (col, row) => {
+            const pc = Math.floor(col/patch), pr = Math.floor(row/patch);
+            return pseed(pr*GRID+pc, fillSeed*7 + 13) % NUM_STYLES;
+        };
+        const palFor = (col, row) => {
+            const pc = Math.floor(col/patch), pr = Math.floor(row/patch);
+            return palettes[pseed(pr*GRID+pc, fillSeed*5 + 3) % palettes.length];
+        };
 
-        // Clip to each group and draw vertical stripes
-        for (let g = 0; g < groupCount; g++) {
+        const sw = cell * (0.5 + (1 - sp.density*0.5) * 0.5); // stripe/element scale
+
+        for (let pid = 1; pid <= GRID*GRID; pid++) {
+            if (!set.has(pid)) continue;
+            const idx = pid-1, col = idx%GRID, row = Math.floor(idx/GRID);
+            const x = col*cell, y = row*cell, cx = x+cell/2, cy = y+cell/2;
+            const style = styleFor(col, row);
+            const pal = palFor(col, row);
+            const scroll = animate ? tt*12 : 0;
+
             ctx.save();
-            ctx.beginPath();
-            for (let pid = 1; pid <= GRID * GRID; pid++) {
-                if (groupMap[pid - 1] !== g) continue;
-                const idx = pid - 1, col = idx % GRID, row = Math.floor(idx / GRID);
-                ctx.rect(col * cell, row * cell, cell, cell);
-            }
-            ctx.clip();
+            ctx.beginPath(); ctx.rect(x, y, cell, cell); ctx.clip();
 
-            // Find group bounds
-            let minX = W, maxX = 0, minY = H, maxY = 0;
-            for (let pid = 1; pid <= GRID * GRID; pid++) {
-                if (groupMap[pid - 1] !== g) continue;
-                const idx = pid - 1, col = idx % GRID, row = Math.floor(idx / GRID);
-                minX = Math.min(minX, col * cell); maxX = Math.max(maxX, (col + 1) * cell);
-                minY = Math.min(minY, row * cell); maxY = Math.max(maxY, (row + 1) * cell);
-            }
-
-            const pal = groupPalette[g];
-            const sw = groupStripeW[g];
-            const scroll = animate ? (t * 12) % (sw * pal.length) : 0;
-            let ci = 0;
-            for (let sx = minX - sw * pal.length + scroll; sx < maxX; sx += sw) {
-                ctx.fillStyle = pal[ci % pal.length];
-                ctx.fillRect(sx, minY, sw + 0.5, maxY - minY);
-                ci++;
+            if (style === 0 || style === 1) {
+                // vertical (0) / horizontal (1) stripes
+                let ci = 0;
+                for (let s = -sw*pal.length + (scroll % (sw*pal.length)); s < cell + sw; s += sw) {
+                    ctx.fillStyle = pal[ci % pal.length];
+                    if (style === 0) ctx.fillRect(x + s, y, sw+0.5, cell);
+                    else ctx.fillRect(x, y + s, cell, sw+0.5);
+                    ci++;
+                }
+            } else if (style === 2) {
+                // diagonal stripes
+                ctx.translate(cx, cy); ctx.rotate(Math.PI/4); ctx.translate(-cx, -cy);
+                let ci = 0;
+                for (let s = -sw*pal.length*2 + (scroll % (sw*pal.length)); s < cell*2; s += sw) {
+                    ctx.fillStyle = pal[ci % pal.length];
+                    ctx.fillRect(x - cell + s, y - cell, sw+0.5, cell*3);
+                    ci++;
+                }
+            } else if (style === 3) {
+                // concentric rings
+                const maxR = cell * 0.75;
+                let ci = 0;
+                for (let rr = maxR; rr > 0; rr -= sw*0.7) {
+                    ctx.fillStyle = pal[ci % pal.length];
+                    ctx.beginPath(); ctx.arc(cx, cy, rr, 0, Math.PI*2); ctx.fill();
+                    ci++;
+                }
+            } else if (style === 4) {
+                // checkerboard of two palette colors
+                const n = 2, sub = cell/n;
+                for (let sy=0; sy<n; sy++) for (let sx=0; sx<n; sx++){
+                    ctx.fillStyle = pal[((sx+sy) % 2) ? 1 : 0];
+                    ctx.fillRect(x+sx*sub, y+sy*sub, Math.ceil(sub), Math.ceil(sub));
+                }
+            } else if (style === 5) {
+                // dot grid on a solid ground
+                ctx.fillStyle = pal[0]; ctx.fillRect(x, y, cell, cell);
+                ctx.fillStyle = pal[1 % pal.length];
+                ctx.beginPath(); ctx.arc(cx, cy, cell*0.3, 0, Math.PI*2); ctx.fill();
+            } else if (style === 6) {
+                // half-split block
+                ctx.fillStyle = pal[0]; ctx.fillRect(x, y, cell, cell);
+                ctx.fillStyle = pal[1 % pal.length];
+                ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x+cell, y); ctx.lineTo(x, y+cell); ctx.closePath(); ctx.fill();
+            } else {
+                // solid color block
+                ctx.fillStyle = pal[pseed(idx, fillSeed) % pal.length];
+                ctx.fillRect(x, y, cell, cell);
             }
             ctx.restore();
         }
@@ -1122,20 +1300,24 @@
         if(!any){minX=0;minY=0;maxX=GRID-1;maxY=GRID-1;}
         const cxg=(minX+maxX)/2, cyg=(minY+maxY)/2, spanr=Math.max(4,(maxX-minX+maxY-minY)/2);
 
-        // green ink tones (subtle)
-        const g0 = dark ? [40,90,60] : [150,200,165];   // faint
-        const g1 = dark ? [60,150,95] : [90,170,120];    // mid
-        const g2 = dark ? [90,210,140] : [40,120,75];    // strong
+        // neon green ink tones
+        const g0 = dark ? [20,120,60] : [60,200,110];    // faint neon
+        const g1 = dark ? [40,220,110] : [30,210,120];   // mid neon
+        const g2 = dark ? [80,255,150] : [0,230,120];    // bright neon
         function mix(a,b,k){return [a[0]+(b[0]-a[0])*k, a[1]+(b[1]-a[1])*k, a[2]+(b[2]-a[2])*k];}
         function rgb(c){return "rgb("+Math.round(c[0])+","+Math.round(c[1])+","+Math.round(c[2])+")";}
 
+        // Stat drivers: possession → blob coverage, passes → busier field, offsides → scatter
+        const _asp = statParams();
+        const cover = 0.4 + _asp.colorAmount * 0.45;
+        const busy = 0.5 + _asp.density * 1.2;
         // Smooth value field — layered sines making soft blobs
         function field(c, r){
             const dx=(c-cxg)/spanr, dy=(r-cyg)/spanr;
             const dist=Math.sqrt(dx*dx+dy*dy);
-            let v = 0.6 - dist*0.5;
-            v += 0.28*Math.sin(c*0.45 + tt*0.7) * Math.cos(r*0.4 - tt*0.5);
-            v += 0.18*Math.sin((c+r)*0.3 - tt*0.9);
+            let v = cover - dist*0.5;
+            v += 0.28*busy*Math.sin(c*0.45 + tt*0.7) * Math.cos(r*0.4 - tt*0.5);
+            v += 0.18*busy*Math.sin((c+r)*0.3 - tt*0.9);
             v += 0.14*Math.sin(c*0.9 + r*0.7 + tt);
             return v;
         }
@@ -1173,25 +1355,153 @@
             }
         }
 
-        // Sparse abstract elements riding on top (low frequency, subtle)
-        const ink = dark ? 'rgba(230,230,225,0.5)' : 'rgba(20,20,20,0.45)';
-        const orange = 'rgba(232,85,45,0.65)';
+        // --- SQUIGGLE LAYER: loose hand-drawn curves scattered inside the logo ---
+        // clip to the logo so squiggles stay inside the mark, then draw wandering
+        // multi-segment curves seeded deterministically (animated drift when playing).
+        ctx.save();
+        ctx.beginPath();
+        for (let pid = 1; pid <= GRID*GRID; pid++) {
+            if (!set.has(pid)) continue;
+            const i = pid-1; ctx.rect((i%GRID)*cell, Math.floor(i/GRID)*cell, cell, cell);
+        }
+        ctx.clip();
+        const squiggleCount = 5 + Math.round(_asp.density * 8); // more passes → more squiggles
+        const sqInk = dark ? 'rgba(255,40,70,0.85)' : 'rgba(255,20,55,0.8)';   // neon red
+        const sqInk2 = dark ? 'rgba(255,90,120,0.7)' : 'rgba(230,0,50,0.7)';   // brighter/deeper red
+        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+        for (let q = 0; q < squiggleCount; q++) {
+            const s0 = pseed(q*13+1, aSeed+777);
+            const s1 = pseed(q*13+5, aSeed+777);
+            let px = minX*cell + (s0 % Math.max(1,(maxX-minX)*cell));
+            let py = minY*cell + (s1 % Math.max(1,(maxY-minY)*cell));
+            const segs = 5 + (pseed(q, aSeed+9) % 6);
+            const step = cell * (1.2 + (pseed(q, aSeed+11)%3)*0.6);
+            let ang = (pseed(q, aSeed+13) % 628) / 100;
+            ctx.strokeStyle = (q % 4 === 0) ? sqInk2 : sqInk;
+            ctx.lineWidth = Math.max(1.2, cell * (0.12 + (pseed(q,aSeed+17)%3)*0.05));
+            ctx.beginPath(); ctx.moveTo(px, py);
+            for (let sgi = 0; sgi < segs; sgi++) {
+                // wander the angle; add gentle animated drift
+                ang += ((pseed(q*31+sgi, aSeed+19) % 200)/100 - 1) * 1.1 + Math.sin(tt*0.6 + q + sgi)*0.25;
+                const nx = px + Math.cos(ang) * step;
+                const ny = py + Math.sin(ang) * step;
+                const mxp = (px+nx)/2 + Math.cos(ang+1.57)*step*0.4;
+                const myp = (py+ny)/2 + Math.sin(ang+1.57)*step*0.4;
+                ctx.quadraticCurveTo(mxp, myp, nx, ny);
+                px = nx; py = ny;
+            }
+            ctx.stroke();
+            // occasional little loop/curl at the end
+            if (pseed(q, aSeed+23) % 3 === 0) {
+                ctx.beginPath(); ctx.arc(px, py, cell*0.3, 0, Math.PI*1.6); ctx.stroke();
+            }
+        }
+        ctx.restore();
+
+
+        const _isp = statParams();
+        const glyphChance = 13 - Math.round(_isp.density * 8); // more passes → more glyphs
+        const ink = dark ? 'rgba(230,230,225,0.7)' : 'rgba(20,20,20,0.7)';
+        const orange = 'rgba(232,85,45,0.8)';
         for (let pid = 1; pid <= GRID*GRID; pid++){
             if(!set.has(pid))continue;
             const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
             const sd = pseed(idx, aSeed + 5 + (animate?Math.floor(t*0.2):0));
-            if (sd % 23 !== 0) continue; // very sparse
+            if (sd % Math.max(4, glyphChance) !== 0) continue; // sparse, density-driven
             const x=col*cell, y=row*cell, mx=x+cell/2, my=y+cell/2;
-            const e = (sd>>5)%4;
-            if(e===0){ ctx.fillStyle=ink; ctx.beginPath(); ctx.arc(mx,my,cell*0.16,0,Math.PI*2); ctx.fill(); }
-            else if(e===1){ ctx.fillStyle=orange; ctx.beginPath(); ctx.moveTo(mx,my-cell*0.18); ctx.lineTo(mx+cell*0.16,my+cell*0.14); ctx.lineTo(mx-cell*0.16,my+cell*0.14); ctx.closePath(); ctx.fill(); }
-            else if(e===2){ ctx.strokeStyle=ink; ctx.lineWidth=Math.max(0.8,cell*0.05); ctx.strokeRect(x+cell*0.25,y+cell*0.25,cell*0.5,cell*0.5); }
-            else { ctx.fillStyle=ink; ctx.fillRect(mx-cell*0.04,y+cell*0.2,cell*0.08,cell*0.6); }
+            const glyph = INTERNET_MOTIFS[(sd >> 5) % INTERNET_MOTIFS.length];
+            // occasional orange accent glyph (tied to cards / warm accent)
+            const warm = ((sd >> 9) % 10) < (1 + Math.round(_isp.warmAccent * 4));
+            ctx.fillStyle = warm ? orange : ink;
+            ctx.font = `700 ${Math.round(cell * (0.7 + ((sd>>3)%3)*0.12))}px "Geist Mono", ui-monospace, monospace`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText(glyph, mx, my + cell*0.04);
         }
 
-        // Faint pixelated boundary outline (low opacity)
-        ctx.strokeStyle = dark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.2)';
-        ctx.lineWidth = Math.max(0.6, cell*0.04);
+        // --- PLAYER NAME LABELS: surnames on neon-blue backgrounds scattered in the mark ---
+        const neonBlue = dark ? 'rgba(0,90,255,0.95)' : 'rgba(0,70,235,0.95)';
+        const neonBlueGlow = 'rgba(40,140,255,0.5)';
+        const nameChance = 19 - Math.round(_isp.density * 6);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        for (let pid = 1; pid <= GRID*GRID; pid++){
+            if(!set.has(pid))continue;
+            const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
+            const sd = pseed(idx, aSeed + 333 + (animate?Math.floor(t*0.12):0));
+            if (sd % Math.max(8, nameChance) !== 0) continue;
+            const name = PLAYER_NAMES[(sd >> 6) % PLAYER_NAMES.length];
+            // fit across consecutive logo cells to the right
+            let span = 1;
+            while (span < Math.ceil(name.length*0.5) && has(col+span, row)) span++;
+            const x=col*cell, y=row*cell, boxW = span*cell, my=y+cell/2;
+            const padY = cell*0.18;
+            // neon-blue glow + solid blue background bar behind the name
+            ctx.fillStyle = neonBlueGlow;
+            ctx.fillRect(x-1, y+padY-1.5, boxW+2, cell-padY*2+3);
+            ctx.fillStyle = neonBlue;
+            ctx.fillRect(x+1, y+padY, boxW-2, cell-padY*2);
+            // white player name text
+            ctx.fillStyle = '#ffffff';
+            const fs = Math.min(cell*0.5, (boxW*1.6)/Math.max(1,name.length));
+            ctx.font = `800 ${Math.round(fs)}px "Geist Mono", ui-monospace, monospace`;
+            ctx.fillText(name, x + boxW/2, my + cell*0.02);
+        }
+
+        // --- PARODY LAYER: trolls/comments the match outcome (drives tone from stats) ---
+        // Build a pool of taunts weighted by the actual stats so the "vibe" reflects the game.
+        const s = matchStats;
+        const taunts = [];
+        if (s.goals === 0) { taunts.push('0-0','BORING','SNOOZE','PARK THE BUS','ZZZ'); }
+        if (s.goals >= 4) { taunts.push('GOAL FEST','SCENES','LIMBS','GG EZ'); }
+        if (s.fouls >= 14) { taunts.push('DIRTY','RIGGED','VAR?','SOFT','CHEAT'); }
+        if (s.cards >= 4) { taunts.push('SENT OFF','RED!','OFF!','11 v 9'); }
+        if (s.offsides >= 5) { taunts.push('OFFSIDE','LINESMAN!','BY A HAIR','CHALK'); }
+        if (s.possession >= 65) { taunts.push('TIKI TAKA','ALL DAY','SIDEWAYS'); }
+        if (s.possession <= 40) { taunts.push('SMASH & GRAB','PARKED','LUCKY'); }
+        if (s.shots >= 12) { taunts.push('WASTEFUL','FINISH!','HOW?!'); }
+        // always-available trolls
+        taunts.push('L','GG','RATIO','MID','COPE','SEETHE','ABSOLUTE','SCENES','OOF','NPC','MEH','???','SKILL ISSUE','CLOWN');
+        const faces = ['\\u263A','\\u2639','\\u2620','\\u00BF','x_x','T_T','>:('];
+
+        const parodyChance = 17 - Math.round(_isp.contrast * 6); // more fouls(contrast) → more trolling
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        for (let pid = 1; pid <= GRID*GRID; pid++){
+            if(!set.has(pid))continue;
+            const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
+            // only roomy interior cells so words fit; need a few cells to the right
+            const sd = pseed(idx, aSeed + 99 + (animate?Math.floor(t*0.15):0));
+            if (sd % Math.max(6, parodyChance) !== 0) continue;
+            const word = taunts[(sd >> 4) % taunts.length];
+            const x=col*cell, y=row*cell, my=y+cell/2;
+            // fit the word across available consecutive logo cells to the right
+            let span = 1;
+            while (span < word.length && has(col+span, row)) span++;
+            const boxW = span * cell;
+            // red-card accent words get red, faces/troll get bright ink
+            const isRed = /RED|SENT|OFF|RIGGED|CHEAT|DIRTY/.test(word);
+            // draw a little sticker bg so it pops out of the dither (parody "stamp")
+            ctx.fillStyle = isRed ? 'rgba(220,40,30,0.92)' : (dark ? 'rgba(245,200,30,0.9)' : 'rgba(20,20,20,0.88)');
+            const padY = cell*0.16;
+            ctx.fillRect(x+1, y+padY, boxW-2, cell - padY*2);
+            // text
+            ctx.fillStyle = isRed ? '#ffffff' : (dark ? '#111111' : '#f5f0e6');
+            const fs = Math.min(cell*0.62, (boxW*1.5)/Math.max(1,word.length));
+            ctx.font = `800 ${Math.round(fs)}px "Geist Mono", ui-monospace, monospace`;
+            ctx.fillText(word, x + boxW/2, my + cell*0.02);
+        }
+        // a couple of sad/troll faces sprinkled (emoji-ish), tied to a losing/dull game
+        if (s.goals <= 1 || s.fouls >= 12) {
+            for (let pid = 1; pid <= GRID*GRID; pid++){
+                if(!set.has(pid))continue;
+                const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
+                const sd = pseed(idx, aSeed + 222);
+                if (sd % 41 !== 0) continue;
+                const x=col*cell, y=row*cell;
+                ctx.fillStyle = dark ? 'rgba(245,200,30,0.95)' : 'rgba(20,20,20,0.9)';
+                ctx.font = `700 ${Math.round(cell*0.8)}px "Geist Mono", ui-monospace, monospace`;
+                ctx.fillText(faces[(sd>>5)%faces.length], x+cell/2, y+cell/2+cell*0.04);
+            }
+        }
+
         for (let row=0; row<GRID; row++){
             for(let col=0; col<GRID; col++){
                 if(!has(col,row))continue;
@@ -1310,8 +1620,9 @@
             }
             // 10,11 = empty cream
 
-            // Secondary combined shape inside ~40% of blocks
-            if ((sd >> 8) % 5 < 2) {
+            // Secondary combined shape — frequency scales with goals (complexity)
+            const _sp = statParams();
+            if ((sd >> 8) % 10 < (2 + Math.round(_sp.complexity * 5))) {
                 const subColor = colors[((sd >> 4) + 1) % 3];
                 const subType = (sd >> 11) % 6;
                 ctx.fillStyle = subColor;
@@ -1449,12 +1760,19 @@
         }
 
         // ---- Multiple animated lightning/specular streaks sweeping across ----
-        const streaks = [
+        const _csp = statParams();
+        const allStreaks = [
             { pos: 0.20, w: 0.05, sp: 0.30, amp: 0.9 },
             { pos: 0.42, w: 0.03, sp: 0.55, amp: 1.0 },
             { pos: 0.66, w: 0.06, sp: 0.22, amp: 0.7 },
             { pos: 0.84, w: 0.025, sp: 0.70, amp: 0.85 },
+            { pos: 0.32, w: 0.04, sp: 0.42, amp: 0.8 },
+            { pos: 0.55, w: 0.035, sp: 0.62, amp: 0.95 },
+            { pos: 0.75, w: 0.045, sp: 0.5, amp: 0.75 },
         ];
+        // shots → more lightning streaks (2 baseline up to all 7)
+        const nStreaks = Math.max(2, Math.min(allStreaks.length, 2 + Math.round(_csp.thickness * 5)));
+        const streaks = allStreaks.slice(0, nStreaks);
         ctx.globalCompositeOperation = 'screen';
         for (const sk of streaks) {
             // diagonal sweeping position

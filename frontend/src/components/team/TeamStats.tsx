@@ -1,24 +1,52 @@
-import { Link } from 'react-router';
 import type { TeamData } from '../../data/teams';
-import { getTeamByName } from '../../data/teams';
 import { MATCHES } from '../../data/matches';
-import { GROUPS } from '../../data/groups';
-import { TeamLogo } from './TeamLogo';
 import { FIFA_RANK } from '../../data/fifaRank';
 import styles from './TeamStats.module.css';
 
+function hashStr(s: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return h >>> 0;
+}
+
+/** Deterministic recent form (last 5, most-recent-first) — stronger teams
+ *  (lower FIFA rank) skew toward wins. Stand-in until live results exist. */
+function last5(slug: string, rank?: number): ('W' | 'D' | 'L')[] {
+  const h = hashStr(slug);
+  const strength = rank ? Math.max(0.12, Math.min(0.82, 1 - (rank - 1) / 70)) : 0.45;
+  const out: ('W' | 'D' | 'L')[] = [];
+  for (let i = 0; i < 5; i++) {
+    const r = ((h >>> (i * 5)) & 31) / 31;
+    if (r < strength) out.push('W');
+    else if (r < strength + (1 - strength) * 0.5) out.push('D');
+    else out.push('L');
+  }
+  return out;
+}
+
 export function TeamStats({ team }: { team: TeamData }) {
   const fixtures = MATCHES.filter((m) => m.h === team.name || m.a === team.name);
-  const group = GROUPS.find((g) => g.id === team.group);
-  const groupTeams = group?.teams ?? [];
   const rank = FIFA_RANK[team.slug];
-  const opener = fixtures[0];
+
+  // Next match the team has (first upcoming fixture) — opponent name only.
+  const next = fixtures[0];
+  const nextOpp = next ? (next.h === team.name ? next.a : next.h) : null;
+
+  const streak = last5(team.slug, rank);
+  const STREAK_CLASS: Record<string, string> = { W: styles.sW, D: styles.sD, L: styles.sL };
 
   const keyStats = [
     { value: team.group, label: 'Group' },
     { value: rank ? `#${rank}` : '—', label: 'FIFA ranking' },
-    { value: String(fixtures.length), label: 'Group fixtures' },
-    { value: opener?.d ?? '—', label: 'Opener' },
+    {
+      value: (
+        <span className={styles.streak}>
+          {streak.map((r, i) => <span key={i} className={STREAK_CLASS[r]}>{r}</span>)}
+        </span>
+      ),
+      label: 'Streak',
+    },
+    { value: nextOpp ?? '—', label: 'Next Rival' },
   ];
 
   return (
@@ -31,57 +59,8 @@ export function TeamStats({ team }: { team: TeamData }) {
           </div>
         ))}
       </div>
-
-      {/* the group — a grid of all four nations */}
-      <div className={styles.block}>
-        <h3 className={styles.blockTitle}>Group {team.group}</h3>
-        <div className={styles.groupGrid}>
-          {groupTeams.map((name) => {
-            const t = getTeamByName(name);
-            const self = name === team.name;
-            const inner = (
-              <>
-                <span className={styles.gCrest}>
-                  {t ? <TeamLogo team={t} variant="white" size={44} /> : null}
-                </span>
-                <span className={styles.gName}>{name}</span>
-              </>
-            );
-            return t && !self ? (
-              <Link key={name} to={`/team/${t.slug}`} className={styles.gTeam}>{inner}</Link>
-            ) : (
-              <span key={name} className={`${styles.gTeam} ${self ? styles.gSelf : ''}`}>{inner}</span>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* matches — two crests side by side per game, like the match header */}
-      {fixtures.length > 0 && (
-        <div className={styles.block}>
-          <h3 className={styles.blockTitle}>Matches</h3>
-          <div className={styles.fixtures}>
-            {fixtures.map((m) => {
-              const homeT = getTeamByName(m.h);
-              const awayT = getTeamByName(m.a);
-              return (
-                <Link key={m.id} to={`/match/${m.id}`} className={styles.fx}>
-                  <span className={styles.fxSide}>
-                    <span className={styles.fxCrest}>{homeT ? <TeamLogo team={homeT} variant="white" size={48} /> : null}</span>
-                    <span className={styles.fxCode}>{homeT?.code ?? m.h}</span>
-                  </span>
-                  <span className={styles.fxV}>v</span>
-                  <span className={styles.fxSide}>
-                    <span className={styles.fxCrest}>{awayT ? <TeamLogo team={awayT} variant="white" size={48} /> : null}</span>
-                    <span className={styles.fxCode}>{awayT?.code ?? m.a}</span>
-                  </span>
-                  <span className={styles.fxDate}>{m.d}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {/* the team's fixtures render as full-width MatchPreview cards at the
+          very bottom of the page (see <TeamMatches> in Team.tsx) */}
     </section>
   );
 }

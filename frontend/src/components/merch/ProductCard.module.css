@@ -78,11 +78,13 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 14px 14px;
-  border-top: 1px solid var(--hairline);
+  /* name/price strip blends into the white background — no tinted strip,
+     no divider line */
+  background: var(--bg);
 }
 
 .title {
-  font-size: 12px;
+  font-size: 20px;
   color: var(--bright);
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -93,7 +95,7 @@
 }
 
 .price {
-  font-size: 12px;
+  font-size: 20px;
   color: var(--bright);
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
@@ -104,8 +106,8 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  padding: 5px 9px;
-  font-size: 10px;
+  padding: 6px 10px;
+  font-size: 20px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--bg);
@@ -132,5 +134,5 @@
 
 @media (max-width: 640px) {
   .meta { padding: 10px 12px 12px; }
-  .title, .price { font-size: 11px; }
+  .title, .price { font-size: 16px; }
 }

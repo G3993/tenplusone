@@ -1,0 +1,363 @@
+/* Full-width match-preview: two team containers over a detail container.
+   Borderless + gapless — the blocks touch with no fill or stroke.
+   Shared by the homepage matches strip and the team page. */
+/* desktop: home team · match detail · away team, one row */
+.match {
+  position: relative;
+  display: grid;
+  /* three sections side by side: home team 40% · match detail 20% · away
+     team 40% (stacked on mobile) */
+  grid-template-columns: 4fr 2fr 4fr;
+  grid-template-areas: "home detail away";
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  /* taller card: the extra bottom padding is the runway for the grid floor */
+  padding: 44px 18px 120px;
+  /* children stack above the z-index:-1 grid floor but inside the card */
+  isolation: isolate;
+  /* the whole card is one 3D blue neon block (CTA family, blue variant):
+     dotted-line face + isometric extrusion on top/right */
+  --d: 8px;
+  border: 1px solid rgba(74, 222, 128, 0.75);
+  /* plain black face — the perspective grid floor is the only texture */
+  background: #000000;
+  box-shadow: 0 0 14px rgba(74, 222, 128, 0.16);
+  transition: transform 0.13s ease, box-shadow 0.13s ease, border-color 0.13s ease;
+  color: inherit;
+}
+/* hover: the whole card presses in like the CTA blocks */
+.match:hover {
+  --d: 5px;
+  transform: translate(3px, -3px);
+  border-color: #4ade80;
+  box-shadow: 0 0 24px rgba(74, 222, 128, 0.32);
+}
+.match::before,
+.match::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.35) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #08210f;
+  border: 1px solid rgba(74, 222, 128, 0.75);
+}
+/* top face */
+.match::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+/* right face */
+.match::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
+}
+/* bottom edge is supplied by the surrounding container (.matchList / .panel) */
+
+/* ── green perspective grid — synthwave floor along the card bottom and a
+   mirrored ceiling at the top, both fading to black toward the middle.
+   The rows scroll toward the viewer. Decorative only (aria-hidden). */
+.field {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 150px;
+  overflow: hidden;
+  z-index: -1;
+  pointer-events: none;
+  /* fade to black well before the horizon */
+  -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.8) 18%, rgba(0, 0, 0, 0.5) 42%, rgba(0, 0, 0, 0.22) 66%, rgba(0, 0, 0, 0.06) 86%, transparent 100%);
+  mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.8) 18%, rgba(0, 0, 0, 0.5) 42%, rgba(0, 0, 0, 0.22) 66%, rgba(0, 0, 0, 0.06) 86%, transparent 100%);
+}
+.field::before {
+  content: '';
+  position: absolute;
+  left: -40%;
+  right: -40%;
+  bottom: 0;
+  height: 200%;
+  --gx: 56px;
+  --gy: 44px;
+  background:
+    repeating-linear-gradient(90deg, rgba(74, 222, 128, 0.35) 0 2px, rgba(0, 0, 0, 0) 2px var(--gx)),
+    repeating-linear-gradient(0deg,  rgba(74, 222, 128, 0.35) 0 2px, rgba(0, 0, 0, 0) 2px var(--gy));
+  /* plate bottom sits on the card's bottom edge; rows recede to the horizon */
+  transform: perspective(420px) rotateX(58deg);
+  transform-origin: 50% 100%;
+  animation: gridScroll 1.8s linear infinite;
+}
+/* rows sweep one full period — with the plate tilted away, this reads as the
+   floor rushing toward the viewer */
+@keyframes gridScroll {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 0, 0 var(--gy, 44px); }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .field::before { animation: none; }
+}
+
+.homeArea { grid-area: home; }
+.awayArea { grid-area: away; }
+
+/* small vs between the two crests — only in the mobile side-by-side layout */
+.vsMid {
+  display: none;
+  grid-area: vsmid;
+  font-family: var(--display);
+  font-size: 18px;
+  color: var(--dim);
+  text-align: center;
+  text-transform: lowercase;
+}
+
+/* team panels: no fill, no pattern (logos float on the page background) */
+.teamPanel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 56px 12px;
+  background: transparent;
+  text-decoration: none;
+  min-width: 0;
+}
+.slot { width: 136px; height: 136px; display: inline-block; flex: none; }
+.crest { flex: none; }
+
+.cName {
+  font-family: var(--display);
+  font-size: clamp(18px, 2.4vw, 24px);
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: var(--bright);
+  text-align: center;
+  max-width: 100%;
+  transition: color 0.12s;
+}
+.teamPanel:hover .cName { color: var(--green); }
+
+/* ── detail: plain centered info in the middle column ──────────────── */
+.detail {
+  grid-area: detail;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 0 4px;
+  background: transparent;
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+  text-decoration: none;
+  line-height: 1.35;
+}
+/* stretch the detail link over the whole card so anywhere on the container
+   opens the match page; team links and odds buttons stack above it */
+.meta::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.metaStage {
+  font-family: var(--mono);
+  font-size: 18px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.metaTeams {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.04em;
+}
+.metaVs {
+  font-weight: 400;
+  color: #4ade80;
+  text-transform: lowercase;
+  padding: 0 4px;
+}
+.metaWhen {
+  font-family: var(--display);
+  font-size: 20px;
+  color: #4ade80;
+  letter-spacing: 0.02em;
+}
+.metaWhere {
+  font-family: var(--display);
+  font-size: 20px;
+  color: #4ade80;
+}
+
+/* compact (homepage): "MEX vs RSA" over the date/time, same size as the time */
+.vsLine {
+  font-family: var(--mono);
+  font-size: 20px;
+  letter-spacing: 0.04em;
+  color: var(--bright);
+  line-height: 1;
+}
+.vsWord {
+  color: var(--dim);
+  text-transform: lowercase;
+}
+.compact { padding: 40px 24px; }
+.compact .detail { gap: 8px; }
+/* homepage strip stays dense — no grid floor there */
+.compact .field { display: none; }
+/* team names: lowercase + a touch smaller in the compact homepage card */
+.compact .cName {
+  text-transform: lowercase;
+  font-size: clamp(11px, 1.4vw, 13px);
+  letter-spacing: 0.02em;
+}
+
+/* three odds buttons (home / draw / away), each with the team code above */
+.odds3 {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.oddCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.oddCode {
+  font-family: var(--mono);
+  font-size: 16px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* ── live prediction market ────────────────────────────────────────── */
+.market {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 16px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: liveRing 1.8s ease-out infinite;
+}
+@keyframes liveRing {
+  0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55); }
+  70%  { box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
+/* widen + breathe so the lines don't read as squished */
+.spark {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+.spark > span {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 720px;
+  justify-content: center;
+}
+.spark svg {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 600px;
+  height: 84px;
+}
+/* the live end-of-series dots pulse to signal a live market */
+.spark svg circle {
+  animation: dotPulse 1.6s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+.picks {
+  font-family: var(--mono);
+  font-size: 18px;
+  letter-spacing: 0.03em;
+  color: var(--dim);
+  text-align: center;
+}
+
+/* tablet/phone: same panel layout, tighter gaps */
+@media (max-width: 720px) {
+  /* mobile: crests side by side with a small vs between, detail beneath */
+  .match {
+    grid-template-columns: 1fr auto 1fr;
+    grid-template-areas:
+      "home vsmid away"
+      "detail detail detail";
+    gap: 12px;
+    padding: 22px 12px 96px;
+  }
+  .vsMid { display: block; }
+  .teamPanel { padding: 24px 8px; }
+  .detail { padding: 14px 0; }
+  .field { height: 110px; }
+  .field::before { --gx: 30px; --gy: 24px; }
+}
+
+@media (max-width: 560px) {
+  .match { gap: 10px; padding: 18px 10px 80px; --d: 6px; }
+  .field { height: 92px; }
+  .teamPanel { padding: 30px 6px; }
+  .slot { width: 96px; height: 96px; }
+  .detail { padding: 6px 0 2px; gap: 14px; }
+  .odds3 { gap: 10px; }
+  .metaWhen { font-size: 18px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liveDot, .spark svg circle { animation: none; }
+}

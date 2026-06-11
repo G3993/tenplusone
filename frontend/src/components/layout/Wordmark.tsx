@@ -6,6 +6,8 @@ interface WordmarkProps {
   full?: boolean;
   /** Medium form: "internet fc". */
   internetfc?: boolean;
+  /** Brand lockup: "internetFC" (lowercase word + uppercase FC). */
+  brand?: boolean;
   /** Render the iFC Brand System pixel lockup as an inline SVG instead of type. */
   pixel?: boolean;
 }
@@ -19,7 +21,7 @@ interface WordmarkProps {
  * assets, and anywhere the typeset mark would lose its character at
  * small sizes).
  */
-export function Wordmark({ className, size, full, internetfc, pixel }: WordmarkProps) {
+export function Wordmark({ className, size, full, internetfc, brand, pixel }: WordmarkProps) {
   if (pixel) {
     // 42×28 viewBox: i-dot=green ball (2,2 4×4), i-stem=gray player (2,8 4×14),
     // F+C in bright. Mirrors iFC Brand System lockup D exactly.
@@ -56,15 +58,15 @@ export function Wordmark({ className, size, full, internetfc, pixel }: WordmarkP
     );
   }
 
-  const rest = full ? 'nternet football club' : internetfc ? 'nternet fc' : 'FC';
-  const label = full ? 'internet football club' : internetfc ? 'internet fc' : 'iFC';
+  const rest = full ? 'nternet football club' : internetfc ? 'nternet fc' : brand ? 'nternet FC' : 'FC';
+  const label = full ? 'internet football club' : internetfc ? 'internet fc' : brand ? 'internet FC' : 'iFC';
   return (
     <span
       className={className}
       style={{
-        fontFamily: 'var(--mono)',
+        fontFamily: 'var(--display)',
         fontWeight: 800,
-        letterSpacing: full || internetfc ? '-0.02em' : '-0.04em',
+        letterSpacing: full || internetfc || brand ? '-0.02em' : '-0.04em',
         fontSize: size ? `${size}px` : undefined,
         lineHeight: 1,
         textTransform: 'none',

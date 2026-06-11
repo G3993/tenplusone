@@ -69,7 +69,24 @@ function PageFallback() {
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
-    window.scrollTo(0, 0);
+    // Take over scroll restoration so mobile browsers don't re-apply the list
+    // page's scroll position after the new route's content mounts.
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    const toTop = () => {
+      // 'instant' overrides the global `html { scroll-behavior: smooth }`,
+      // which otherwise animates this jump and gets cut off mid-scroll on
+      // mobile when the lazy route content lands.
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    toTop();
+    // Again on the next frame — after the lazy route's real content replaces
+    // the Suspense fallback and the document regains its height.
+    const raf = requestAnimationFrame(toTop);
+    return () => cancelAnimationFrame(raf);
   }, [pathname]);
   return null;
 }

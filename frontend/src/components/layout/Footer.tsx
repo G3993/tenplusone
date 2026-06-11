@@ -68,8 +68,7 @@ export function Footer() {
         <section className={styles.col} aria-labelledby="ft-brand">
           <h2 id="ft-brand" className={styles.brand}>internet fc</h2>
           <p className={styles.tagline}>
-            48 nations, every crest on the same pixel grid.
-            browse, predict, own a tournament you actually love.
+            Futbol culture celebrated play by play, pixel by pixel.
           </p>
           <div className={styles.socials} aria-label="iFC on social">
             <a
@@ -82,7 +81,7 @@ export function Footer() {
               <YouTubeIcon />
             </a>
             <a
-              href="https://www.instagram.com/internetfc"
+              href="https://www.instagram.com/internetfutbolclub/"
               target="_blank"
               rel="noopener noreferrer"
               className={styles.social}
@@ -132,9 +131,9 @@ export function Footer() {
         </section>
 
         <section className={styles.col} aria-labelledby="ft-sub">
-          <h2 id="ft-sub" className={styles.colHead}>tournament updates</h2>
+          <h2 id="ft-sub" className={styles.colHead}>match updates</h2>
           <p className={styles.subCopy}>
-            kickoff alerts, fixture drops, new crests in the shop. zero spam.
+            new match results, limited-edition drops. zero spam.
           </p>
           <form className={styles.subscribe} onSubmit={onSubmit}>
             {status === 'ok' ? (

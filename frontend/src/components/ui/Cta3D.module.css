@@ -1,0 +1,88 @@
+/* 3D tetris-block CTA — neon green scanline face with an isometric extrusion
+   (top + right faces at 45°, like the engine's cube motif). Hovering reduces
+   the depth and shifts the face toward the back plane, so the block reads as
+   pressed in. */
+
+.cta {
+  /* extrusion depth — hover/active shrink it to "press" the block */
+  --d: 7px;
+  position: relative;
+  display: block;
+  width: fit-content;
+  margin: 56px auto 0;
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c8ffda;
+  text-decoration: none;
+  padding: 16px 34px;
+  /* neon scanline texture on near-black green — scanlines kept faint so the
+     label stays easy to read */
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    #04100a;
+  border: 1px solid #35d06b;
+  box-shadow: 0 0 16px rgba(74, 222, 128, 0.22);
+  text-shadow: 0 0 8px rgba(74, 222, 128, 0.55);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
+}
+
+/* shared face texture for the extrusion sides — darker, tighter scanlines */
+.cta::before,
+.cta::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.35) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #08210f;
+  border: 1px solid #2aa957;
+  transition: inherit;
+}
+
+/* top face — parallelogram leaning right (bottom edge sits on the button) */
+.cta::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+
+/* right face — parallelogram leaning up (left edge sits on the button) */
+.cta::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
+}
+
+.cta:hover {
+  --d: 3px;
+  transform: translate(4px, -4px);
+  box-shadow: 0 0 22px rgba(74, 222, 128, 0.38);
+}
+
+.cta:active {
+  --d: 1px;
+  transform: translate(6px, -6px);
+}
+
+@media (max-width: 560px) {
+  .cta {
+    width: calc(100% - var(--d));
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 30px;
+    padding: 18px 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta, .cta::before, .cta::after { transition: none; }
+}

@@ -1,6 +1,8 @@
+/* no extra top margin — heroWrap's 48px top padding and brandName's 48px top
+   margin frame the logo with equal space above and below. */
 .hero {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 26px auto 0;
+  margin: 0 auto;
 }

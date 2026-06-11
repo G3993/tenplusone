@@ -60,11 +60,13 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  * light variants just works — clones inherit the same split.
  */
 const TEMPLATES = [
-  // Reference: "Argentina - World Cup 2026 Tee" (shop "Ten + One").
-  { type: 'tee', templateId: '69cd37f123e97cd05d03472d', typeLabel: 'Terminal Tee' },
-  // Add more as you build them, e.g.:
-  // { type: 'hoodie', templateId: '...', typeLabel: 'Hoodie' },
-  // { type: 'cap',    templateId: '...', typeLabel: 'Cap' },
+  // NEON line: full-colour 3D crest art (ART_STYLE=3d) on the existing boxy-tee
+  // and tote references — same blueprints/variants/placement, colour artwork.
+  { type: 'neon-tee', templateId: '6a1d8926dd788c501308502d', typeLabel: 'Neon Tee' },
+  { type: 'neon-tote', templateId: '6a0f213f76a738b4c204436a', typeLabel: 'Neon Tote' },
+  // Earlier references (kept):
+  // { type: 'embroidered-cap', templateId: '6a1ef812c91489211d03058c', typeLabel: 'Embroidered Cap' },
+  // { type: 'tee', templateId: '69cd37f123e97cd05d03472d', typeLabel: 'Terminal Tee' },
 ];
 
 const ART_BASE = 'https://www.internetfc.com/logos/print/4500';      // flat mono crests (white/black split)
@@ -230,10 +232,16 @@ async function teamProductFields(template, refProduct, team) {
   // Collect the reference crest placement(s): position + transform of each
   // placed crest image (ignore text/overlay SVGs that can't be re-referenced).
   const places = [];
+  const seenPlace = new Set();
   for (const area of refProduct.print_areas) {
     for (const ph of area.placeholders || []) {
       for (const img of ph.images || []) {
         if (!(img.name || '').toLowerCase().includes(REFERENCE_TEAM.toLowerCase())) continue;
+        // References repeat the same placement across per-variant print-area
+        // splits (and black/white art pairs) — dedupe so we don't stack copies.
+        const key = `${ph.position}|${img.x}|${img.y}|${img.scale}|${img.angle}`;
+        if (seenPlace.has(key)) continue;
+        seenPlace.add(key);
         places.push({ position: ph.position, x: img.x, y: img.y, scale: img.scale, angle: img.angle });
       }
     }

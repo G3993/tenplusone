@@ -3,44 +3,44 @@ import styles from './Legal.module.css';
 
 const FAQS: { q: string; a: string }[] = [
   {
-    q: 'is internet fc an official tournament site?',
-    a: 'no. we are an independent fan project. crests, club marks, and federation names belong to their respective associations. we love this tournament; we are not the tournament.',
+    q: 'Is internet FC an official tournament site?',
+    a: 'No. We are an independent fan project. Crests, club marks, and federation names belong to their respective associations. We love this tournament; we are not the tournament.',
   },
   {
-    q: 'can i bet real money on these predictions?',
-    a: 'no. iFC is a free game of skill. odds are synthetic, modeled from team strength so the prediction market feels real, but no money changes hands. your bracket is for bragging rights and a clean conscience.',
+    q: 'How is every logo unique?',
+    a: 'Every crest is generated from the real stats of its match: passes, goals, shots, possession. The numbers drive the pixels, so no two games ever produce the same symbol. The final artwork is unlocked at the final whistle, and you can purchase before or after the game. Order before full time and your piece is printed with the artwork the match locks in.',
   },
   {
-    q: 'how long does merch take to arrive?',
-    a: '3 to 5 business days to print, then 5 to 8 days in the US (free over $75), 7 to 12 to Canada and Mexico, 10 to 18 to the rest of the world. printed on demand, shipped from the closest facility.',
+    q: 'How long does merch take to arrive?',
+    a: '3 to 5 business days to print, then 5 to 8 days in the US (free over $75), 7 to 12 to Canada and Mexico, 10 to 18 to the rest of the world. Printed on demand, shipped from the closest facility.',
   },
   {
-    q: 'what sizes do you carry?',
-    a: 'tees, jerseys, hoodies, and shorts come in S through XL. caps, scarves, and beanies are one size. our cuts run true to size; the size guide on every product page lists exact measurements.',
+    q: 'What sizes do you carry?',
+    a: 'Tees, jerseys, hoodies, and shorts come in S through XL. Caps, scarves, and beanies are one size. Our cuts run true to size; the size guide on every product page lists exact measurements.',
   },
   {
-    q: 'do you ship internationally?',
-    a: 'yes. global tracked shipping at checkout. duties and taxes are paid by the recipient on delivery, calculated by the destination country.',
+    q: 'Do you ship internationally?',
+    a: 'Yes. Global tracked shipping at checkout. Duties and taxes are paid by the recipient on delivery, calculated by the destination country.',
   },
   {
-    q: 'what if my crest is off center or the print is wrong?',
-    a: 'send a photo to hello@internetfc.com within 60 days and we will replace it on us. printing defects are on us, full stop.',
+    q: 'What if my crest is off center or the print is wrong?',
+    a: 'Send a photo to team.internetfc@gmail.com within 60 days and we will replace it on us. Printing defects are on us, full stop.',
   },
   {
-    q: 'when do new fixtures and posters drop?',
-    a: 'group stage runs jun 11 to jun 27, knockouts jun 28 to jul 19. match posters unlock the moment a fixture is set. winners-only posters mint after the final whistle.',
+    q: 'When do new match pieces drop?',
+    a: 'Group stage runs Jun 11 to Jun 27, knockouts Jun 28 to Jul 19. Every fixture gets its own piece, and the final artwork unlocks at the final whistle of each game.',
   },
   {
-    q: 'do you offer custom or team bulk orders?',
-    a: 'we do for orders of 25 or more units of the same item. write to hello@internetfc.com with the team, item, and quantity. we will quote within 48 hours.',
+    q: 'Do you offer custom or team bulk orders?',
+    a: 'We do for orders of 25 or more units of the same item. Write to team.internetfc@gmail.com with the team, item, and quantity. We will quote within 48 hours.',
   },
 ];
 
 export default function FAQ() {
   return (
     <div className={styles.page}>
-      <div className={styles.title}>faq</div>
-      <div className={styles.updated}>the questions, answered straight</div>
+      <div className={styles.title}>FAQ</div>
+      <div className={styles.updated}>The questions, answered straight.</div>
 
       {FAQS.map((f) => (
         <div key={f.q} className={styles.section}>
@@ -50,15 +50,15 @@ export default function FAQ() {
       ))}
 
       <div className={styles.section}>
-        <div className={styles.h2}>didn&rsquo;t find your answer?</div>
+        <div className={styles.h2}>Didn&rsquo;t find your answer?</div>
         <p className={styles.p}>
-          write us at{' '}
-          <a href="mailto:hello@internetfc.com" style={{ color: 'var(--bright)' }}>hello@internetfc.com</a>.
-          we reply within one business day.
+          Write us at{' '}
+          <a href="mailto:team.internetfc@gmail.com" style={{ color: 'var(--bright)' }}>team.internetfc@gmail.com</a>.
+          We reply within one business day.
         </p>
       </div>
 
-      <Link to="/" className={styles.back}>&larr; back to home</Link>
+      <Link to="/" className={styles.back}>&larr; Back to home</Link>
     </div>
   );
 }

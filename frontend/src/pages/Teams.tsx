@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo, type CSSProperties } from 'react';
 import { Link } from 'react-router';
 import { TEAMS, teamAccent } from '../data/teams';
 import { TeamLogo } from '../components/team/TeamLogo';
-import { SectionHead } from '../components/layout/SectionHead';
 import { SpectrumCrest } from '../components/logos/SpectrumCrest';
 import { MotifCrest, type MotifId } from '../components/logos/MotifCrest';
 import { teamSeed, FRAMES } from '../components/logos/spectrumMotif';
@@ -26,11 +25,9 @@ const MOTIFS: { key: Motif; label: string }[] = [
   { key: 'off', label: 'normal' },
   { key: 'spectrum', label: 'spectrum' },
   { key: 'mono', label: 'b&w' },
-  { key: 'outline', label: 'outlines' },
   { key: 'lines', label: 'lines' },
   { key: 'mesh', label: 'nets' },
   { key: 'cube', label: '3d' },
-  { key: 'teamColors', label: 'colors' },
   { key: 'pattern', label: 'pattern' },
   { key: 'abstract', label: 'abstract' },
   { key: 'internet', label: 'internet' },
@@ -39,7 +36,7 @@ const MOTIFS: { key: Motif; label: string }[] = [
 ];
 
 // The motifs the 'cycle' mode rotates through, in order.
-const CYCLE_LIST: Motif[] = ['spectrum', 'mono', 'outline', 'lines', 'mesh', 'cube', 'teamColors', 'pattern', 'abstract', 'internet', 'chrome', 'stats'];
+const CYCLE_LIST: Motif[] = ['spectrum', 'mono', 'lines', 'mesh', 'cube', 'pattern', 'abstract', 'internet', 'chrome', 'stats'];
 
 // Color treatment for the SpectrumCrest-backed motifs only.
 const VARIANT: Record<'spectrum' | 'mono' | 'outline', 'spectrum' | 'mono' | 'outline'> = {
@@ -47,7 +44,9 @@ const VARIANT: Record<'spectrum' | 'mono' | 'outline', 'spectrum' | 'mono' | 'ou
   mono: 'mono',
   outline: 'outline',
 };
-const SPECTRUM_MOTIFS = new Set<Motif>(['spectrum', 'mono', 'outline']);
+// 'mono' (b&w) now renders via the engine's `solid` renderer — the real
+// reference B&W treatment (shaders/halftone/dither), not spectrum-in-grayscale.
+const SPECTRUM_MOTIFS = new Set<Motif>(['spectrum', 'outline']);
 
 function useMaxSize() {
   const get = () =>
@@ -63,9 +62,12 @@ function useMaxSize() {
   return max;
 }
 
+const SIZE_STEP = 20;
+const DEFAULT_SIZE = 180; // desktop default crest size
+
 export function Teams() {
   const MAX = useMaxSize();
-  const [size, setSize] = useState(64);
+  const [size, setSize] = useState(DEFAULT_SIZE);
   const [motif, setMotif] = useState<Motif>('cycle');
   const [shape, setShape] = useState<'square' | 'circle'>('square');
   const [frame, setFrame] = useState(0);
@@ -101,14 +103,8 @@ export function Teams() {
   return (
     <div className={styles.wrap}>
       <div className={styles.head}>
-        <SectionHead
-          eyebrow="03 / NATIONS"
-          title="48 nations, one rule."
-          sub="every crest fit to the same pixel grid. drop two side by side and the optical weight matches, every time."
-        />
         <div className={styles.controls}>
           <div className={styles.motif}>
-            <span className={styles.motifLabel}>motif</span>
             <div className={styles.motifTrack} role="group" aria-label="motif style">
               {MOTIFS.map((m) => (
                 <button
@@ -139,20 +135,30 @@ export function Teams() {
               ))}
             </div>
           </div>
-          <label className={styles.sizer}>
-            <span className={styles.sizerLabel}>size</span>
-            <input
-              type="range"
-              min={MIN}
-              max={MAX}
-              step={4}
-              value={clamped}
-              onChange={(e) => setSize(Number(e.target.value))}
-              className={styles.slider}
-              aria-label="logo size"
-            />
-            <span className={styles.sizerVal}>{clamped}px</span>
-          </label>
+          <div className={styles.motif}>
+            <span className={styles.motifLabel}>size</span>
+            <div className={styles.motifTrack} role="group" aria-label="logo size">
+              <button
+                type="button"
+                className={styles.motifBtn}
+                onClick={() => setSize(Math.max(MIN, clamped - SIZE_STEP))}
+                disabled={clamped <= MIN}
+                aria-label="decrease size"
+              >
+                −
+              </button>
+              <span className={styles.sizerVal}>{clamped}px</span>
+              <button
+                type="button"
+                className={styles.motifBtn}
+                onClick={() => setSize(Math.min(MAX, clamped + SIZE_STEP))}
+                disabled={clamped >= MAX}
+                aria-label="increase size"
+              >
+                +
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -187,7 +193,7 @@ export function Teams() {
                   seed={motifData[t.slug].seed}
                   size={clamped}
                   shape={shape}
-                  motif={active as MotifId}
+                  motif={(active === 'mono' ? 'solid' : active) as MotifId}
                   teamId={t.slug}
                 />
               )}

@@ -1,6 +1,6 @@
 .slipSelect {
   font-family: var(--font);
-  font-size: 13px;
+  font-size: 18px;
   color: var(--bright);
   background: transparent;
   border: none;
@@ -23,7 +23,7 @@
 
 .rmBtn {
   font-family: var(--font);
-  font-size: 11px;
+  font-size: 16px;
   color: var(--dim);
   background: none;
   border: none;
@@ -37,7 +37,7 @@
 
 .cmdBtn {
   font-family: var(--font);
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--bg);
   background: var(--bright);

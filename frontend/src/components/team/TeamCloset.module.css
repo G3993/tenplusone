@@ -13,16 +13,17 @@
 }
 
 .eyebrow {
-  font-size: 12px;
+  font-family: var(--display);
+  font-size: 19px;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--green);
+  color: var(--bright);
 }
 
 .title {
-  font-family: var(--sans);
-  font-size: clamp(26px, 4.5vw, 40px);
+  font-family: var(--display);
+  font-size: clamp(40px, 7vw, 64px);
   font-weight: 700;
   letter-spacing: -0.03em;
   line-height: 1.05;
@@ -35,7 +36,8 @@
   margin-bottom: 16px;
 }
 .headCompact .eyebrow {
-  font-size: 10px;
+  font-family: var(--display);
+  font-size: 16px;
   letter-spacing: 0.18em;
 }
 /* uppercase team name, much smaller than the team-page title */
@@ -47,7 +49,7 @@
 
 .note {
   color: var(--dim);
-  font-size: 14px;
+  font-size: 20px;
   padding: 16px 0;
 }
 
@@ -68,14 +70,17 @@
 }
 
 @media (max-width: 560px) {
-  .grid { grid-template-columns: 1fr 1fr; }
+  /* one product per row, full width, on mobile */
+  .grid { grid-template-columns: 1fr; }
 }
 
 .viewAll {
-  display: inline-block;
-  margin-top: 16px;
+  display: block;
+  width: fit-content;
+  margin: 16px auto 0;
+  text-align: center;
   color: var(--dim);
-  font-size: 13px;
+  font-size: 22px;
   letter-spacing: 0.02em;
   text-decoration: none;
   transition: color 0.15s ease;

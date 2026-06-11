@@ -1,35 +1,27 @@
-import { useState, useEffect } from 'react';
 import type { TeamData } from '../../data/teams';
 import { toAmerican } from '../../lib/odds';
 import styles from './MatchPoll.module.css';
 
-type Pick = 'home' | 'draw' | 'away';
+export type MatchPick = 'home' | 'draw' | 'away';
+type Pick = MatchPick;
 
 interface Props {
-  matchId: string;
   home: TeamData;
   away: TeamData;
   /** [home, draw, away] decimal odds — shown on the call buttons. */
   odds: [number, number, number];
+  /** Controlled pick — nothing is pre-selected; the page owns the state. */
+  pick: Pick | null;
+  onPick: (p: Pick) => void;
 }
 
 /**
  * The match "your call" CTA. Each button IS the odds button — it shows the
- * live decimal odds for that outcome. Picking a side records the vote (locally)
- * and anchors straight to that team's featured kit below. The market sparkline
- * underneath is the live signal (implied probability over time).
+ * live odds for that outcome. Picking a side filters the closet below to that
+ * team's gear and anchors to it. Controlled: no pick is restored on load, so
+ * opening a match never shows a team pre-selected.
  */
-export function MatchPoll({ matchId, home, away, odds }: Props) {
-  const key = `ifc-pick-${matchId}`;
-  const [pick, setPick] = useState<Pick | null>(null);
-
-  useEffect(() => {
-    try {
-      const v = localStorage.getItem(key);
-      if (v === 'home' || v === 'draw' || v === 'away') setPick(v);
-    } catch { /* ignore */ }
-  }, [key]);
-
+export function MatchPoll({ home, away, odds, pick, onPick }: Props) {
   const scrollToKit = (p: Pick) => {
     const target = p === 'away' ? `closet-${away.slug}` : `closet-${home.slug}`;
     requestAnimationFrame(() => {
@@ -38,15 +30,15 @@ export function MatchPoll({ matchId, home, away, odds }: Props) {
   };
 
   const choose = (p: Pick) => {
-    setPick(p);
-    try { localStorage.setItem(key, p); } catch { /* ignore */ }
-    scrollToKit(p);
+    onPick(p);
+    if (p !== 'draw') scrollToKit(p);
   };
 
-  const options: { p: Pick; label: string; odd: number }[] = [
-    { p: 'home', label: home.name, odd: odds[0] },
-    { p: 'draw', label: 'Draw', odd: odds[1] },
-    { p: 'away', label: away.name, odd: odds[2] },
+  // Match the match-card odds boxes: value on top, team abbreviation beneath.
+  const options: { p: Pick; code: string; odd: number }[] = [
+    { p: 'home', code: home.code, odd: odds[0] },
+    { p: 'draw', code: 'DRAW', odd: odds[1] },
+    { p: 'away', code: away.code, odd: odds[2] },
   ];
 
   return (
@@ -60,8 +52,8 @@ export function MatchPoll({ matchId, home, away, odds }: Props) {
             aria-pressed={pick === o.p}
             onClick={() => choose(o.p)}
           >
-            <span className={styles.optLabel}>{o.label}</span>
             <span className={styles.optOdds}>{toAmerican(o.odd)}</span>
+            <span className={styles.optLabel}>{o.code}</span>
           </button>
         ))}
       </div>

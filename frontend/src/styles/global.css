@@ -1,5 +1,15 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Sora:wght@300;400;500;600;700;800&display=swap');
+/* Google Fonts moved to a <link> in index.html — an @import here hides the
+   font request behind the CSS bundle download (serial waterfall). */
 @import './tokens.css';
+
+/* PP NeueBit — bitmap display face for headlines (self-hosted woff2). */
+@font-face {
+  font-family: 'PP NeueBit';
+  src: url('/fonts/PPNeueBit-Bold.woff2') format('woff2');
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 

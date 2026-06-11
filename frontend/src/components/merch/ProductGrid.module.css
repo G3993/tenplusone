@@ -20,9 +20,10 @@
 
   background: var(--bg);
   color: var(--bright);
-  /* Even vertical inset top + bottom so the white panel breathes on the
-     dark global chrome above/below it. */
-  padding-block: 8px 40px;
+  /* Cancel the global Editor top padding so the white shop sits flush under
+     the nav — no dark band above the filter row. */
+  margin-top: -40px;
+  padding-block: 0 40px;
 }
 
 .head {
@@ -32,15 +33,17 @@
   gap: 16px;
 }
 
-/* Featured / All collection tabs. */
+/* Center type pagination (tees / outerwear / accessories / all). */
 .tabs {
   display: flex;
   gap: 18px;
+  flex: 1 1 auto;
+  justify-content: center;
 }
 
 .tab {
   font-family: var(--font);
-  font-size: 13px;
+  font-size: 22px;
   letter-spacing: 0.04em;
   color: var(--dim);
   background: transparent;
@@ -73,14 +76,14 @@
 }
 
 .crumbLabel {
-  font-size: 11px;
+  font-size: 17px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--bright);
 }
 
 .crumbCount {
-  font-size: 11px;
+  font-size: 17px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
@@ -92,17 +95,22 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
+}
+.filterLeft, .filterRight {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
 }
 
 .select {
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 18px;
   letter-spacing: 0.04em;
   color: var(--bright);
   background: var(--bg);
   border: 1px solid var(--hairline);
-  border-radius: 6px;
+  border-radius: 0;
   padding: 9px 30px 9px 12px;
   cursor: pointer;
   appearance: none;
@@ -116,13 +124,17 @@
 .select:hover { border-color: var(--dim); }
 .select:focus-visible { outline: none; border-color: var(--bright); }
 
+/* the type dropdown only appears on mobile (desktop uses the .tabs pagination) */
+.typeSelect { display: none; }
+
 .filterToggle, .filterClear {
   background: transparent;
   color: var(--dim);
   border: 1px solid var(--hairline);
+  border-radius: 0;
   padding: 7px 14px;
   font: inherit;
-  font-size: 11px;
+  font-size: 16px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
@@ -149,7 +161,7 @@
   flex-shrink: 0;
   width: 48px;
   font-family: var(--mono, monospace);
-  font-size: 10px;
+  font-size: 20px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--dim);
@@ -172,7 +184,7 @@
   border: 1px solid var(--hairline);
   padding: 7px 12px;
   font: inherit;
-  font-size: 10px;
+  font-size: 20px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   cursor: pointer;
@@ -241,7 +253,7 @@
 .note {
   padding: 60px 24px;
   text-align: center;
-  font-size: 12px;
+  font-size: 18px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dim);
@@ -252,13 +264,15 @@
 }
 
 @media (max-width: 640px) {
-  .head { padding: 16px 16px 14px; }
+  .head { padding: 14px 12px 12px; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .crumbLabel { font-size: 10px; }
-  /* Stack each filter row (label above its scrolling chip strip) so the chips
-     get the full width and don't fight the label for space. */
-  .filterPanel { padding: 12px; gap: 14px; }
-  .filterRow { flex-direction: column; align-items: stretch; gap: 6px; }
-  .filterLabel { width: auto; }
-  .filter { padding: 8px 12px; }
+  .crumbLabel { font-size: 20px; }
+
+  /* keep the whole filter nav on one row: team | type | color, all as
+     dropdowns (the pagination tabs are swapped for a select on mobile) */
+  .filterBar { flex-wrap: nowrap; gap: 6px; }
+  .filterLeft, .filterRight { flex: 0 0 auto; }
+  .tabs { display: none; }
+  .typeSelect { display: block; flex: 1 1 auto; min-width: 0; }
+  .select { font-size: 16px; padding: 7px 22px 7px 9px; background-position: right 7px center; }
 }

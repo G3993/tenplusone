@@ -21,7 +21,7 @@
 }
 
 .brand {
-  font-size: 16px;
+  font-size: 30px;
   font-weight: 800;
   letter-spacing: -0.01em;
   color: var(--bright);
@@ -29,7 +29,7 @@
 }
 
 .tagline {
-  font-size: 12px;
+  font-size: 20px;
   color: var(--dim);
   line-height: 1.55;
   margin: 0;
@@ -68,7 +68,7 @@
 }
 
 .colHead {
-  font-size: 11px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -83,7 +83,7 @@
 }
 
 .colLink {
-  font-size: 13px;
+  font-size: 22px;
   color: var(--dim);
   text-decoration: none;
   transition: color 0.12s;
@@ -92,7 +92,7 @@
 .colLink:hover { color: var(--bright); }
 
 .subCopy {
-  font-size: 12px;
+  font-size: 20px;
   color: var(--dim);
   line-height: 1.55;
   margin: 0;
@@ -108,7 +108,7 @@
 
 .subInput {
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 20px;
   color: var(--bright);
   background: transparent;
   border: 1px solid var(--hairline);
@@ -127,7 +127,7 @@
 
 .subBtn {
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--bg);
   background: var(--bright);
@@ -142,7 +142,7 @@
 
 .subOk {
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 20px;
   color: var(--green);
 }
 
@@ -158,7 +158,7 @@
 
 .copy {
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 20px;
   color: var(--dim);
 }
 
@@ -167,7 +167,7 @@
   align-items: center;
   gap: 8px;
   font-family: var(--font);
-  font-size: 12px;
+  font-size: 20px;
   color: var(--dim);
   background: none;
   border: 1px solid var(--hairline);
@@ -184,7 +184,7 @@
 }
 
 .themeIcon {
-  font-size: 14px;
+  font-size: 20px;
   line-height: 1;
 }
 

@@ -4,11 +4,11 @@ import styles from './Legal.module.css';
 export default function Privacy() {
   return (
     <div className={styles.page}>
-      <div className={styles.title}>privacy</div>
-      <div className={styles.updated}>last updated · may 2026</div>
+      <div className={styles.title}>Privacy</div>
+      <div className={styles.updated}>Last updated · May 2026</div>
 
       <div className={styles.section}>
-        <div className={styles.h2}>what we collect</div>
+        <div className={styles.h2}>What we collect</div>
         <p className={styles.p}>
           Email when you subscribe or place a prediction. Order details when
           you buy merch (fulfilled by Shopify and Printful). Anonymous usage
@@ -17,7 +17,7 @@ export default function Privacy() {
       </div>
 
       <div className={styles.section}>
-        <div className={styles.h2}>how we use it</div>
+        <div className={styles.h2}>How we use it</div>
         <p className={styles.p}>
           To send tournament updates if you've subscribed, to fulfill orders,
           and to understand which parts of the site people use. We don't sell
@@ -26,7 +26,7 @@ export default function Privacy() {
       </div>
 
       <div className={styles.section}>
-        <div className={styles.h2}>cookies + local storage</div>
+        <div className={styles.h2}>Cookies + local storage</div>
         <p className={styles.p}>
           We use localStorage on your device to remember your theme, cart,
           predictions, and (if you've entered one) the email you predict
@@ -35,7 +35,7 @@ export default function Privacy() {
       </div>
 
       <div className={styles.section}>
-        <div className={styles.h2}>third parties</div>
+        <div className={styles.h2}>Third parties</div>
         <p className={styles.p}>
           Shopify (checkout), Printful (fulfillment), Vercel (hosting +
           analytics). Each has its own privacy policy.
@@ -43,13 +43,13 @@ export default function Privacy() {
       </div>
 
       <div className={styles.section}>
-        <div className={styles.h2}>contact</div>
+        <div className={styles.h2}>Contact</div>
         <p className={styles.p}>
-          Questions? Reach us at <a href="mailto:hello@internetfc.com" style={{ color: 'var(--bright)' }}>hello@internetfc.com</a>.
+          Questions? Reach us at <a href="mailto:team.internetfc@gmail.com" style={{ color: 'var(--bright)' }}>team.internetfc@gmail.com</a>.
         </p>
       </div>
 
-      <Link to="/" className={styles.back}>← back to home</Link>
+      <Link to="/" className={styles.back}>← Back to home</Link>
     </div>
   );
 }

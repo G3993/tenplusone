@@ -4,14 +4,29 @@
   box-sizing: border-box;
 }
 
+/* secondary-nav bar — same style/height as the WC26 sub-nav: a sticky bar that
+   docks under the main nav, controls vertically centred. Breaks out of .wrap's
+   padding so it spans full width. */
 .head {
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-  padding-bottom: 0;
-  margin-bottom: 14px;
+  align-items: center;
+  /* safe center: centered when the bar fits, falls back to scroll-from-start
+     when the controls overflow (otherwise centered overflow clips the left,
+     unreachable by scroll) */
+  justify-content: safe center;
+  gap: 14px;
+  flex-wrap: nowrap;
+  height: var(--nav-h);
+  box-sizing: border-box;
+  margin: -18px -24px 22px;
+  padding: 0 24px;
+  position: sticky;
+  top: var(--nav-h);
+  z-index: 50;
+  background: var(--overlay-bg);
+  backdrop-filter: saturate(150%) blur(8px);
+  border-bottom: 1px solid var(--hairline);
+  overflow-x: auto;
 }
 
 .titleRow {
@@ -29,16 +44,17 @@
 
 .meta {
   color: var(--dim);
-  font-size: 13px;
+  font-size: 18px;
 }
 
 /* size slider */
 .sizer {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 12px;
+  gap: 8px;
+  font-size: 18px;
   color: var(--dim);
+  white-space: nowrap;
 }
 
 .sizerLabel {
@@ -47,7 +63,7 @@
 }
 
 .slider {
-  width: 180px;
+  width: 120px;
   accent-color: var(--green);
   cursor: pointer;
   height: 20px;
@@ -56,24 +72,26 @@
 .sizerVal {
   color: var(--white);
   font-variant-numeric: tabular-nums;
-  width: 56px;
+  width: 46px;
   text-align: right;
 }
 
-/* controls row: motif picker + size slider */
+/* controls row: motif picker + shape + size slider — single, centered line */
 .controls {
   display: flex;
   align-items: center;
-  gap: 18px;
-  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: nowrap;
 }
 
 .motif {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 12px;
+  gap: 8px;
+  font-size: 18px;
   color: var(--dim);
+  white-space: nowrap;
 }
 
 .motifLabel {
@@ -90,10 +108,11 @@
   background: transparent;
   border: 0;
   border-right: 1px solid var(--hairline);
-  padding: 7px 14px;
+  padding: 7px 9px;
   font: inherit;
-  font-size: 11px;
-  letter-spacing: 0.1em;
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
   text-transform: uppercase;
   color: var(--dim);
   cursor: pointer;
@@ -151,7 +170,8 @@
 }
 
 .name {
-  font-size: 13px;
+  font-family: var(--display);
+  font-size: 22px;
   color: var(--bright);
   line-height: 1.25;
   max-width: 100%;
@@ -164,37 +184,18 @@
   color: var(--accent, var(--green));
 }
 
-/* Stop the inline motif button row from forcing the page wider than the
-   viewport on phones/tablets — stack the label above a wrapping track. */
+/* On phones/tablets the bar keeps the WC26 sub-nav behaviour: one line, the
+   controls scroll horizontally rather than stacking. */
 @media (max-width: 768px) {
-  .controls { width: 100%; }
-  .motif {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    width: 100%;
-    min-width: 0;
-  }
-  .motifTrack {
-    flex-wrap: wrap;
-    max-width: 100%;
-  }
+  .head { justify-content: flex-start; }
+  .sizer { margin-left: 0; }
 }
 
 @media (max-width: 560px) {
   .wrap { padding: 14px 14px 60px; }
-  .head {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    margin-bottom: 12px;
-  }
+  .head { margin: -14px -14px 18px; padding: 0 14px; }
   .title { font-size: 21px; }
-  .sizer {
-    width: 100%;
-    justify-content: space-between;
-  }
-  .slider { flex: 1; width: auto; }
+  .slider { width: 120px; }
   .grid {
     grid-template-columns: repeat(auto-fill, minmax(calc(var(--logo) + 40px), 1fr));
   }
