@@ -51,11 +51,11 @@ export function MatchStatsPanel({ matchId, home, away }: {
     team ? (
       <MotifCrest
         still
-        motif="team3d"
+        motif="chrome"
         teamId={team.slug}
         seed={teamSeed(team.slug)}
         pixels={getLogoPixels(team.slug, team.name[0])}
-        size={48}
+        size={64}
       />
     ) : (
       <span>{fallback}</span>

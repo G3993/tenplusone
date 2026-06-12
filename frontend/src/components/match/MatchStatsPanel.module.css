@@ -14,7 +14,6 @@
   gap: 12px;
   margin: 0 0 4px;
   padding-bottom: 12px;
-  border-bottom: 1px solid var(--hairline);
 }
 .statTitle {
   font-family: var(--display);
@@ -24,7 +23,7 @@
   color: var(--bright);
   font-variant-numeric: tabular-nums;
 }
-.statCrest { display: inline-flex; width: 48px; height: 48px; }
+.statCrest { display: inline-flex; width: 64px; height: 64px; }
 
 .rows {
   list-style: none;
@@ -36,9 +35,7 @@
   grid-template-columns: 72px 1fr 72px;
   align-items: center;
   padding: 11px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
-.row:last-child { border-bottom: none; }
 
 .label {
   text-align: center;

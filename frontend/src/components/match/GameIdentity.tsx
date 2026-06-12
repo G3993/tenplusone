@@ -54,15 +54,12 @@ export function GameIdentity({ matchId, home, away }: {
     );
   };
 
-  const homeCode = getTeamByName(home)?.code ?? home;
-  const awayCode = getTeamByName(away)?.code ?? away;
-
   const pairSize = crestSize - 128; // draws: two crests, still a /32 multiple
   const cell = (winnerName ? crestSize : pairSize) / 32;
 
   return (
     <section className={styles.wrap} aria-label="game identity">
-      {/* section 1 — the game identity itself, on the blueprint grid */}
+      {/* the game identity, alone on its blueprint grid */}
       <div className={styles.stage} style={{ '--cell': `${cell}px` } as CSSProperties}>
         {winnerName ? (
           renderCrest(winnerName, crestSize)
@@ -72,13 +69,6 @@ export function GameIdentity({ matchId, home, away }: {
             {renderCrest(away, pairSize)}
           </div>
         )}
-      </div>
-
-      {/* section 2 — the match details, one color */}
-      <div className={styles.scoreline}>
-        <span>{homeCode}</span>
-        <span>{stats.homeGoals} – {stats.awayGoals}</span>
-        <span>{awayCode}</span>
       </div>
     </section>
   );
