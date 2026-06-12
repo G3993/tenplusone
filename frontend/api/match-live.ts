@@ -36,7 +36,25 @@ interface LivePayload {
     shots: number;
     xg: number;
   };
+  /** Full 11-attribute team stat lines (the numbers that drive the art). */
+  teamStats: { home: TeamStatLine; away: TeamStatLine };
+  /** For LIVE games: the real current minute the playhead should hold at. */
+  liveMinute?: number;
   events: MatchEvent[];
+}
+
+export interface TeamStatLine {
+  goals: number;
+  shots: number;
+  shotsOnTarget: number;
+  possession: number;
+  passes: number;
+  passAccuracy: number;
+  fouls: number;
+  yellowCards: number;
+  redCards: number;
+  offsides: number;
+  corners: number;
 }
 
 /** Deterministic PRNG so a given match id always simulates the same game. */
@@ -84,29 +102,164 @@ function simulate(id: string): LivePayload {
   const possession = Math.round(38 + rng() * 24); // 38..62 home share
   const xg = Math.round((goalCount * 0.8 + rng() * 1.5) * 10) / 10;
 
+  // Split the match into two full 11-attribute stat lines. Shares lean with
+  // possession so the lines feel like one coherent game.
+  const homeShare = possession / 100;
+  const homeShots = Math.max(homeGoals, Math.round(shots * (0.3 + homeShare * 0.7)));
+  const awayShots = Math.max(awayGoals, shots - homeShots);
+  const homeCards = events.filter((e) => e.type === 'card' && e.team === 'home').length;
+  const awayCards = cardCount - homeCards;
+  const mk = (goals: number, sh: number, poss: number, yc: number): TeamStatLine => {
+    const passes = Math.round(poss * (7 + rng() * 4));
+    return {
+      goals,
+      shots: sh,
+      shotsOnTarget: Math.max(goals, Math.round(sh * (0.3 + rng() * 0.3))),
+      possession: poss,
+      passes,
+      passAccuracy: Math.round(74 + poss * 0.25 + rng() * 6),
+      fouls: 5 + Math.floor(rng() * 10),
+      yellowCards: yc,
+      redCards: rng() < 0.06 ? 1 : 0,
+      offsides: Math.floor(rng() * 4),
+      corners: Math.max(0, Math.round(sh * (0.25 + rng() * 0.2))),
+    };
+  };
+  const teamStats = {
+    home: mk(homeGoals, homeShots, possession, homeCards),
+    away: mk(awayGoals, awayShots, 100 - possession, awayCards),
+  };
+
   return {
     id,
     source: 'simulated',
     status: 'FINISHED',
     playSeconds: 90, // replay the 90' over 90s so the morph is watchable
     final: { homeGoals, awayGoals, possession, cards: cardCount, shots, xg },
+    teamStats,
     events,
   };
 }
 
 /**
- * Real feed adapter. Structured for API-Football; returns null on any miss so
- * the caller falls back to simulation. Not exercised until FOOTBALL_API_KEY is
- * set and matches are mapped to provider fixture ids.
+ * Real feed adapter — ESPN's public World Cup API (no key needed).
+ * Maps our match (team names + ISO date) to the ESPN event, then normalizes
+ * the box score into our 11-attribute lines and the key events into our
+ * timeline. Returns null on any miss so the caller falls back to simulation.
  */
-async function fetchLive(id: string, key: string): Promise<LivePayload | null> {
+import { MATCHES } from '../src/data/matches';
+
+const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world';
+
+function clockToMinute(v: string | undefined): number {
+  if (!v) return 0;
+  const m = v.match(/(\d+)'(?:\+(\d+))?/);
+  return m ? Math.min(120, Number(m[1]) + (m[2] ? Number(m[2]) : 0)) : 0;
+}
+
+function num(stats: Record<string, string>, key: string): number {
+  const v = parseFloat(stats[key] ?? '0');
+  return Number.isFinite(v) ? v : 0;
+}
+
+function lineFrom(stats: Record<string, string>, goals: number): TeamStatLine {
+  return {
+    goals,
+    shots: Math.round(num(stats, 'totalShots')),
+    shotsOnTarget: Math.round(num(stats, 'shotsOnTarget')),
+    possession: Math.round(num(stats, 'possessionPct')),
+    passes: Math.round(num(stats, 'totalPasses')),
+    passAccuracy: Math.round(num(stats, 'passPct') * 100),
+    fouls: Math.round(num(stats, 'foulsCommitted')),
+    yellowCards: Math.round(num(stats, 'yellowCards')),
+    redCards: Math.round(num(stats, 'redCards')),
+    offsides: Math.round(num(stats, 'offsides')),
+    corners: Math.round(num(stats, 'wonCorners')),
+  };
+}
+
+async function fetchLive(id: string): Promise<LivePayload | null> {
   try {
-    // TODO: map our match id -> provider fixture id (by date + team names).
-    // const fixtureId = await resolveFixture(id, key);
-    // const r = await fetch(`https://v3.football.api-sports.io/fixtures?id=${fixtureId}`,
-    //   { headers: { 'x-apisports-key': key } });
-    // ...normalize events + stats into LivePayload...
-    return null;
+    const match = MATCHES.find((m) => m.id === id);
+    if (!match || !match.iso) return null;
+    const ymd = match.iso.slice(0, 10).replace(/-/g, '');
+
+    // 1. find the ESPN event for this fixture by date + team names
+    const sb = await fetch(`${ESPN}/scoreboard?dates=${ymd}`).then((r) => r.json());
+    const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '');
+    const want = [norm(match.h), norm(match.a)];
+    const event = (sb.events || []).find((e: any) => {
+      const names = (e.competitions?.[0]?.competitors || []).map((c: any) => norm(c.team?.displayName || ''));
+      return want.every((w) => names.some((n: string) => n.includes(w) || w.includes(n)));
+    });
+    if (!event) return null;
+
+    // 2. pull the box score + timeline
+    const sum = await fetch(`${ESPN}/summary?event=${event.id}`).then((r) => r.json());
+    const comp = event.competitions[0];
+    const byName = (name: string) =>
+      (comp.competitors || []).find((c: any) => {
+        const n = norm(c.team?.displayName || '');
+        const w = norm(name);
+        return n.includes(w) || w.includes(n);
+      });
+    const homeC = byName(match.h);
+    const awayC = byName(match.a);
+    if (!homeC || !awayC) return null;
+    const homeGoals = Number(homeC.score ?? 0);
+    const awayGoals = Number(awayC.score ?? 0);
+
+    const statsFor = (c: any): Record<string, string> => {
+      const t = (sum.boxscore?.teams || []).find((b: any) => b.team?.id === c.team?.id);
+      const out: Record<string, string> = {};
+      for (const s of t?.statistics || []) out[s.name] = s.displayValue;
+      return out;
+    };
+    const home = lineFrom(statsFor(homeC), homeGoals);
+    const away = lineFrom(statsFor(awayC), awayGoals);
+
+    // 3. timeline: goals + cards with real minutes
+    const events: MatchEvent[] = [];
+    for (const k of sum.keyEvents || []) {
+      const text = (k.type?.text || '').toLowerCase();
+      const teamName = norm(k.team?.displayName || '');
+      const side: 'home' | 'away' | null = teamName
+        ? (teamName.includes(norm(match.h)) || norm(match.h).includes(teamName)) ? 'home'
+        : (teamName.includes(norm(match.a)) || norm(match.a).includes(teamName)) ? 'away'
+        : null
+        : null;
+      if (!side) continue;
+      const minute = clockToMinute(k.clock?.displayValue);
+      if (text.includes('goal') && !text.includes('own goal called back')) {
+        events.push({ minute, type: 'goal', team: side });
+      } else if (text.includes('card')) {
+        events.push({ minute, type: 'card', team: side });
+      }
+    }
+    events.sort((a, b) => a.minute - b.minute);
+
+    const state = comp.status?.type?.state; // 'pre' | 'in' | 'post'
+    const status = state === 'post' ? 'FINISHED' : state === 'in' ? 'LIVE' : 'SCHEDULED';
+    const liveMinute = status === 'LIVE' ? clockToMinute(comp.status?.displayClock) : 90;
+
+    return {
+      id,
+      source: 'live',
+      status,
+      // finished games replay the full 90' over 90s; live games catch up fast
+      playSeconds: status === 'LIVE' ? 8 : 90,
+      liveMinute,
+      final: {
+        homeGoals,
+        awayGoals,
+        possession: home.possession,
+        cards: home.yellowCards + home.redCards + away.yellowCards + away.redCards,
+        shots: home.shots + away.shots,
+        xg: 0,
+      },
+      teamStats: { home, away },
+      events,
+    };
   } catch {
     return null;
   }
@@ -122,17 +275,15 @@ export default async function handler(req: Request): Promise<Response> {
     });
   }
 
-  const key = process.env.FOOTBALL_API_KEY;
-  let payload: LivePayload | null = null;
-  if (key) payload = await fetchLive(id, key);
+  let payload: LivePayload | null = await fetchLive(id);
   if (!payload) payload = simulate(id);
 
+  const cache =
+    payload.source === 'simulated' ? 'public, s-maxage=60'
+    : payload.status === 'FINISHED' ? 'public, s-maxage=300'
+    : 'no-store';
   return new Response(JSON.stringify(payload), {
     status: 200,
-    headers: {
-      'content-type': 'application/json',
-      // Simulated timelines are stable; cache briefly at the edge.
-      'cache-control': payload.source === 'simulated' ? 'public, s-maxage=60' : 'no-store',
-    },
+    headers: { 'content-type': 'application/json', 'cache-control': cache },
   });
 }

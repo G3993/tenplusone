@@ -15,25 +15,14 @@ export default function About() {
       <div className={styles.updated}>internet football club &middot; est. 2026</div>
 
       <div className={styles.section}>
-        <p className={styles.p}>We champion futbol culture</p>
-        <p className={styles.p}>Play by play by play, pixel by pixel</p>
         <p className={styles.p}>
-          Every match generates unique symbols made from real game stats &amp; results
-        </p>
-        <p className={styles.p}>
-          Every game is celebrated and remembered in a unique artifact driven by
-          the real-game stats. No two symbols are ever the same, no match is ever
+          We champion futbol culture, play by play, pixel by pixel. Every match
+          generates unique symbols made from real game stats and results. Every
+          game is celebrated and remembered in a unique artifact driven by the
+          real-game stats. No two symbols are ever the same, no match is ever
           the same. Data-driven symbols of the game we love, one pixel at a time.
         </p>
       </div>
-
-      <img
-        src="/ifc-stats.gif"
-        alt="iFC built from match-stat tiles"
-        width={220}
-        height={220}
-        style={{ display: 'block', margin: '40px auto 28px', imageRendering: 'pixelated' }}
-      />
 
       <Link to="/" className={styles.back}>&larr; back to home</Link>
     </div>

@@ -6,15 +6,29 @@ import styles from './UpcomingMatches.module.css';
 
 // Bucket the full fixture list into day groups, preserving chronological order
 // (MATCHES is already in official match-number order).
-const DAYS: { date: string; games: Match[] }[] = [];
+const DAYS: { date: string; iso: string; games: Match[] }[] = [];
 for (const m of MATCHES) {
   const last = DAYS[DAYS.length - 1];
   if (last && last.date === m.d) last.games.push(m);
-  else DAYS.push({ date: m.d, games: [m] });
+  else DAYS.push({ date: m.d, iso: (m.iso || '').slice(0, 10), games: [m] });
 }
 
-export function UpcomingMatches() {
-  const [di, setDi] = useState(0);
+/** Index of today's match day (local time) — or the next day with games, so
+ *  the strip always opens on what's relevant right now. */
+function todayIndex(): number {
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const i = DAYS.findIndex((d) => d.iso >= today);
+  return i === -1 ? DAYS.length - 1 : i;
+}
+
+export function UpcomingMatches({ showOdds = false, showCta = true, heading = 'matches' }: {
+  /** wc26 variant: odds buttons on, no CTA */
+  showOdds?: boolean;
+  showCta?: boolean;
+  heading?: string | null;
+} = {}) {
+  const [di, setDi] = useState(todayIndex);
   const day = DAYS[di];
 
   const prev = () => setDi((i) => Math.max(0, i - 1));
@@ -33,9 +47,11 @@ export function UpcomingMatches() {
 
   return (
     <section className={styles.wrap}>
-      <div className={styles.head}>
-        <h2 className={styles.title}>matches</h2>
-      </div>
+      {heading && (
+        <div className={styles.head}>
+          <h2 className={styles.title}>{heading}</h2>
+        </div>
+      )}
 
       <div className={styles.panel} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div className={styles.nav}>
@@ -57,11 +73,11 @@ export function UpcomingMatches() {
         </div>
 
         <div className={styles.matches}>
-          {day.games.map((m) => <MatchPreview key={m.id} m={m} hideOdds animate />)}
+          {day.games.map((m) => <MatchPreview key={m.id} m={m} hideOdds={!showOdds} animate />)}
         </div>
       </div>
 
-      <Cta3D to="/wc26">ALL WC*26 MATCHES</Cta3D>
+      {showCta && <Cta3D to="/wc26">ALL WC*26 MATCHES</Cta3D>}
     </section>
   );
 }

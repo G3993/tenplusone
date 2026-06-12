@@ -171,9 +171,38 @@ function americanToProb(odds: string): number {
 /** Outright (winner) odds — every nation as a floating tile (like the homepage
  *  grid: no background, no borders): animated neon-3D crest, name, and the
  *  implied win % underneath, ordered favourite → longest shot. */
+/** Deterministic per-team hash for the fan-pick aggregate (stable per name). */
+function fanSeed(name: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < name.length; i++) { h ^= name.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return ((h >>> 0) % 1000) / 1000;
+}
+
 export function OutrightsList() {
   // Crest size mirrors the homepage grid: 180 desktop / 100 mobile.
   const [size, setSize] = useState(180);
+  // your call — picking a nation reveals the aggregated fan picks
+  const [myPick, setMyPick] = useState<string | null>(() => {
+    try { return localStorage.getItem('ifc-outright-pick'); } catch { return null; }
+  });
+  const pickTeam = (name: string) => {
+    const next = myPick === name ? null : name;
+    setMyPick(next);
+    try {
+      if (next) localStorage.setItem('ifc-outright-pick', next);
+      else localStorage.removeItem('ifc-outright-pick');
+    } catch { /* private mode */ }
+  };
+  // fan share: blend implied probability with a stable per-team wobble, then
+  // normalize; your pick nudges its own share up like one more ballot.
+  const fanShares = (() => {
+    const raw = OUTRIGHTS.map((o) => ({
+      team: o.team,
+      w: americanToProb(o.odds) * (0.8 + fanSeed(o.team) * 0.5) + (myPick === o.team ? 0.01 : 0),
+    }));
+    const total = raw.reduce((a, r) => a + r.w, 0);
+    return Object.fromEntries(raw.map((r) => [r.team, (r.w / total) * 100]));
+  })();
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 560px)');
     const apply = () => setSize(mq.matches ? 100 : 180);
@@ -185,9 +214,9 @@ export function OutrightsList() {
   return (
     <div className={styles.orWrap}>
       <div className={styles.orHero}>
-        <h3 className={styles.orHeroTitle}>who wins?</h3>
+        <h3 className={styles.orHeroTitle}>predictions</h3>
         <p className={styles.orHeroSub}>
-          choose your winner. everyone&rsquo;s picks aggregate into new live odds.
+          what the people think
         </p>
       </div>
 
@@ -218,7 +247,6 @@ export function OutrightsList() {
                 <span className={styles.winCrest} style={{ width: size, height: size }} />
               )}
               <span className={styles.winName}>{o.team}</span>
-              <span className={styles.winPct}>{pct}%</span>
             </>
           );
           return (
@@ -227,6 +255,20 @@ export function OutrightsList() {
                 <Link to={`/team/${team.slug}`} className={styles.winCell}>{inner}</Link>
               ) : (
                 <span className={styles.winCell}>{inner}</span>
+              )}
+              <button
+                type="button"
+                className={`${styles.pickBtn} ${myPick === o.team ? styles.pickOn : ''}`}
+                aria-pressed={myPick === o.team}
+                aria-label={`pick ${o.team} (${pct}% implied)`}
+                onClick={() => pickTeam(o.team)}
+              >
+                {myPick === o.team ? `${pct}% ✓` : `${pct}%`}
+              </button>
+              {myPick && (
+                <span className={styles.winFans}>
+                  {fanShares[o.team].toFixed(1)}% of picks
+                </span>
               )}
             </li>
           );

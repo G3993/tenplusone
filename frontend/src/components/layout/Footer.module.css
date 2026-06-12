@@ -29,11 +29,13 @@
 }
 
 .tagline {
-  font-size: 20px;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--dim);
-  line-height: 1.55;
+  line-height: 1.7;
   margin: 0;
-  max-width: 32ch;
+  max-width: 36ch;
 }
 
 .socials {
@@ -83,7 +85,9 @@
 }
 
 .colLink {
-  font-size: 22px;
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--dim);
   text-decoration: none;
   transition: color 0.12s;
@@ -92,6 +96,8 @@
 .colLink:hover { color: var(--bright); }
 
 .subCopy {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
   font-size: 20px;
   color: var(--dim);
   line-height: 1.55;

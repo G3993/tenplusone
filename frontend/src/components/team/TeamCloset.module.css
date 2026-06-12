@@ -79,7 +79,7 @@
   width: fit-content;
   margin: 16px auto 0;
   text-align: center;
-  color: var(--dim);
+  color: #c8ffda;
   font-size: 22px;
   letter-spacing: 0.02em;
   text-decoration: none;
@@ -87,3 +87,24 @@
 }
 
 .viewAll:hover { color: var(--bright); }
+
+
+/* ── horizontal swipe gallery (match page): every item, scroll left-right ── */
+.scroller {
+  display: flex;
+  gap: 1px;
+  background: var(--hairline);
+  border: 1px solid var(--hairline);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.scroller::-webkit-scrollbar { display: none; }
+.scroller > * {
+  flex: 0 0 300px;
+  scroll-snap-align: start;
+}
+@media (max-width: 560px) {
+  .scroller > * { flex: 0 0 78vw; }
+}

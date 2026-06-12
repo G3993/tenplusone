@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { Groups } from './Groups';
-import { MatchList } from '../components/matches/MatchList';
+import { UpcomingMatches } from '../components/home/UpcomingMatches';
 import { KnockoutBracket, OutrightsList } from './Bracket';
 import styles from './WC26.module.css';
 
 type SectionId = 'matches' | 'groups' | 'bracket' | 'winner';
 
 const SECTIONS: { id: SectionId; label: string }[] = [
-  { id: 'matches', label: 'matches' },
   { id: 'groups', label: 'groups' },
+  { id: 'matches', label: 'matches' },
   { id: 'bracket', label: 'bracket' },
   { id: 'winner', label: 'predictions' },
 ];
@@ -20,7 +20,7 @@ const SECTIONS: { id: SectionId; label: string }[] = [
  * below the bracket, as its own section.
  */
 export function WC26() {
-  const [active, setActive] = useState<SectionId>('matches');
+  const [active, setActive] = useState<SectionId>('groups');
   const refs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
@@ -57,12 +57,12 @@ export function WC26() {
         ))}
       </nav>
 
-      <section id="matches" ref={(el) => { refs.current.matches = el; }} className={styles.section}>
-        <div className={styles.pad}><MatchList /></div>
-      </section>
-
       <section id="groups" ref={(el) => { refs.current.groups = el; }} className={styles.section}>
         <Groups />
+      </section>
+
+      <section id="matches" ref={(el) => { refs.current.matches = el; }} className={styles.section}>
+        <UpcomingMatches showOdds showCta={false} heading={null} />
       </section>
 
       <section id="bracket" ref={(el) => { refs.current.bracket = el; }} className={styles.section}>

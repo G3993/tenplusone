@@ -17,7 +17,6 @@ interface MatchClosetProps {
 export function MatchCloset({ home, away, pick = null }: MatchClosetProps) {
   const showHome = pick !== 'away';
   const showAway = pick !== 'home';
-  const focused = pick === 'home' || pick === 'away';
   return (
     <section className={styles.section} aria-label="shop the matchup">
       {showHome && (
@@ -27,7 +26,7 @@ export function MatchCloset({ home, away, pick = null }: MatchClosetProps) {
             title={home.name}
             eyebrow=""
             compact
-            limit={focused ? undefined : 3}
+            scroll
             viewAllHref={`/team/${home.slug}`}
           />
         </div>
@@ -39,7 +38,7 @@ export function MatchCloset({ home, away, pick = null }: MatchClosetProps) {
             title={away.name}
             eyebrow=""
             compact
-            limit={focused ? undefined : 3}
+            scroll
             viewAllHref={`/team/${away.slug}`}
           />
         </div>

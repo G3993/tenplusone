@@ -8,7 +8,8 @@
    with real separation between groups so they read as distinct units. */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  /* three groups per row on desktop */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 26px;
   width: 100%;
   box-sizing: border-box;
@@ -20,11 +21,9 @@
 .group {
   --d: 6px;
   position: relative;
-  border: 1px solid #35d06b;
-  background:
-    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.12) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
-    #04100a;
-  box-shadow: 0 0 10px rgba(74, 222, 128, 0.14);
+  border: 1px solid var(--nav-border, #1a1a1a);
+  background: #000000;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
 }
@@ -34,9 +33,9 @@
   position: absolute;
   box-sizing: border-box;
   background:
-    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.45) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
-    #0a2c17;
-  border: 1px solid #2aa957;
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #111111;
+  border: 1px solid var(--nav-border, #1a1a1a);
 }
 /* top face */
 .group::before {
@@ -62,7 +61,7 @@
   align-items: baseline;
   gap: 8px;
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(53, 208, 107, 0.4);
+  border-bottom: 1px solid var(--nav-border, #1a1a1a);
 }
 
 .groupTag {
@@ -86,17 +85,19 @@
 }
 
 .cell {
-  display: flex;
+  display: grid;
+  grid-template-columns: 20px 76px minmax(0, 1fr);
+  grid-template-areas: "pos logo name";
   align-items: center;
-  gap: 18px;
-  padding: 16px 20px;
+  column-gap: 22px;
+  padding: 20px 22px;
   text-decoration: none;
   color: inherit;
   transition: background 80ms ease;
 }
 
 .cell + .cell {
-  border-top: 1px solid rgba(53, 208, 107, 0.3);
+  border-top: 1px solid var(--nav-border, #1a1a1a);
 }
 
 .cell:hover {
@@ -112,16 +113,18 @@
 }
 
 .logo {
-  flex-shrink: 0;
+  grid-area: logo;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 52px;
-  height: 52px;
+  width: 56px;
+  height: 56px;
 }
 
 .text {
+  grid-area: name;
   display: flex;
+  gap: 3px;
   flex-direction: column;
   min-width: 0;
   flex: 1 1 auto;
@@ -148,7 +151,94 @@
   letter-spacing: 0.06em;
 }
 
+@media (max-width: 1000px) {
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 720px) {
   .wrap { padding: 14px; }
   .grid { grid-template-columns: 1fr; }
+}
+
+/* ── mini standings: header row + per-team stat columns ─────────────── */
+.statHead {
+  display: grid;
+  grid-template-columns: 20px 76px minmax(0, 1fr);
+  column-gap: 22px;
+  align-items: center;
+  padding: 10px 20px 8px;
+  border-bottom: 1px solid var(--nav-border, #1a1a1a);
+  font-size: 15px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9adfb4;
+}
+.statHeadTeam { grid-column: 1 / 3; }
+.statHead .statCols { grid-column: 3; justify-self: start; }
+
+.statCols {
+  display: grid;
+  grid-template-columns: repeat(7, 32px);
+  text-align: left;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.stats {
+  font-size: 18px;
+  color: #ffffff;
+}
+.pts {
+  color: #c8ffda;
+  font-weight: 700;
+}
+
+.pos {
+  grid-area: pos;
+  width: 20px;
+  font-size: 18px;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .statCols { grid-template-columns: repeat(7, 26px); }
+  .statHead { padding: 8px 14px 6px; font-size: 13px; grid-template-columns: 18px 56px minmax(0, 1fr); column-gap: 18px; }
+  .stats { font-size: 16px; }
+  .cell { column-gap: 18px; padding: 16px 14px; grid-template-columns: 18px 56px minmax(0, 1fr); }
+  .logo { width: 56px; height: 56px; }
+  .name { font-size: 18px; }
+}
+
+/* ── live board indicators ──────────────────────────────────────────── */
+.liveTag {
+  margin-left: auto;
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.liveDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 10px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: groupLive 1.6s ease-in-out infinite;
+  vertical-align: middle;
+}
+@keyframes groupLive {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.boardNote {
+  margin: 22px 0 0;
+  text-align: center;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--dim);
 }

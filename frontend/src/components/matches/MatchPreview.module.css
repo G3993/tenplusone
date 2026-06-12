@@ -19,10 +19,10 @@
   /* the whole card is one 3D blue neon block (CTA family, blue variant):
      dotted-line face + isometric extrusion on top/right */
   --d: 8px;
-  border: 1px solid rgba(74, 222, 128, 0.75);
+  border: 1px solid var(--nav-border, #1a1a1a);
   /* plain black face — the perspective grid floor is the only texture */
   background: #000000;
-  box-shadow: 0 0 14px rgba(74, 222, 128, 0.16);
+  box-shadow: none;
   transition: transform 0.13s ease, box-shadow 0.13s ease, border-color 0.13s ease;
   color: inherit;
 }
@@ -33,15 +33,21 @@
   border-color: #4ade80;
   box-shadow: 0 0 24px rgba(74, 222, 128, 0.32);
 }
+/* the synthwave floor lights up green with the card */
+.match:hover .field::before {
+  background:
+    repeating-linear-gradient(90deg, rgba(74, 222, 128, 0.5) 0 2px, rgba(0, 0, 0, 0) 2px var(--gx)),
+    repeating-linear-gradient(0deg,  rgba(74, 222, 128, 0.5) 0 2px, rgba(0, 0, 0, 0) 2px var(--gy));
+}
 .match::before,
 .match::after {
   content: '';
   position: absolute;
   box-sizing: border-box;
   background:
-    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.35) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
-    #08210f;
-  border: 1px solid rgba(74, 222, 128, 0.75);
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #111111;
+  border: 1px solid var(--nav-border, #1a1a1a);
 }
 /* top face */
 .match::before {
@@ -89,8 +95,8 @@
   --gx: 56px;
   --gy: 44px;
   background:
-    repeating-linear-gradient(90deg, rgba(74, 222, 128, 0.35) 0 2px, rgba(0, 0, 0, 0) 2px var(--gx)),
-    repeating-linear-gradient(0deg,  rgba(74, 222, 128, 0.35) 0 2px, rgba(0, 0, 0, 0) 2px var(--gy));
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 2px, rgba(0, 0, 0, 0) 2px var(--gx)),
+    repeating-linear-gradient(0deg,  rgba(255, 255, 255, 0.22) 0 2px, rgba(0, 0, 0, 0) 2px var(--gy));
   /* plate bottom sits on the card's bottom edge; rows recede to the horizon */
   transform: perspective(420px) rotateX(58deg);
   transform-origin: 50% 100%;
@@ -360,4 +366,79 @@
 
 @media (prefers-reduced-motion: reduce) {
   .liveDot, .spark svg circle { animation: none; }
+}
+
+
+/* ── finished match: the result card ────────────────────────────────── */
+/* winner's crest big on top; mini logo · score · mini logo beneath */
+.matchDone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* played games go quiet: same gray chrome as the group cards */
+  border-color: var(--nav-border, #1a1a1a);
+  box-shadow: none;
+}
+.matchDone::before,
+.matchDone::after {
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #111111;
+  border: 1px solid var(--nav-border, #1a1a1a);
+}
+.matchDone .field::before {
+  background:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 2px, rgba(0, 0, 0, 0) 2px var(--gx)),
+    repeating-linear-gradient(0deg,  rgba(255, 255, 255, 0.22) 0 2px, rgba(0, 0, 0, 0) 2px var(--gy));
+}
+.matchDone:hover {
+  border-color: #4ade80;
+  box-shadow: 0 0 24px rgba(74, 222, 128, 0.32);
+}
+
+.resultWrap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-decoration: none;
+  text-align: center;
+}
+
+.ftTag {
+  font-family: var(--display);
+  font-size: 18px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.winnerStage {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.scoreRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.scoreVal {
+  font-family: var(--display);
+  font-size: 34px;
+  font-weight: 800;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+@media (max-width: 560px) {
+  .winnerStage { gap: 16px; }
+  .scoreVal { font-size: 28px; }
 }

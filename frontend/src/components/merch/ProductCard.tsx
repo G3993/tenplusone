@@ -68,7 +68,7 @@ export function ProductCard({
 
       {/* Hover affordance — only visible on pointer-hover/focus. Click on the
           card itself still navigates to the product detail page. */}
-      <span className={styles.add} aria-hidden="true">+ add</span>
+      <span className={styles.add} aria-hidden="true">view →</span>
 
       <span className={styles.meta}>
         <span className={styles.title}>{product.title}</span>

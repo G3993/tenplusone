@@ -16,9 +16,11 @@ interface TeamClosetProps {
   limit?: number;
   /** With `limit`, render a "view all" link to the full closet. */
   viewAllHref?: string;
+  /** Horizontal swipe gallery (match page): every item in one scrolling row. */
+  scroll?: boolean;
 }
 
-export function TeamCloset({ teamSlug, title = 'Shop the kit', eyebrow, compact, limit, viewAllHref }: TeamClosetProps) {
+export function TeamCloset({ teamSlug, title = 'Shop the kit', eyebrow, compact, limit, viewAllHref, scroll }: TeamClosetProps) {
   const [products, setProducts] = useState<ShopifyProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,7 +60,7 @@ export function TeamCloset({ teamSlug, title = 'Shop the kit', eyebrow, compact,
       )}
 
       {!loading && !error && products.length > 0 && (
-        <div className={styles.grid}>
+        <div className={scroll ? styles.scroller : styles.grid}>
           {shown.map((product) => (
             <ProductCard key={product.id} product={product} teamSlug={teamSlug} />
           ))}

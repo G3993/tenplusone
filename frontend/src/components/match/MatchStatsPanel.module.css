@@ -1,0 +1,150 @@
+/* Live team stats — the Google match-stats layout in the iFC system:
+   win probability bar up top, then the 11 attribute rows that drive the art.
+   home value · centered label · away value, leader highlighted in green. */
+.panel {
+  width: 100%;
+  max-width: 560px;
+  margin: 36px auto 0;
+  padding-top: 28px;
+  border-top: 1px solid var(--hairline);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+  font-family: var(--display);
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bright);
+  margin: 0 0 18px;
+}
+.clock {
+  font-size: 20px;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── win probability ──────────────────────────────────────────────── */
+.probRow {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.probSide,
+.probMid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.probMid { text-align: center; align-items: center; }
+.probRight { text-align: right; align-items: flex-end; }
+.probName {
+  font-family: var(--display);
+  font-size: 20px;
+  color: var(--bright);
+}
+.probVal {
+  font-family: var(--display);
+  font-size: 24px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dim);
+}
+.probHome { color: #4ade80; }
+.probAway { color: #86efac; }
+
+.probBar {
+  display: flex;
+  height: 10px;
+  width: 100%;
+  gap: 2px;
+  background: var(--hairline);
+}
+.probBarHome,
+.probBarDraw,
+.probBarAway {
+  height: 100%;
+  transition: width 0.5s ease;
+}
+.probBarHome { background: #4ade80; }
+.probBarDraw { background: #2a2a2a; }
+.probBarAway { background: #86efac; }
+
+/* ── stat rows ─────────────────────────────────────────────────────── */
+.statHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 30px 0 4px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--hairline);
+}
+.statTitle {
+  font-family: var(--display);
+  font-size: 20px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+.statCrest { display: inline-flex; width: 34px; height: 34px; }
+
+.rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.row {
+  display: grid;
+  grid-template-columns: 72px 1fr 72px;
+  align-items: center;
+  padding: 11px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.row:last-child { border-bottom: none; }
+
+.label {
+  text-align: center;
+  font-size: 22px;
+  color: var(--bright);
+}
+
+.val {
+  font-family: var(--display);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--white);
+  justify-self: center;
+  min-width: 52px;
+  padding: 3px 0;
+  border-radius: 999px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.row .val:last-child { justify-self: center; }
+
+/* the leading side lights up green, like the reference */
+.lead {
+  background: #14532d;
+  color: #ffffff;
+}
+
+.note {
+  margin: 18px 0 0;
+  text-align: center;
+  font-size: 18px;
+  color: var(--dim);
+}
+
+@media (max-width: 560px) {
+  .panel { max-width: 100%; }
+  .row { grid-template-columns: 60px 1fr 60px; padding: 9px 0; }
+  .label { font-size: 19px; }
+  .val { font-size: 20px; min-width: 46px; }
+  .head { font-size: 21px; }
+}

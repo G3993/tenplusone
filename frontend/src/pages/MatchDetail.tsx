@@ -5,6 +5,8 @@ import { useCrestSize } from '../components/matches/MatchPreview';
 import { MatchResult } from '../components/match/MatchResult';
 import { MatchCloset } from '../components/match/MatchCloset';
 import { MatchPoll, type MatchPick } from '../components/match/MatchPoll';
+import { MatchStatsPanel } from '../components/match/MatchStatsPanel';
+import { GameIdentity } from '../components/match/GameIdentity';
 import { MeshGridBG } from '../components/home/MeshGridBG';
 import { MATCHES } from '../data/matches';
 import { getTeamByName } from '../data/teams';
@@ -103,6 +105,18 @@ export function MatchDetail() {
       {status !== 'FINISHED' && homeTeam && awayTeam && (
         <MatchPoll home={homeTeam} away={awayTeam} odds={match.odds} pick={pick} onPick={setPick} />
       )}
+
+      {/* the 11 live attributes that drive the art — Google-style stat sheet */}
+      <MatchStatsPanel
+        matchId={match.id}
+        home={match.h}
+        away={match.a}
+        odds={match.odds as [number, number, number]}
+      />
+
+      {/* final-whistle reveal: the result rendered as the winner's
+          stat-driven crest */}
+      <GameIdentity matchId={match.id} home={match.h} away={match.a} />
 
       {/* score — centered (no predictions) */}
       <div className={styles.status}>

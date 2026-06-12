@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo, type CSSProperties } from 'react';
 import { Link } from 'react-router';
 import { TEAMS, teamAccent } from '../data/teams';
+import { GROUPS } from '../data/groups';
 import { TeamLogo } from '../components/team/TeamLogo';
 import { SpectrumCrest } from '../components/logos/SpectrumCrest';
 import { MotifCrest, type MotifId } from '../components/logos/MotifCrest';
 import { teamSeed, FRAMES } from '../components/logos/spectrumMotif';
 import { getLogoPixels } from '../data/team-logos/index.ts';
+import { MeshGridBG } from '../components/home/MeshGridBG';
 import styles from './Teams.module.css';
 
 const SORTED = [...TEAMS].sort((a, b) => a.name.localeCompare(b.name));
@@ -70,6 +72,7 @@ export function Teams() {
   const [size, setSize] = useState(DEFAULT_SIZE);
   const [motif, setMotif] = useState<Motif>('cycle');
   const [shape, setShape] = useState<'square' | 'circle'>('square');
+  const [group, setGroup] = useState<string>('all');
   const [frame, setFrame] = useState(0);
   const [cycleIdx, setCycleIdx] = useState(0);
   const clamped = Math.min(size, MAX);
@@ -102,25 +105,10 @@ export function Teams() {
 
   return (
     <div className={styles.wrap}>
+      <MeshGridBG />
       <div className={styles.head}>
         <div className={styles.controls}>
           <div className={styles.motif}>
-            <div className={styles.motifTrack} role="group" aria-label="motif style">
-              {MOTIFS.map((m) => (
-                <button
-                  key={m.key}
-                  type="button"
-                  className={`${styles.motifBtn} ${motif === m.key ? styles.motifOn : ''}`}
-                  aria-pressed={motif === m.key}
-                  onClick={() => setMotif(m.key)}
-                >
-                  {m.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className={styles.motif}>
-            <span className={styles.motifLabel}>shape</span>
             <div className={styles.motifTrack} role="group" aria-label="pixel shape">
               {(['square', 'circle'] as const).map((s) => (
                 <button
@@ -130,13 +118,37 @@ export function Teams() {
                   aria-pressed={shape === s}
                   onClick={() => setShape(s)}
                 >
-                  {s === 'square' ? '◼ square' : '● circle'}
+                  {s === 'square' ? '\u25fc' : '\u25cf'}
                 </button>
               ))}
             </div>
           </div>
+          <span className={styles.cubeWrap}>
+          <select
+            className={styles.select}
+            value={motif}
+            onChange={(e) => setMotif(e.target.value as Motif)}
+            aria-label="crest style"
+          >
+            {MOTIFS.map((m) => (
+              <option key={m.key} value={m.key}>style · {m.label}</option>
+            ))}
+          </select>
+          </span>
+          <span className={styles.cubeWrap}>
+          <select
+            className={styles.select}
+            value={group}
+            onChange={(e) => setGroup(e.target.value)}
+            aria-label="group filter"
+          >
+            <option value="all">all groups</option>
+            {GROUPS.map((g) => (
+              <option key={g.id} value={g.id}>group {g.id}</option>
+            ))}
+          </select>
+          </span>
           <div className={styles.motif}>
-            <span className={styles.motifLabel}>size</span>
             <div className={styles.motifTrack} role="group" aria-label="logo size">
               <button
                 type="button"
@@ -147,7 +159,6 @@ export function Teams() {
               >
                 −
               </button>
-              <span className={styles.sizerVal}>{clamped}px</span>
               <button
                 type="button"
                 className={styles.motifBtn}
@@ -168,7 +179,13 @@ export function Teams() {
         className={styles.grid}
         style={{ '--logo': `${clamped}px` } as CSSProperties}
       >
-        {SORTED.map((t) => (
+        {(group === 'all'
+          ? SORTED
+          : SORTED.filter((t) => {
+              const g = GROUPS.find((x) => x.id === group);
+              return g ? g.teams.includes(t.name) : true;
+            })
+        ).map((t) => (
           <Link
             key={t.slug}
             to={`/team/${t.slug}`}
@@ -198,7 +215,7 @@ export function Teams() {
                 />
               )}
             </span>
-            <span className={styles.name}>{t.name}</span>
+            <span className={styles.name}>{t.code}</span>
           </Link>
         ))}
       </div>

@@ -19,7 +19,7 @@
 
   /* main nav bar height — the WC26 sticky sub-nav docks directly below it.
      Keep .nav's forced height in sync with this. */
-  --nav-h: 62px;
+  --nav-h: 74px;
 
   --mono: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
   --pixel: 'JetBrains Mono', 'SF Mono', 'Menlo', 'Consolas', monospace;
@@ -62,5 +62,5 @@
 
 /* nav is shorter on mobile (the SHOP pill collapses to a text link) */
 @media (max-width: 700px) {
-  :root, :root[data-theme='dark'] { --nav-h: 46px; }
+  :root, :root[data-theme='dark'] { --nav-h: 56px; }
 }

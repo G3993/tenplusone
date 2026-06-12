@@ -1,6 +1,9 @@
 .wrap {
-  padding: 18px 24px 80px;
+  padding: 0 24px 80px;
   width: 100%;
+  /* cancel the global Editor top padding so the control bar sits flush
+     under the main nav with no dead black band */
+  margin-top: -40px;
   box-sizing: border-box;
 }
 
@@ -18,7 +21,7 @@
   flex-wrap: nowrap;
   height: var(--nav-h);
   box-sizing: border-box;
-  margin: -18px -24px 22px;
+  margin: 0 -24px 22px;
   padding: 0 24px;
   position: sticky;
   top: var(--nav-h);
@@ -101,35 +104,101 @@
 
 .motifTrack {
   display: inline-flex;
-  border: 1px solid var(--hairline);
+  align-items: center;
+  gap: 14px;
 }
 
 .motifBtn {
-  background: transparent;
-  border: 0;
-  border-right: 1px solid var(--hairline);
-  padding: 7px 9px;
+  --d: 4px;
+  position: relative;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px solid var(--nav-border, #1a1a1a);
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    #0a0a0a;
+  padding: 8px 14px;
   font: inherit;
-  font-size: 16px;
+  font-size: 22px;
+  line-height: 1;
   letter-spacing: 0.08em;
   white-space: nowrap;
   text-transform: uppercase;
-  color: var(--dim);
+  color: var(--white);
   cursor: pointer;
-  transition: color 0.14s ease, background-color 0.14s ease;
+  transition: color 0.14s ease, background-color 0.14s ease, border-color 0.14s ease;
+}
+.motifBtn::before,
+.motifBtn::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #111111;
+  border: 1px solid var(--nav-border, #1a1a1a);
+}
+.motifBtn::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+.motifBtn::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
 }
 
-.motifBtn:last-child { border-right: 0; }
-.motifBtn:hover { color: var(--bright); }
-.motifOn, .motifOn:hover { background: var(--bright); color: var(--bg); }
+.motifBtn:hover { color: #c8ffda; border-color: #35d06b; }
+.motifBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+/* active: the green CTA cube — scanline face + green extrusion */
+.motifOn,
+.motifOn:hover {
+  border-color: #35d06b;
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    #04100a;
+  color: #c8ffda;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.18);
+}
+.motifOn::before,
+.motifOn::after {
+  background:
+    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.45) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #0a2c17;
+  border-color: #2aa957;
+}
+.motifOn::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+.motifOn::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
+}
 
 /* grid reflows with logo size: column min-width tracks --logo */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(calc(var(--logo) + 72px), 1fr));
-  gap: 1px;
-  background: var(--hairline);
-  border: 1px solid var(--hairline);
+  gap: 28px 12px;
   align-items: stretch;
   width: 100%;
 }
@@ -142,7 +211,7 @@
   text-align: center;
   gap: 12px;
   padding: 20px 16px;
-  background: var(--surface);
+  background: transparent;
   text-decoration: none;
   color: inherit;
   transition: box-shadow 0.12s;
@@ -170,6 +239,7 @@
 }
 
 .name {
+  text-transform: uppercase;
   font-family: var(--display);
   font-size: 22px;
   color: var(--bright);
@@ -201,3 +271,65 @@
   }
   .cell { padding: 16px 12px; gap: 10px; }
 }
+
+
+/* ── STYLE / GROUP dropdowns in the control bar ─────────────────────── */
+.cubeWrap {
+  --d: 4px;
+  position: relative;
+  display: inline-flex;
+}
+.cubeWrap::before,
+.cubeWrap::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #111111;
+  border: 1px solid var(--nav-border, #1a1a1a);
+  pointer-events: none;
+}
+.cubeWrap::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+.cubeWrap::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
+}
+
+.select {
+  height: 46px;
+  box-sizing: border-box;
+  font-family: var(--font);
+  font-size: 20px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white);
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
+    #0a0a0a;
+  border: 1px solid var(--nav-border, #1a1a1a);
+  border-radius: 0;
+  padding: 8px 34px 8px 14px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234ade80' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0 1px, rgba(0, 0, 0, 0) 1px 4px);
+  background-repeat: no-repeat, repeat;
+  background-position: right 12px center, 0 0;
+  transition: border-color 0.12s;
+}
+.select:hover { border-color: var(--green); color: #c8ffda; }
+.select:focus-visible { outline: none; border-color: var(--green); }
