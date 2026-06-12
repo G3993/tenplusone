@@ -25,6 +25,21 @@
 }
 .statCrest { display: inline-flex; width: 64px; height: 64px; }
 
+/* crest + country code stacked on each side of the score */
+.statSide {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.statCode {
+  font-family: var(--display);
+  font-size: 18px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white);
+}
+
 .rows {
   list-style: none;
   margin: 0;

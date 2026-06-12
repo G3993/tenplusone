@@ -64,11 +64,17 @@ export function MatchStatsPanel({ matchId, home, away }: {
   return (
     <section className={styles.panel} aria-label="live team stats">
       <div className={styles.statHead}>
-        <span className={styles.statCrest}>{crest(homeTeam, home)}</span>
+        <span className={styles.statSide}>
+          <span className={styles.statCrest}>{crest(homeTeam, home)}</span>
+          <span className={styles.statCode}>{homeCode}</span>
+        </span>
         <span className={styles.statTitle}>
           {homeCode} {stats.homeGoals} – {stats.awayGoals} {awayCode}
         </span>
-        <span className={styles.statCrest}>{crest(awayTeam, away)}</span>
+        <span className={styles.statSide}>
+          <span className={styles.statCrest}>{crest(awayTeam, away)}</span>
+          <span className={styles.statCode}>{awayCode}</span>
+        </span>
       </div>
 
       <ul className={styles.rows}>

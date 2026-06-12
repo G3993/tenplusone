@@ -8,8 +8,10 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  max-width: 720px;
-  margin: 44px auto 0;
+  /* sized to the viewport: the square card + the scoreline row below it fit
+     above the fold, so the result is visible without scrolling */
+  max-width: min(720px, calc(100dvh - var(--nav-h, 74px) - 250px));
+  margin: 36px auto 0;
   padding: 0;
   /* same gray 3D card as the match/group containers */
   border: 1px solid var(--nav-border, #1a1a1a);
@@ -64,6 +66,12 @@
 .crestLink {
   display: inline-block;
   text-decoration: none;
+}
+
+/* short-window guard: never let the fixed-size crest spill out of the stage */
+.stage canvas {
+  max-width: 88%;
+  max-height: 88%;
 }
 
 .drawPair {
