@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, type CSSProperties } from 'react';
+import { useMemo, useState, useEffect, useRef, type CSSProperties } from 'react';
 import { Link } from 'react-router';
 import { useMatchLive } from '../../lib/useMatchLive';
 import { getTeamByName } from '../../data/teams';
@@ -18,18 +18,23 @@ export function GameIdentity({ matchId, home, away }: {
 }) {
   const { stats, frozen } = useMatchLive(matchId);
 
-  // Crest render size: multiples of 32 so each logo pixel is a whole number
-  // of px — the blueprint grid pitch derives from it and stays locked on.
+  const finished = frozen && stats.status === 'FINISHED';
+
+  // Crest render size tracks the card's real width (~53%, the 384-in-720
+  // proportion), snapped to multiples of 32 so each logo pixel is a whole
+  // number of px — the grid pitch derives from it and never warps.
+  const wrapRef = useRef<HTMLElement>(null);
   const [crestSize, setCrestSize] = useState(384);
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 560px)');
-    const apply = () => setCrestSize(mq.matches ? 288 : 384);
-    apply();
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
-  }, []);
-
-  const finished = frozen && stats.status === 'FINISHED';
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0].contentRect.width;
+      setCrestSize(Math.max(160, Math.min(384, Math.round((w * 0.533) / 32) * 32)));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [finished]);
   const winnerName = useMemo(() => {
     if (stats.homeGoals > stats.awayGoals) return home;
     if (stats.awayGoals > stats.homeGoals) return away;
@@ -54,11 +59,11 @@ export function GameIdentity({ matchId, home, away }: {
     );
   };
 
-  const pairSize = crestSize - 128; // draws: two crests, still a /32 multiple
+  const pairSize = Math.max(96, crestSize - 128); // draws: two crests, /32 multiple
   const cell = (winnerName ? crestSize : pairSize) / 32;
 
   return (
-    <section className={styles.wrap} aria-label="game identity">
+    <section ref={wrapRef} className={styles.wrap} aria-label="game identity">
       {/* the game identity, alone on its blueprint grid */}
       <div className={styles.stage} style={{ '--cell': `${cell}px` } as CSSProperties}>
         {winnerName ? (

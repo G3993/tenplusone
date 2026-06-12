@@ -68,11 +68,6 @@
   text-decoration: none;
 }
 
-/* short-window guard: never let the fixed-size crest spill out of the stage */
-.stage canvas {
-  max-width: 88%;
-  max-height: 88%;
-}
 
 .drawPair {
   display: flex;

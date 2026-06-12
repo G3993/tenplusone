@@ -69,7 +69,7 @@ export function MatchStatsPanel({ matchId, home, away }: {
           <span className={styles.statCode}>{homeCode}</span>
         </span>
         <span className={styles.statTitle}>
-          {homeCode} {stats.homeGoals} – {stats.awayGoals} {awayCode}
+          {stats.homeGoals} – {stats.awayGoals}
         </span>
         <span className={styles.statSide}>
           <span className={styles.statCrest}>{crest(awayTeam, away)}</span>
