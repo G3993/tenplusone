@@ -57,32 +57,35 @@ export function MatchDetail() {
   return (
     <div className={styles.page}>
       <MeshGridBG />
-      {/* logos big, up top */}
-      <header className={styles.crests}>
-        {homeTeam ? (
-          <Link to={`/team/${homeTeam.slug}`} className={styles.crest}>
-            <MatchCrest3D slug={homeTeam.slug} name={match.h} size={crestSize} />
-            <span className={styles.crestName}>{match.h}</span>
-          </Link>
-        ) : (
-          <span className={styles.crest}>
-            <span className={styles.crestName}>{match.h}</span>
-          </span>
-        )}
+      {/* logos big, up top — once the match is FINISHED they move inside the
+          Game Identity scoreboard, so the header version disappears */}
+      {status !== 'FINISHED' && (
+        <header className={styles.crests}>
+          {homeTeam ? (
+            <Link to={`/team/${homeTeam.slug}`} className={styles.crest}>
+              <MatchCrest3D slug={homeTeam.slug} name={match.h} size={crestSize} />
+              <span className={styles.crestName}>{match.h}</span>
+            </Link>
+          ) : (
+            <span className={styles.crest}>
+              <span className={styles.crestName}>{match.h}</span>
+            </span>
+          )}
 
-        <span className={styles.vs}>vs</span>
+          <span className={styles.vs}>vs</span>
 
-        {awayTeam ? (
-          <Link to={`/team/${awayTeam.slug}`} className={styles.crest}>
-            <MatchCrest3D slug={awayTeam.slug} name={match.a} size={crestSize} />
-            <span className={styles.crestName}>{match.a}</span>
-          </Link>
-        ) : (
-          <span className={styles.crest}>
-            <span className={styles.crestName}>{match.a}</span>
-          </span>
-        )}
-      </header>
+          {awayTeam ? (
+            <Link to={`/team/${awayTeam.slug}`} className={styles.crest}>
+              <MatchCrest3D slug={awayTeam.slug} name={match.a} size={crestSize} />
+              <span className={styles.crestName}>{match.a}</span>
+            </Link>
+          ) : (
+            <span className={styles.crest}>
+              <span className={styles.crestName}>{match.a}</span>
+            </span>
+          )}
+        </header>
+      )}
 
       {/* match meta + odds only while the game is undecided — once it's
           FINISHED the Game Identity card takes their place under the logos,

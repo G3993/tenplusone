@@ -43,6 +43,15 @@
   transform-origin: 0 0;
 }
 
+/* the two team logos, side by side at the top of the scoreboard band */
+.headCrests {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(28px, 8vw, 56px);
+  margin-bottom: 8px;
+}
+
 .ft {
   font-family: var(--display);
   font-size: 20px;

@@ -4,6 +4,7 @@ import { useMatchLive } from '../../lib/useMatchLive';
 import { getTeamByName } from '../../data/teams';
 import { getLogoPixels } from '../../data/team-logos/index.ts';
 import { MotifCrest } from '../logos/MotifCrest';
+import { MatchCrest3D } from './MatchCrest3D';
 import { teamSeed } from '../logos/spectrumMotif';
 import styles from './GameIdentity.module.css';
 
@@ -46,8 +47,23 @@ export function GameIdentity({ matchId, home, away }: {
   const homeCode = getTeamByName(home)?.code ?? home;
   const awayCode = getTeamByName(away)?.code ?? away;
 
+  // the two team logos, inside the card's scoreboard band
+  const headCrest = (name: string) => {
+    const team = getTeamByName(name);
+    if (!team) return null;
+    return (
+      <Link to={`/team/${team.slug}`} className={styles.crestLink} aria-label={name}>
+        <MatchCrest3D slug={team.slug} name={team.name} size={132} />
+      </Link>
+    );
+  };
+
   return (
     <section className={styles.wrap} aria-label="game identity">
+      <div className={styles.headCrests}>
+        {headCrest(home)}
+        {headCrest(away)}
+      </div>
       <span className={styles.ft}>FT</span>
       <div className={styles.scoreline}>
         <span className={styles.scoreTeam}>{homeCode}</span>
