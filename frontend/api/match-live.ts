@@ -151,6 +151,39 @@ import { MATCHES } from '../src/data/matches';
 
 const ESPN = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world';
 
+/* Team-name matching: fold diacritics (Türkiye, Curaçao), strip to a-z, then
+ * map our short display names to ESPN's official forms. */
+/* note: no alias for Bosnia — 'bosnia' substring-matches both of ESPN's
+ * forms ("Bosnia and Herzegovina" / "Bosnia-Herzegovina") */
+const TEAM_ALIASES: Record<string, string> = {
+  usa: 'unitedstates',
+  turkey: 'turkiye',
+  ivorycoast: 'cotedivoire',
+  capeverde: 'caboverde',
+};
+const norm = (s: string) =>
+  s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z]/g, '');
+const canon = (s: string) => {
+  const n = norm(s);
+  return TEAM_ALIASES[n] ?? n;
+};
+const sameName = (a: string, b: string) => {
+  const ca = canon(a);
+  const cb = canon(b);
+  return ca === cb || ca.includes(cb) || cb.includes(ca);
+};
+
+/* Kickoff instant for a fixture: iso carries local stadium time, t carries the
+ * timezone label — add its UTC offset so "hasn't kicked off yet" is real. */
+const TZ_HOURS: Record<string, number> = { PDT: 7, PST: 8, MDT: 6, MST: 7, CDT: 5, CST: 6, EDT: 4, EST: 5 };
+function kickoffMs(m: { iso?: string; t?: string }): number | null {
+  if (!m.iso) return null;
+  const t = Date.parse(`${m.iso}:00Z`);
+  if (!Number.isFinite(t)) return null;
+  const tz = (m.t ?? '').split(' ')[1] ?? '';
+  return t + (TZ_HOURS[tz] ?? 5) * 3_600_000;
+}
+
 function clockToMinute(v: string | undefined): number {
   if (!v) return 0;
   const m = v.match(/(\d+)'(?:\+(\d+))?/);
@@ -186,11 +219,9 @@ async function fetchLive(id: string): Promise<LivePayload | null> {
 
     // 1. find the ESPN event for this fixture by date + team names
     const sb = await fetch(`${ESPN}/scoreboard?dates=${ymd}`).then((r) => r.json());
-    const norm = (s: string) => s.toLowerCase().replace(/[^a-z]/g, '');
-    const want = [norm(match.h), norm(match.a)];
     const event = (sb.events || []).find((e: any) => {
-      const names = (e.competitions?.[0]?.competitors || []).map((c: any) => norm(c.team?.displayName || ''));
-      return want.every((w) => names.some((n: string) => n.includes(w) || w.includes(n)));
+      const names = (e.competitions?.[0]?.competitors || []).map((c: any) => c.team?.displayName || '');
+      return [match.h, match.a].every((w) => names.some((n: string) => sameName(n, w)));
     });
     if (!event) return null;
 
@@ -198,11 +229,7 @@ async function fetchLive(id: string): Promise<LivePayload | null> {
     const sum = await fetch(`${ESPN}/summary?event=${event.id}`).then((r) => r.json());
     const comp = event.competitions[0];
     const byName = (name: string) =>
-      (comp.competitors || []).find((c: any) => {
-        const n = norm(c.team?.displayName || '');
-        const w = norm(name);
-        return n.includes(w) || w.includes(n);
-      });
+      (comp.competitors || []).find((c: any) => sameName(c.team?.displayName || '', name));
     const homeC = byName(match.h);
     const awayC = byName(match.a);
     if (!homeC || !awayC) return null;
@@ -222,10 +249,10 @@ async function fetchLive(id: string): Promise<LivePayload | null> {
     const events: MatchEvent[] = [];
     for (const k of sum.keyEvents || []) {
       const text = (k.type?.text || '').toLowerCase();
-      const teamName = norm(k.team?.displayName || '');
+      const teamName = k.team?.displayName || '';
       const side: 'home' | 'away' | null = teamName
-        ? (teamName.includes(norm(match.h)) || norm(match.h).includes(teamName)) ? 'home'
-        : (teamName.includes(norm(match.a)) || norm(match.a).includes(teamName)) ? 'away'
+        ? sameName(teamName, match.h) ? 'home'
+        : sameName(teamName, match.a) ? 'away'
         : null
         : null;
       if (!side) continue;
@@ -276,7 +303,14 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   let payload: LivePayload | null = await fetchLive(id);
-  if (!payload) payload = simulate(id);
+  if (!payload) {
+    payload = simulate(id);
+    // Never fabricate a result for a game that hasn't kicked off — the
+    // simulator is a post-kickoff fallback only.
+    const match = MATCHES.find((m) => m.id === id);
+    const kick = match ? kickoffMs(match) : null;
+    if (kick !== null && Date.now() < kick) payload.status = 'SCHEDULED';
+  }
 
   const cache =
     payload.source === 'simulated' ? 'public, s-maxage=60'

@@ -8,9 +8,9 @@ import { teamSeed } from '../logos/spectrumMotif';
 import styles from './GameIdentity.module.css';
 
 /** The match result as art: once the game is FINISHED, reveal the Game
- *  Identity — the winner's crest rendered with the final match stats as
- *  inputs (the engine is already fed by MatchStatsPanel, so this crest
- *  carries the real numbers of the game). Draws show both crests. */
+ *  Identity — the winner's crest rendered through the stats motif, animating
+ *  with the real final numbers (the engine is fed by MatchStatsPanel on the
+ *  same page). Draws show one crest at a time with a slider between the two. */
 export function GameIdentity({ matchId, home, away }: {
   matchId: string;
   home: string;
@@ -19,6 +19,9 @@ export function GameIdentity({ matchId, home, away }: {
   const { stats, frozen } = useMatchLive(matchId);
 
   const finished = frozen && stats.status === 'FINISHED';
+
+  // Draws: which of the two identities is on stage.
+  const [side, setSide] = useState<'home' | 'away'>('home');
 
   // Crest render size tracks the card's real width (~53%, the 384-in-720
   // proportion), snapped to multiples of 32 so each logo pixel is a whole
@@ -43,13 +46,15 @@ export function GameIdentity({ matchId, home, away }: {
 
   if (!finished) return null;
 
+  // The identity itself: the stats motif — colored and animated by the
+  // match's final numbers, not the plain 3D mark.
   const renderCrest = (name: string, size: number) => {
     const team = getTeamByName(name);
     if (!team) return null;
     return (
       <Link to={`/team/${team.slug}`} className={styles.crestLink} aria-label={name}>
         <MotifCrest
-          motif="team3d"
+          motif="stats"
           teamId={team.slug}
           seed={teamSeed(team.slug)}
           pixels={getLogoPixels(team.slug, team.name[0])}
@@ -59,22 +64,32 @@ export function GameIdentity({ matchId, home, away }: {
     );
   };
 
-  const pairSize = Math.max(96, crestSize - 128); // draws: two crests, /32 multiple
-  const cell = (winnerName ? crestSize : pairSize) / 32;
+  const shown = winnerName ?? (side === 'home' ? home : away);
+  const cell = crestSize / 32;
 
   return (
     <section ref={wrapRef} className={styles.wrap} aria-label="game identity">
       {/* the game identity, alone on its blueprint grid */}
       <div className={styles.stage} style={{ '--cell': `${cell}px` } as CSSProperties}>
-        {winnerName ? (
-          renderCrest(winnerName, crestSize)
-        ) : (
-          <div className={styles.drawPair}>
-            {renderCrest(home, pairSize)}
-            {renderCrest(away, pairSize)}
-          </div>
-        )}
+        {renderCrest(shown, crestSize)}
       </div>
+
+      {/* draw: both teams produced an identity — slide between them */}
+      {!winnerName && (
+        <div className={styles.pairNav} role="tablist" aria-label="draw — both identities">
+          {([['home', home], ['away', away]] as const).map(([s, name]) => (
+            <button
+              key={s}
+              type="button"
+              role="tab"
+              aria-selected={side === s}
+              aria-label={name}
+              className={`${styles.pairDot} ${side === s ? styles.pairDotOn : ''}`}
+              onClick={() => setSide(s)}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

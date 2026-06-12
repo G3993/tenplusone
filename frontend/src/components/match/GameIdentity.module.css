@@ -69,13 +69,35 @@
 }
 
 
-.drawPair {
+/* draw slider — two pixel dots under the stage, one per identity */
+.pairNav {
   display: flex;
   align-items: center;
-  gap: 28px;
+  justify-content: center;
+  gap: 14px;
+  padding: 14px 0 16px;
+}
+
+.pairDot {
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  background: transparent;
+  border: 1px solid var(--nav-border, #1a1a1a);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+
+.pairDot:hover { border-color: #35d06b; }
+
+.pairDotOn,
+.pairDotOn:hover {
+  background: var(--green);
+  border-color: #35d06b;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.45);
 }
 
 @media (max-width: 560px) {
   .wrap { margin-top: 34px; }
-  .drawPair { gap: 16px; }
 }
