@@ -144,7 +144,7 @@
   .cartCta { display: none; }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 480px) {
   .nav { gap: 8px; padding: 10px 12px; }
   .menu { gap: 12px; }
   .navLink { font-size: 24px; }

@@ -53,14 +53,12 @@
   padding: 16px 0;
 }
 
+/* Two big tiles per row spanning the full page width — a lookbook pace, not
+   a catalog grid. No container chrome; the cards float on the page. */
 .grid {
   display: grid;
-  /* auto-fit (not auto-fill) collapses empty tracks so a small set of products
-     stretches to fill the full screen width instead of clustering left. */
-  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
-  gap: 1px;
-  background: var(--hairline);
-  border: 1px solid var(--hairline);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
   align-items: stretch;
 }
 
@@ -71,7 +69,7 @@
 
 @media (max-width: 560px) {
   /* one product per row, full width, on mobile */
-  .grid { grid-template-columns: 1fr; }
+  .grid { grid-template-columns: 1fr; gap: 18px; }
 }
 
 .viewAll {
@@ -102,9 +100,11 @@
 }
 .scroller::-webkit-scrollbar { display: none; }
 .scroller > * {
-  flex: 0 0 300px;
+  /* wider tile = taller card (4/5 aspect) — the gallery reads as a feature
+     band, not a thumbnail strip */
+  flex: 0 0 380px;
   scroll-snap-align: start;
 }
 @media (max-width: 560px) {
-  .scroller > * { flex: 0 0 78vw; }
+  .scroller > * { flex: 0 0 84vw; }
 }

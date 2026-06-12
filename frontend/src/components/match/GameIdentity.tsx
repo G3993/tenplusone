@@ -43,12 +43,17 @@ export function GameIdentity({ matchId, home, away }: {
     );
   };
 
+  const homeCode = getTeamByName(home)?.code ?? home;
+  const awayCode = getTeamByName(away)?.code ?? away;
+
   return (
     <section className={styles.wrap} aria-label="game identity">
-      <span className={styles.eyebrow}>
-        FT · {home} {stats.homeGoals} – {stats.awayGoals} {away}
-      </span>
-      <h3 className={styles.title}>game identity</h3>
+      <span className={styles.ft}>FT</span>
+      <div className={styles.scoreline}>
+        <span className={styles.scoreTeam}>{homeCode}</span>
+        <span className={styles.score}>{stats.homeGoals} – {stats.awayGoals}</span>
+        <span className={styles.scoreTeam}>{awayCode}</span>
+      </div>
 
       <div className={styles.stage}>
         {winnerName ? (
@@ -62,10 +67,6 @@ export function GameIdentity({ matchId, home, away }: {
       </div>
 
       {winnerName && <div className={styles.winner}>{winnerName}</div>}
-      <p className={styles.note}>
-        this symbol is generated from the final stats of this match.
-        no other game will ever produce it.
-      </p>
     </section>
   );
 }

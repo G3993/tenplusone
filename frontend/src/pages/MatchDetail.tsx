@@ -1,17 +1,16 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useSearchParams, Link } from 'react-router';
 import { MatchCrest3D } from '../components/match/MatchCrest3D';
 import { useCrestSize } from '../components/matches/MatchPreview';
-import { MatchResult } from '../components/match/MatchResult';
 import { MatchCloset } from '../components/match/MatchCloset';
 import { MatchPoll, type MatchPick } from '../components/match/MatchPoll';
 import { MatchStatsPanel } from '../components/match/MatchStatsPanel';
 import { GameIdentity } from '../components/match/GameIdentity';
 import { MeshGridBG } from '../components/home/MeshGridBG';
+import { Back3D } from '../components/ui/Back3D';
 import { MATCHES } from '../data/matches';
 import { getTeamByName } from '../data/teams';
-import { fetchMatch } from '../lib/api';
-import type { ApiMatch } from '../lib/api';
+import { useMatchLive } from '../lib/useMatchLive';
 import styles from './MatchDetail.module.css';
 
 /** "13:00 PDT" → "1:00 PM PDT" — human 12-hour clock, not 24-hour. */
@@ -30,8 +29,9 @@ export function MatchDetail() {
 
   const match = MATCHES.find((m) => m.id === id);
 
-  const [apiMatch, setApiMatch] = useState<ApiMatch | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Same live feed the stat panel + identity card consume, so the page layout
+  // (meta/odds vs. identity card) flips on the same FT signal they use.
+  const { stats } = useMatchLive(id ?? '');
   // Your call — starts unselected on every visit (never auto-restored); picking
   // a team filters the closet below to that team's full line.
   const [searchParams] = useSearchParams();
@@ -39,13 +39,6 @@ export function MatchDetail() {
   const [pick, setPick] = useState<MatchPick | null>(
     urlPick === 'home' || urlPick === 'away' || urlPick === 'draw' ? urlPick : null,
   );
-
-  useEffect(() => {
-    if (!id) return;
-    fetchMatch(id)
-      .then((m) => setApiMatch(m))
-      .finally(() => setLoading(false));
-  }, [id]);
 
   if (!match) {
     return (
@@ -59,10 +52,7 @@ export function MatchDetail() {
   const homeTeam = getTeamByName(match.h);
   const awayTeam = getTeamByName(match.a);
 
-  // Determine match status from API data, fallback to SCHEDULED
-  const status = apiMatch?.status || 'SCHEDULED';
-  const homeScore = apiMatch?.score_home;
-  const awayScore = apiMatch?.score_away;
+  const status = stats.status;
 
   return (
     <div className={styles.page}>
@@ -94,16 +84,24 @@ export function MatchDetail() {
         )}
       </header>
 
-      {/* match meta — centered */}
-      <div className={styles.meta}>
-        <div className={styles.when}>{to12h(match.t)}</div>
-        <div className={styles.venue}>{match.v}</div>
-      </div>
+      {/* match meta + odds only while the game is undecided — once it's
+          FINISHED the Game Identity card takes their place under the logos,
+          with the stat sheet below it as the receipts. */}
+      {status !== 'FINISHED' && (
+        <div className={styles.meta}>
+          <div className={styles.when}>{to12h(match.t)}</div>
+          <div className={styles.venue}>{match.v}</div>
+        </div>
+      )}
 
       {/* "your call" CTA — the call buttons ARE the odds; sparkline is the live
           signal. Replaces the old separate read-only odds row. */}
       {status !== 'FINISHED' && homeTeam && awayTeam && (
         <MatchPoll home={homeTeam} away={awayTeam} odds={match.odds} pick={pick} onPick={setPick} />
+      )}
+
+      {status === 'FINISHED' && (
+        <GameIdentity matchId={match.id} home={match.h} away={match.a} />
       )}
 
       {/* the 11 live attributes that drive the art — Google-style stat sheet */}
@@ -114,35 +112,20 @@ export function MatchDetail() {
         odds={match.odds as [number, number, number]}
       />
 
-      {/* final-whistle reveal: the result rendered as the winner's
-          stat-driven crest */}
-      <GameIdentity matchId={match.id} home={match.h} away={match.a} />
-
-      {/* score — centered (no predictions) */}
-      <div className={styles.status}>
-        {loading && <span className={styles.muted}>loading…</span>}
-
-        {!loading && status === 'FINISHED' && homeScore != null && awayScore != null && (
-          <MatchResult
-            homeTeam={match.h}
-            awayTeam={match.a}
-            homeScore={homeScore}
-            awayScore={awayScore}
-          />
-        )}
-
-        {!loading && status === 'LIVE' && homeScore != null && awayScore != null && (
+      {/* live score — centered (FINISHED score lives on the identity card) */}
+      {status === 'LIVE' && (
+        <div className={styles.status}>
           <div className={styles.live}>
-            {match.h} {homeScore} – {awayScore} {match.a}
+            {match.h} {stats.homeGoals} – {stats.awayGoals} {match.a}
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {homeTeam && awayTeam && (
         <MatchCloset home={homeTeam} away={awayTeam} pick={pick} />
       )}
 
-      <Link to="/matches" className={styles.back}>← back to matches</Link>
+      <Back3D to="/matches">← back to matches</Back3D>
     </div>
   );
 }

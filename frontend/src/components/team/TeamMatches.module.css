@@ -23,22 +23,20 @@
   align-items: center;
   gap: 12px;
 }
+/* abbreviation under the crest — same treatment as the teams-grid labels */
 .name {
-  font-family: var(--mono);
-  font-size: 18px;
-  font-weight: 600;
+  font-family: var(--display);
+  font-size: 22px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--bright);
   text-align: center;
 }
 
-/* Bordered container, same width + treatment as the stat-hub grid above. */
+/* Floating fixture list — no container chrome, the crests carry it. */
 .list {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--hairline);
-  background: var(--surface);
 }
 
 /* minimal fixture row — two animated crests with a "v" between */
@@ -48,11 +46,9 @@
   justify-content: center;
   gap: clamp(28px, 10vw, 80px);
   padding: 26px 24px;
-  border-top: 1px solid var(--hairline);
   text-decoration: none;
   transition: background 0.12s;
 }
-.row:first-child { border-top: none; }
 .row:hover { background: rgba(255, 255, 255, 0.03); }
 
 .crest { flex: none; }
@@ -60,7 +56,7 @@
 
 .v {
   font-family: var(--mono);
-  font-size: 20px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;

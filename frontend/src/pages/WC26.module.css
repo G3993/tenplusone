@@ -14,7 +14,7 @@
   align-items: center;
   justify-content: center;
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: 14px;
   /* same height as the primary nav; pills keep their size, centred vertically */
   height: var(--nav-h);
   box-sizing: border-box;
@@ -24,53 +24,40 @@
   border-bottom: 1px solid var(--hairline);
 }
 
+/* sub-nav buttons — identical to the Teams-page control cubes: flat 46px
+   gray cube idle, flat green cube active. One system across WC26/Teams/Shop. */
 .jumpLink {
+  --d: 4px;
   position: relative;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px solid var(--nav-border, #1a1a1a);
+  background: #0a0a0a;
+  padding: 8px 14px;
   font-family: var(--font);
-  /* matches the main-nav link size so the two bars read as one system */
-  font-size: 26px;
+  font-size: 22px;
   line-height: 1;
-  color: var(--dim);
-  background: none;
-  border: 1px solid transparent;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: var(--white);
   cursor: pointer;
   text-decoration: none;
-  /* equal padding all round so the active block is vertically centred */
-  padding: 8px 14px;
   border-radius: 0;
-  text-transform: uppercase;
-  transition: color 0.12s, background 0.12s;
+  transition: color 0.14s ease, background-color 0.14s ease, border-color 0.14s ease;
 }
-
-.jumpLink:hover {
-  color: var(--bright);
-  background: var(--surface);
-}
-
-/* active tab: the 3D green cube block (CTA family) — scanline face with the
-   isometric top/right extrusion */
-.jumpActive,
-.jumpActive:hover {
-  --d: 4px;
-  color: #c8ffda;
-  border-color: #35d06b;
-  background:
-    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
-    #04100a;
-  box-shadow: 0 0 10px rgba(74, 222, 128, 0.18);
-}
-.jumpActive::before,
-.jumpActive::after {
+.jumpLink::before,
+.jumpLink::after {
   content: '';
   position: absolute;
   box-sizing: border-box;
-  background:
-    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.45) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
-    #0a2c17;
-  border: 1px solid #2aa957;
+  background: #111111;
+  border: 1px solid var(--nav-border, #1a1a1a);
 }
-/* top face */
-.jumpActive::before {
+.jumpLink::before {
   left: -1px;
   right: -1px;
   top: calc(-1 * var(--d) - 1px);
@@ -78,14 +65,29 @@
   transform: skewX(-45deg);
   transform-origin: 0 100%;
 }
-/* right face */
-.jumpActive::after {
+.jumpLink::after {
   top: -1px;
   bottom: -1px;
   right: calc(-1 * var(--d) - 1px);
   width: var(--d);
   transform: skewY(-45deg);
   transform-origin: 0 0;
+}
+
+.jumpLink:hover { color: #c8ffda; border-color: #35d06b; }
+
+/* active tab: the flat green cube */
+.jumpActive,
+.jumpActive:hover {
+  border-color: #35d06b;
+  background: #04100a;
+  color: #c8ffda;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.18);
+}
+.jumpActive::before,
+.jumpActive::after {
+  background: #0a2c17;
+  border-color: #2aa957;
 }
 
 .section {
@@ -124,8 +126,8 @@
 @media (max-width: 560px) {
   .page { padding-bottom: 64px; }
   .hero { padding: 14px 14px 14px; }
-  .jump { padding: 0 14px; gap: 2px; overflow-x: auto; }
-  .jumpLink { font-size: 17px; padding: 6px 10px; text-transform: uppercase; }
+  .jump { padding: 0 14px; gap: 10px; overflow-x: auto; }
+  .jumpLink { font-size: 18px; padding: 6px 10px; }
   .section { padding-top: 28px; scroll-margin-top: calc(var(--nav-h) * 2); }
   .secHead { padding: 0 14px 16px; margin-bottom: 20px; flex-direction: column; gap: 4px; }
   .secTitle { font-size: 21px; }

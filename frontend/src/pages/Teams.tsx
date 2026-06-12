@@ -76,6 +76,10 @@ export function Teams() {
   const [frame, setFrame] = useState(0);
   const [cycleIdx, setCycleIdx] = useState(0);
   const clamped = Math.min(size, MAX);
+  // Group mode: 4 teams, one row — render crests at the cap and let the grid
+  // scale them to fill the full page width.
+  const groupMode = group !== 'all';
+  const effSize = groupMode ? MAX : clamped;
 
   // The motif actually rendered: 'cycle' resolves to the current step.
   const active: Motif = motif === 'cycle' ? CYCLE_LIST[cycleIdx % CYCLE_LIST.length] : motif;
@@ -176,8 +180,8 @@ export function Teams() {
       {/* Browse-all grid. Each tile drills into /team/<slug> where the 3D
           interactive crest lives. */}
       <div
-        className={styles.grid}
-        style={{ '--logo': `${clamped}px` } as CSSProperties}
+        className={`${styles.grid} ${groupMode ? styles.gridGroup : ''}`}
+        style={{ '--logo': `${effSize}px` } as CSSProperties}
       >
         {(group === 'all'
           ? SORTED
@@ -194,13 +198,13 @@ export function Teams() {
           >
             <span className={styles.crest}>
               {active === 'off' ? (
-                <TeamLogo team={t} variant="white" size={clamped} shape={shape} />
+                <TeamLogo team={t} variant="white" size={effSize} shape={shape} />
               ) : SPECTRUM_MOTIFS.has(active) ? (
                 <SpectrumCrest
                   pixels={motifData[t.slug].pixels}
                   seed={motifData[t.slug].seed}
                   frame={frame}
-                  size={clamped}
+                  size={effSize}
                   shape={shape}
                   variant={VARIANT[active as 'spectrum' | 'mono' | 'outline']}
                 />
@@ -208,7 +212,7 @@ export function Teams() {
                 <MotifCrest
                   pixels={motifData[t.slug].pixels}
                   seed={motifData[t.slug].seed}
-                  size={clamped}
+                  size={effSize}
                   shape={shape}
                   motif={(active === 'mono' ? 'solid' : active) as MotifId}
                   teamId={t.slug}

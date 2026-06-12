@@ -117,9 +117,8 @@
   justify-content: center;
   box-sizing: border-box;
   border: 1px solid var(--nav-border, #1a1a1a);
-  background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
-    #0a0a0a;
+  /* flat faces — no scanline texture on the control system */
+  background: #0a0a0a;
   padding: 8px 14px;
   font: inherit;
   font-size: 22px;
@@ -136,9 +135,7 @@
   content: '';
   position: absolute;
   box-sizing: border-box;
-  background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
-    #111111;
+  background: #111111;
   border: 1px solid var(--nav-border, #1a1a1a);
 }
 .motifBtn::before {
@@ -160,21 +157,17 @@
 
 .motifBtn:hover { color: #c8ffda; border-color: #35d06b; }
 .motifBtn:disabled { opacity: 0.35; cursor: not-allowed; }
-/* active: the green CTA cube — scanline face + green extrusion */
+/* active: the green cube — flat face + green extrusion */
 .motifOn,
 .motifOn:hover {
   border-color: #35d06b;
-  background:
-    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
-    #04100a;
+  background: #04100a;
   color: #c8ffda;
   box-shadow: 0 0 10px rgba(74, 222, 128, 0.18);
 }
 .motifOn::before,
 .motifOn::after {
-  background:
-    repeating-linear-gradient(0deg, rgba(74, 222, 128, 0.45) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
-    #0a2c17;
+  background: #0a2c17;
   border-color: #2aa957;
 }
 .motifOn::before {
@@ -238,6 +231,28 @@
   height: auto;
 }
 
+/* ── group mode: the 4 group teams side by side, maximized to one view ──
+   .grid.gridGroup outranks the responsive .grid overrides further down. */
+.grid.gridGroup {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.grid.gridGroup .crest {
+  width: 100%;
+}
+/* crests render at the cap size and scale to fill their column */
+.grid.gridGroup .crest canvas,
+.grid.gridGroup .crest img,
+.grid.gridGroup .crest svg {
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1;
+}
+@media (max-width: 860px) {
+  /* 2 × 2 on smaller screens — the whole group still fits one screen */
+  .grid.gridGroup { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 .name {
   text-transform: uppercase;
   font-family: var(--display);
@@ -284,9 +299,7 @@
   content: '';
   position: absolute;
   box-sizing: border-box;
-  background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
-    #111111;
+  background: #111111;
   border: 1px solid var(--nav-border, #1a1a1a);
   pointer-events: none;
 }
@@ -315,9 +328,7 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--white);
-  background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0 1px, rgba(0, 0, 0, 0) 1px 4px),
-    #0a0a0a;
+  background-color: #0a0a0a;
   border: 1px solid var(--nav-border, #1a1a1a);
   border-radius: 0;
   padding: 8px 34px 8px 14px;
@@ -325,10 +336,9 @@
   appearance: none;
   -webkit-appearance: none;
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234ade80' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0 1px, rgba(0, 0, 0, 0) 1px 4px);
-  background-repeat: no-repeat, repeat;
-  background-position: right 12px center, 0 0;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234ade80' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
   transition: border-color 0.12s;
 }
 .select:hover { border-color: var(--green); color: #c8ffda; }

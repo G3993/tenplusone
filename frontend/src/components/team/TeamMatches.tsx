@@ -21,7 +21,7 @@ function Crest({ name }: { name: string }) {
         size={104}
         className={styles.crest}
       />
-      <span className={styles.name}>{team.name.toUpperCase()}</span>
+      <span className={styles.name}>{team.code}</span>
     </span>
   );
 }

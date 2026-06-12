@@ -7,6 +7,7 @@ import { TeamStats } from '../components/team/TeamStats';
 import { TeamWatch } from '../components/team/TeamWatch';
 import { TeamMatches } from '../components/team/TeamMatches';
 import { MeshGridBG } from '../components/home/MeshGridBG';
+import { Back3D } from '../components/ui/Back3D';
 import styles from './Team.module.css';
 
 export function Team() {
@@ -33,13 +34,13 @@ export function Team() {
       <TeamHero team={team} />
       <div className={styles.body}>
         <TeamStats team={team} />
-        {/* upcoming matches — same width as the stat hub container above */}
+        {/* roster directly under the stat hub */}
+        <TeamWatch team={team} />
         <TeamMatches team={team} />
       </div>
       <div className={styles.body}>
         <TeamCloset teamSlug={team.slug} eyebrow={`${team.code} Collection`} title="" />
-        <TeamWatch team={team} />
-        <Link to="/teams" className={styles.back}>← all teams</Link>
+        <Back3D to="/teams">← all teams</Back3D>
       </div>
     </div>
   );

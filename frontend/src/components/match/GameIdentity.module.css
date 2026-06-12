@@ -43,27 +43,53 @@
   transform-origin: 0 0;
 }
 
-.eyebrow {
+.ft {
   font-family: var(--display);
   font-size: 20px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--green);
 }
 
-.title {
+/* MEX  2 – 0  RSA */
+.scoreline {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 18px;
   font-family: var(--display);
-  font-size: clamp(34px, 6vw, 48px);
   font-weight: 800;
-  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--bright);
-  margin: 0;
   line-height: 1;
 }
 
+.scoreTeam {
+  font-size: clamp(28px, 5vw, 38px);
+  letter-spacing: 0.06em;
+  color: var(--bright);
+}
+
+.score {
+  font-size: clamp(28px, 5vw, 38px);
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the crest floats on a square blueprint grid spanning the card */
 .stage {
-  margin-top: 16px;
+  align-self: stretch;
+  margin: 16px -24px 0;
+  padding: 30px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 26px 26px;
+  background-position: center;
+  border-top: 1px solid var(--nav-border, #1a1a1a);
+  border-bottom: 1px solid var(--nav-border, #1a1a1a);
 }
 
 .crestLink {
@@ -84,14 +110,6 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--bright);
-}
-
-.note {
-  margin: 4px 0 0;
-  max-width: 40ch;
-  font-size: 18px;
-  line-height: 1.6;
-  color: var(--dim);
 }
 
 @media (max-width: 560px) {

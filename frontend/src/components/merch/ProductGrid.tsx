@@ -183,10 +183,12 @@ export function ProductGrid({ teamFilter }: ProductGridProps = {}) {
           {/* left — team dropdown */}
           <div className={styles.filterLeft}>
             {!teamFilter && teams.length > 0 && (
-              <select className={styles.select} value={team} onChange={(e) => setTeam(e.target.value)} aria-label="filter by team">
-                <option value="all">WC26 TEAMS</option>
-                {teams.map((t) => <option key={t} value={t}>{t}</option>)}
-              </select>
+              <span className={styles.cubeWrap}>
+                <select className={styles.select} value={team} onChange={(e) => setTeam(e.target.value)} aria-label="filter by team">
+                  <option value="all">WC26 TEAMS</option>
+                  {teams.map((t) => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </span>
             )}
           </div>
 
@@ -208,22 +210,26 @@ export function ProductGrid({ teamFilter }: ProductGridProps = {}) {
           </div>
 
           {/* mobile — type as a dropdown instead of the pagination */}
-          <select
-            className={`${styles.select} ${styles.typeSelect}`}
-            value={type}
-            onChange={(e) => setType(e.target.value)}
-            aria-label="filter by type"
-          >
-            {typeTabs.map((o) => <option key={o.type} value={o.type}>{o.label}</option>)}
-          </select>
+          <span className={`${styles.cubeWrap} ${styles.typeSelectWrap}`}>
+            <select
+              className={`${styles.select} ${styles.typeSelect}`}
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              aria-label="filter by type"
+            >
+              {typeTabs.map((o) => <option key={o.type} value={o.type}>{o.label}</option>)}
+            </select>
+          </span>
 
           {/* right — color dropdown */}
           <div className={styles.filterRight}>
             {colors.length > 0 && (
-              <select className={styles.select} value={color} onChange={(e) => setColor(e.target.value)} aria-label="filter by color">
-                <option value="all">color</option>
-                {colors.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <span className={styles.cubeWrap}>
+                <select className={styles.select} value={color} onChange={(e) => setColor(e.target.value)} aria-label="filter by color">
+                  <option value="all">color</option>
+                  {colors.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </span>
             )}
           </div>
         </div>

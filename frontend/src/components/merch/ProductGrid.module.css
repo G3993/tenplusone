@@ -26,12 +26,18 @@
   padding-block: 0 40px;
 }
 
+/* The filter bar IS the shop's secondary nav — identical bar to the WC26 and
+   Teams sub-navs: sticky under the main nav, nav-h tall, dark tokens. */
 .head {
-  padding: 24px 24px 20px;
+  position: sticky;
+  top: var(--nav-h);
+  z-index: 50;
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  /* the filter bar matches the site's secondary navs: black, dark tokens */
+  align-items: center;
+  height: var(--nav-h);
+  box-sizing: border-box;
+  padding: 0 24px;
+  overflow-x: auto;
   --bg: #000000;
   --surface: #0a0a0a;
   --hairline: #1a1a1a;
@@ -44,34 +50,74 @@
 /* Center type pagination (tees / outerwear / accessories / all). */
 .tabs {
   display: flex;
-  gap: 18px;
+  gap: 14px;
   flex: 1 1 auto;
   justify-content: center;
 }
 
+/* same flat 46px cube buttons as the Teams-page controls */
 .tab {
-  font-family: var(--font);
-  font-size: 26px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--dim);
-  background: transparent;
-  /* flat bordered boxes, same geometry as the teams-page controls —
-     no scanline texture */
-  border: 1px solid transparent;
-  border-radius: 0;
+  --d: 4px;
+  position: relative;
   height: 46px;
-  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
-  padding: 0 16px;
+  justify-content: center;
+  box-sizing: border-box;
+  border: 1px solid var(--hairline);
+  background: #0a0a0a;
+  padding: 8px 14px;
+  font-family: var(--font);
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  text-transform: uppercase;
+  color: var(--dim);
+  border-radius: 0;
   cursor: pointer;
-  transition: color 0.12s, border-color 0.12s;
+  transition: color 0.14s ease, background-color 0.14s ease, border-color 0.14s ease;
+}
+.tab::before,
+.tab::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background: #111111;
+  border: 1px solid var(--hairline);
+}
+.tab::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+.tab::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
 }
 
-.tab:hover { color: var(--green); }
+.tab:hover { color: #c8ffda; border-color: #35d06b; }
+
+/* active: the flat green cube */
 .tabActive,
-.tabActive:hover { color: var(--green); border-color: var(--green); }
+.tabActive:hover {
+  border-color: #35d06b;
+  background: #04100a;
+  color: #c8ffda;
+  box-shadow: 0 0 10px rgba(74, 222, 128, 0.18);
+}
+.tabActive::before,
+.tabActive::after {
+  background: #0a2c17;
+  border-color: #2aa957;
+}
 
 .linkBtn {
   font: inherit;
@@ -110,8 +156,9 @@
 .filterBar {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-wrap: nowrap;
+  gap: 14px;
+  width: 100%;
 }
 .filterLeft, .filterRight {
   display: flex;
@@ -119,32 +166,67 @@
   flex: 0 0 auto;
 }
 
+/* same flat select as the Teams-page dropdowns */
 .select {
   font-family: var(--font);
   font-size: 20px;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--bright);
-  background: var(--bg);
+  background-color: #0a0a0a;
   border: 1px solid var(--hairline);
   border-radius: 0;
   height: 46px;
   box-sizing: border-box;
-  padding: 0 30px 0 12px;
+  padding: 8px 34px 8px 14px;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234ade80' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 11px center;
+  background-position: right 12px center;
   transition: border-color 0.12s;
 }
 
-.select:hover { border-color: var(--green); color: var(--green); }
+.select:hover { border-color: var(--green); color: #c8ffda; }
 .select:focus-visible { outline: none; border-color: var(--green); }
 
+/* cube extrusion wrapper around the dropdowns — same as the Teams bar */
+.cubeWrap {
+  --d: 4px;
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+.cubeWrap::before,
+.cubeWrap::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background: #111111;
+  border: 1px solid var(--hairline);
+  pointer-events: none;
+}
+.cubeWrap::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+.cubeWrap::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
+}
+
 /* the type dropdown only appears on mobile (desktop uses the .tabs pagination) */
-.typeSelect { display: none; }
+.typeSelectWrap { display: none; }
+.typeSelect { width: 100%; }
 
 .filterToggle, .filterClear {
   background: transparent;
@@ -283,15 +365,15 @@
 }
 
 @media (max-width: 640px) {
-  .head { padding: 14px 12px 12px; }
+  .head { padding: 0 14px; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .crumbLabel { font-size: 20px; }
 
   /* keep the whole filter nav on one row: team | type | color, all as
      dropdowns (the pagination tabs are swapped for a select on mobile) */
-  .filterBar { flex-wrap: nowrap; gap: 6px; }
+  .filterBar { gap: 10px; }
   .filterLeft, .filterRight { flex: 0 0 auto; }
   .tabs { display: none; }
-  .typeSelect { display: block; flex: 1 1 auto; min-width: 0; }
-  .select { font-size: 16px; padding: 7px 22px 7px 9px; background-position: right 7px center; }
+  .typeSelectWrap { display: inline-flex; flex: 1 1 auto; min-width: 0; }
+  .select { font-size: 16px; padding: 7px 26px 7px 10px; background-position: right 8px center; }
 }

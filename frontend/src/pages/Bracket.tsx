@@ -215,9 +215,6 @@ export function OutrightsList() {
     <div className={styles.orWrap}>
       <div className={styles.orHero}>
         <h3 className={styles.orHeroTitle}>predictions</h3>
-        <p className={styles.orHeroSub}>
-          what the people think
-        </p>
       </div>
 
       <ol className={styles.winGrid}>
