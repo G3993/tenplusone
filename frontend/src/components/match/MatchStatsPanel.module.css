@@ -6,13 +6,6 @@
   margin: 36px auto 0;
 }
 
-.clock {
-  margin-left: 10px;
-  font-size: 18px;
-  color: var(--green);
-  font-variant-numeric: tabular-nums;
-}
-
 /* ── stat rows ─────────────────────────────────────────────────────── */
 .statHead {
   display: flex;
@@ -25,12 +18,13 @@
 }
 .statTitle {
   font-family: var(--display);
-  font-size: 20px;
-  letter-spacing: 0.14em;
+  font-size: 26px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--white);
+  color: var(--bright);
+  font-variant-numeric: tabular-nums;
 }
-.statCrest { display: inline-flex; width: 34px; height: 34px; }
+.statCrest { display: inline-flex; width: 48px; height: 48px; }
 
 .rows {
   list-style: none;

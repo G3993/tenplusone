@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, type CSSProperties } from 'react';
 import { Link } from 'react-router';
 import { useMatchLive } from '../../lib/useMatchLive';
 import { getTeamByName } from '../../data/teams';
@@ -17,6 +17,17 @@ export function GameIdentity({ matchId, home, away }: {
   away: string;
 }) {
   const { stats, frozen } = useMatchLive(matchId);
+
+  // Crest render size: multiples of 32 so each logo pixel is a whole number
+  // of px — the blueprint grid pitch derives from it and stays locked on.
+  const [crestSize, setCrestSize] = useState(384);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 560px)');
+    const apply = () => setCrestSize(mq.matches ? 288 : 384);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
 
   const finished = frozen && stats.status === 'FINISHED';
   const winnerName = useMemo(() => {
@@ -46,16 +57,19 @@ export function GameIdentity({ matchId, home, away }: {
   const homeCode = getTeamByName(home)?.code ?? home;
   const awayCode = getTeamByName(away)?.code ?? away;
 
+  const pairSize = crestSize - 128; // draws: two crests, still a /32 multiple
+  const cell = (winnerName ? crestSize : pairSize) / 32;
+
   return (
     <section className={styles.wrap} aria-label="game identity">
       {/* section 1 — the game identity itself, on the blueprint grid */}
-      <div className={styles.stage}>
+      <div className={styles.stage} style={{ '--cell': `${cell}px` } as CSSProperties}>
         {winnerName ? (
-          renderCrest(winnerName, 280)
+          renderCrest(winnerName, crestSize)
         ) : (
           <div className={styles.drawPair}>
-            {renderCrest(home, 200)}
-            {renderCrest(away, 200)}
+            {renderCrest(home, pairSize)}
+            {renderCrest(away, pairSize)}
           </div>
         )}
       </div>

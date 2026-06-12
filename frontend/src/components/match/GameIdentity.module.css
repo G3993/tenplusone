@@ -8,7 +8,7 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  max-width: 560px;
+  max-width: 720px;
   margin: 44px auto 0;
   padding: 32px 24px 36px;
   /* same gray 3D card as the match/group containers */
@@ -72,9 +72,9 @@
   background:
     linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  /* one grid cell = one logo pixel: the crest engine draws round(280/32) = 9px
-     cells at the 280 render, so the blueprint grid uses the same pitch */
-  background-size: 9px 9px;
+  /* one grid cell = one logo pixel — pitch comes from the crest render size
+     (size/32), set inline as --cell so the two never drift */
+  background-size: var(--cell, 12px) var(--cell, 12px);
   background-position: center;
   border-bottom: 1px solid var(--nav-border, #1a1a1a);
 }

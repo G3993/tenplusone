@@ -27,9 +27,11 @@ export function MatchStatsPanel({ matchId, home, away }: {
   home: string;
   away: string;
 }) {
-  const { teams, stats, minute, frozen } = useMatchLive(matchId);
+  const { teams, stats } = useMatchLive(matchId);
   const homeTeam = getTeamByName(home);
   const awayTeam = getTeamByName(away);
+  const homeCode = homeTeam?.code ?? home;
+  const awayCode = awayTeam?.code ?? away;
 
   // Feed the live numbers into the motif engine so every crest on this page
   // (including the big header pair) colors and morphs with the match.
@@ -53,7 +55,7 @@ export function MatchStatsPanel({ matchId, home, away }: {
         teamId={team.slug}
         seed={teamSeed(team.slug)}
         pixels={getLogoPixels(team.slug, team.name[0])}
-        size={34}
+        size={48}
       />
     ) : (
       <span>{fallback}</span>
@@ -64,8 +66,7 @@ export function MatchStatsPanel({ matchId, home, away }: {
       <div className={styles.statHead}>
         <span className={styles.statCrest}>{crest(homeTeam, home)}</span>
         <span className={styles.statTitle}>
-          team stats
-          <span className={styles.clock}>{frozen ? 'FT' : `${minute}'`}</span>
+          {homeCode} {stats.homeGoals} – {stats.awayGoals} {awayCode}
         </span>
         <span className={styles.statCrest}>{crest(awayTeam, away)}</span>
       </div>
