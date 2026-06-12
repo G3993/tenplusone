@@ -68,7 +68,13 @@ export interface ShopifyProduct {
 export interface CartLine {
   id: string;
   quantity: number;
-  merchandise: { id: string; title: string; product: { title: string } };
+  merchandise: {
+    id: string;
+    title: string;
+    price?: { amount: string };
+    image?: { url: string; altText: string | null } | null;
+    product: { title: string; handle?: string };
+  };
   cost: { totalAmount: { amount: string; currencyCode: string } };
 }
 
@@ -147,30 +153,37 @@ const PRODUCT_BY_HANDLE_QUERY = `#graphql
   }
 `;
 
-const CART_CREATE_MUTATION = `#graphql
-  mutation CartCreate($input: CartInput!) {
-    cartCreate(input: $input) {
-      cart {
+// Shared cart payload — every cart operation returns the same shape so the
+// store can swap state wholesale. Includes the variant image + unit price
+// for the cart drawer line items.
+const CART_PAYLOAD = `
+  id
+  checkoutUrl
+  lines(first: 50) {
+    edges {
+      node {
         id
-        checkoutUrl
-        lines(first: 50) {
-          edges {
-            node {
-              id
-              quantity
-              merchandise {
-                ... on ProductVariant {
-                  id
-                  title
-                  product { title }
-                }
-              }
-              cost { totalAmount { amount currencyCode } }
-            }
+        quantity
+        merchandise {
+          ... on ProductVariant {
+            id
+            title
+            price { amount }
+            image { url altText }
+            product { title handle }
           }
         }
         cost { totalAmount { amount currencyCode } }
       }
+    }
+  }
+  cost { totalAmount { amount currencyCode } }
+`;
+
+const CART_CREATE_MUTATION = `#graphql
+  mutation CartCreate($input: CartInput!) {
+    cartCreate(input: $input) {
+      cart { ${CART_PAYLOAD} }
       userErrors { field message }
     }
   }
@@ -179,27 +192,25 @@ const CART_CREATE_MUTATION = `#graphql
 const CART_LINES_ADD_MUTATION = `#graphql
   mutation CartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
     cartLinesAdd(cartId: $cartId, lines: $lines) {
-      cart {
-        id
-        checkoutUrl
-        lines(first: 50) {
-          edges {
-            node {
-              id
-              quantity
-              merchandise {
-                ... on ProductVariant {
-                  id
-                  title
-                  product { title }
-                }
-              }
-              cost { totalAmount { amount currencyCode } }
-            }
-          }
-        }
-        cost { totalAmount { amount currencyCode } }
-      }
+      cart { ${CART_PAYLOAD} }
+      userErrors { field message }
+    }
+  }
+`;
+
+const CART_LINES_UPDATE_MUTATION = `#graphql
+  mutation CartLinesUpdate($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
+    cartLinesUpdate(cartId: $cartId, lines: $lines) {
+      cart { ${CART_PAYLOAD} }
+      userErrors { field message }
+    }
+  }
+`;
+
+const CART_LINES_REMOVE_MUTATION = `#graphql
+  mutation CartLinesRemove($cartId: ID!, $lineIds: [ID!]!) {
+    cartLinesRemove(cartId: $cartId, lineIds: $lineIds) {
+      cart { ${CART_PAYLOAD} }
       userErrors { field message }
     }
   }
@@ -207,27 +218,7 @@ const CART_LINES_ADD_MUTATION = `#graphql
 
 const CART_QUERY = `#graphql
   query Cart($cartId: ID!) {
-    cart(id: $cartId) {
-      id
-      checkoutUrl
-      lines(first: 50) {
-        edges {
-          node {
-            id
-            quantity
-            merchandise {
-              ... on ProductVariant {
-                id
-                title
-                product { title }
-              }
-            }
-            cost { totalAmount { amount currencyCode } }
-          }
-        }
-      }
-      cost { totalAmount { amount currencyCode } }
-    }
+    cart(id: $cartId) { ${CART_PAYLOAD} }
   }
 `;
 
@@ -438,6 +429,47 @@ export async function addToCart(cartId: string, variantId: string, quantity: num
     },
   });
   return data.cartLinesAdd.cart;
+}
+
+function recomputeMockTotal(cart: ShopifyCart) {
+  const total = cart.lines.edges.reduce(
+    (sum, e) => sum + parseFloat(e.node.cost.totalAmount.amount),
+    0
+  );
+  cart.cost.totalAmount.amount = total.toFixed(2);
+}
+
+export async function updateCartLine(cartId: string, lineId: string, quantity: number): Promise<ShopifyCart> {
+  if (isMockMode) {
+    const line = mockCartState?.lines.edges.find((e) => e.node.id === lineId)?.node;
+    if (mockCartState && line) {
+      const unit = parseFloat(line.cost.totalAmount.amount) / line.quantity;
+      line.quantity = quantity;
+      line.cost.totalAmount.amount = (unit * quantity).toFixed(2);
+      recomputeMockTotal(mockCartState);
+    }
+    return mockCartState!;
+  }
+
+  const { data } = await shopifyClient!.request(CART_LINES_UPDATE_MUTATION, {
+    variables: { cartId, lines: [{ id: lineId, quantity }] },
+  });
+  return data.cartLinesUpdate.cart;
+}
+
+export async function removeCartLine(cartId: string, lineId: string): Promise<ShopifyCart> {
+  if (isMockMode) {
+    if (mockCartState) {
+      mockCartState.lines.edges = mockCartState.lines.edges.filter((e) => e.node.id !== lineId);
+      recomputeMockTotal(mockCartState);
+    }
+    return mockCartState!;
+  }
+
+  const { data } = await shopifyClient!.request(CART_LINES_REMOVE_MUTATION, {
+    variables: { cartId, lineIds: [lineId] },
+  });
+  return data.cartLinesRemove.cart;
 }
 
 export async function fetchCart(cartId: string): Promise<ShopifyCart | null> {

@@ -81,6 +81,7 @@ export default function ProductDetail() {
   const [activeImg, setActiveImg] = useState(0);
   const [frame, setFrame] = useState(0);
   const addItem = useCartStore((s) => s.addItem);
+  const openCart = useCartStore((s) => s.openCart);
   const checkout = useCartStore((s) => s.checkout);
   const cartLoading = useCartStore((s) => s.loading);
 
@@ -181,12 +182,18 @@ export default function ProductDetail() {
     if (idx >= 0) setActiveImg(idx);
   };
 
-  const buyNow = async () => {
+  const addToCart = async () => {
     if (!currentVariantId) return;
     await addItem(currentVariantId);
     setAdded(true);
-    checkout();
+    openCart();
     setTimeout(() => setAdded(false), 2500);
+  };
+
+  const buyNow = async () => {
+    if (!currentVariantId) return;
+    await addItem(currentVariantId);
+    checkout();
   };
 
   return (
@@ -324,13 +331,22 @@ export default function ProductDetail() {
             </div>
           )}
 
-          <button
-            className={styles.buy}
-            onClick={buyNow}
-            disabled={cartLoading || !currentVariantId}
-          >
-            {cartLoading ? 'processing…' : added ? 'added ✓' : 'buy now'}
-          </button>
+          <div className={styles.buyRow}>
+            <button
+              className={styles.buy}
+              onClick={addToCart}
+              disabled={cartLoading || !currentVariantId}
+            >
+              {cartLoading ? 'processing…' : added ? 'added ✓' : 'add to cart'}
+            </button>
+            <button
+              className={styles.buyNow}
+              onClick={buyNow}
+              disabled={cartLoading || !currentVariantId}
+            >
+              buy now
+            </button>
+          </div>
         </div>
       </div>
     </div>

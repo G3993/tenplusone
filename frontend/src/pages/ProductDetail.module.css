@@ -301,16 +301,22 @@
 
 .size:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
 
-.buy {
+.buyRow {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
   margin-top: 10px;
-  align-self: flex-start;
+  flex-wrap: wrap;
+}
+
+.buy {
   font-family: var(--font);
   font-size: 24px;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--bg);
   background: var(--green);
-  border: none;
+  border: 1px solid var(--green);
   padding: 14px 32px;
   cursor: pointer;
   transition: opacity 0.12s;
@@ -319,6 +325,29 @@
 .buy:hover { opacity: 0.85; }
 
 .buy:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Secondary path: skip the cart, straight to checkout. Gray-idle outline that
+   goes green on hover, matching the container hover language. */
+.buyNow {
+  font-family: var(--font);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--bright);
+  background: none;
+  border: 1px solid var(--nav-border);
+  padding: 14px 32px;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+
+.buyNow:hover:not(:disabled) {
+  color: #c8ffda;
+  border-color: var(--green);
+  box-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
+}
+
+.buyNow:disabled { opacity: 0.4; cursor: not-allowed; }
 
 @media (max-width: 720px) {
   .page { padding: 20px 14px 60px; }

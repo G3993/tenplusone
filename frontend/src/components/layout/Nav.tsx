@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Wordmark } from './Wordmark';
+import { useCartStore } from '../../stores/cart';
 import styles from './Nav.module.css';
 
 const NAV_LINKS = [
@@ -11,6 +12,8 @@ const NAV_LINKS = [
 export function Nav() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const itemCount = useCartStore((s) => s.itemCount);
+  const openCart = useCartStore((s) => s.openCart);
 
   // collapse the mobile menu whenever the route changes
   useEffect(() => {
@@ -47,6 +50,16 @@ export function Nav() {
         >
           SHOP
         </Link>
+        {/* Cart only earns nav space once it has something in it. */}
+        {itemCount > 0 && (
+          <button
+            className={styles.cartBtn}
+            onClick={() => { setMenuOpen(false); openCart(); }}
+            aria-label={`open cart, ${itemCount} item${itemCount === 1 ? '' : 's'}`}
+          >
+            CART<span className={styles.cartCount}>·{itemCount}</span>
+          </button>
+        )}
       </div>
 
       <Link

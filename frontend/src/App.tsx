@@ -5,6 +5,7 @@ import { Nav } from './components/layout/Nav';
 import { Footer } from './components/layout/Footer';
 import { FooterBottom } from './components/layout/FooterBottom';
 import { Editor } from './components/layout/Editor';
+import { CartDrawer } from './components/merch/CartDrawer';
 import { Home } from './pages/Home';
 import { useCartStore } from './stores/cart';
 
@@ -141,6 +142,7 @@ export function App() {
       </Editor>
       <Footer />
       <FooterBottom />
+      <CartDrawer />
       <Analytics />
     </BrowserRouter>
   );

@@ -1,6 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { createCart, addToCart, fetchCart, type ShopifyCart, type CartLine } from '../lib/shopify';
+import {
+  createCart,
+  addToCart,
+  fetchCart,
+  updateCartLine,
+  removeCartLine,
+  type ShopifyCart,
+  type CartLine,
+} from '../lib/shopify';
 
 function extractCartState(cart: ShopifyCart) {
   const items = cart.lines.edges.map((e) => e.node);
@@ -20,7 +28,13 @@ interface CartStore {
   itemCount: number;
   total: string;
   loading: boolean;
+  /** Cart drawer visibility — global so the nav, product page, and drawer share it. */
+  open: boolean;
+  openCart: () => void;
+  closeCart: () => void;
   addItem: (variantId: string, quantity?: number) => Promise<void>;
+  updateLine: (lineId: string, quantity: number) => Promise<void>;
+  removeLine: (lineId: string) => Promise<void>;
   restoreCart: () => Promise<void>;
   checkout: () => void;
   clear: () => void;
@@ -35,6 +49,10 @@ export const useCartStore = create<CartStore>()(
       itemCount: 0,
       total: '0.00',
       loading: false,
+      open: false,
+
+      openCart: () => set({ open: true }),
+      closeCart: () => set({ open: false }),
 
       addItem: async (variantId, quantity = 1) => {
         set({ loading: true });
@@ -46,6 +64,33 @@ export const useCartStore = create<CartStore>()(
           set({ ...extractCartState(cart), loading: false });
         } catch (err) {
           console.error('Failed to add item to cart:', err);
+          set({ loading: false });
+        }
+      },
+
+      updateLine: async (lineId, quantity) => {
+        const { cartId } = get();
+        if (!cartId) return;
+        if (quantity < 1) return get().removeLine(lineId);
+        set({ loading: true });
+        try {
+          const cart = await updateCartLine(cartId, lineId, quantity);
+          set({ ...extractCartState(cart), loading: false });
+        } catch (err) {
+          console.error('Failed to update cart line:', err);
+          set({ loading: false });
+        }
+      },
+
+      removeLine: async (lineId) => {
+        const { cartId } = get();
+        if (!cartId) return;
+        set({ loading: true });
+        try {
+          const cart = await removeCartLine(cartId, lineId);
+          set({ ...extractCartState(cart), loading: false });
+        } catch (err) {
+          console.error('Failed to remove cart line:', err);
           set({ loading: false });
         }
       },

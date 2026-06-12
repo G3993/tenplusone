@@ -73,6 +73,23 @@
   vertical-align: middle;
 }
 
+/* Cart trigger — same type as the nav links but always green, since it only
+   appears once the cart has items (it IS the selected/active state). */
+.cartBtn {
+  font-family: var(--font);
+  font-size: 26px;
+  color: var(--green);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.12s;
+}
+
+.cartBtn:hover { color: #c8ffda; }
+
+.cartCount { color: #c8ffda; }
+
 /* Hamburger button. Hidden on desktop; 44 x 44 minimum on mobile to meet WCAG 2.5.5. */
 .menuBtn {
   display: none;
@@ -118,6 +135,8 @@
     border-bottom: none;
   }
 
+  .cartBtn { font-size: 26px; }
+
   /* short link text on mobile; pill CTA swapped for a plain SHOP link */
   .labelFull { display: none; }
   .labelShort { display: inline; }
@@ -129,4 +148,5 @@
   .nav { gap: 8px; padding: 10px 12px; }
   .menu { gap: 12px; }
   .navLink { font-size: 24px; }
+  .cartBtn { font-size: 24px; }
 }
