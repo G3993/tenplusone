@@ -87,12 +87,45 @@
 .viewAll:hover { color: var(--bright); }
 
 
-/* ── horizontal swipe gallery (match page): every item, scroll left-right ── */
+/* ── horizontal swipe gallery (match page): every item, scroll left-right,
+   framed as a gray 3D cube container ── */
+.scrollerCube {
+  --d: 8px;
+  position: relative;
+  border: 1px solid var(--nav-border, #1a1a1a);
+  background: #000000;
+}
+.scrollerCube::before,
+.scrollerCube::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    #111111;
+  border: 1px solid var(--nav-border, #1a1a1a);
+}
+.scrollerCube::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+.scrollerCube::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
+}
+
 .scroller {
   display: flex;
   gap: 1px;
   background: var(--hairline);
-  border: 1px solid var(--hairline);
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scroll-snap-type: x mandatory;

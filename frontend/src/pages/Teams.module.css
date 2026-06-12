@@ -210,11 +210,8 @@
   transition: box-shadow 0.12s;
 }
 
-.cell:hover {
-  position: relative;
-  z-index: 1;
-  box-shadow: inset 0 0 0 1px var(--accent, var(--green));
-}
+/* no container highlight on hover — the crest itself flips to a random
+   motif (handled in the component) */
 
 .crest {
   display: flex;

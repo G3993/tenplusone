@@ -60,11 +60,21 @@ export function TeamCloset({ teamSlug, title = 'Shop the kit', eyebrow, compact,
       )}
 
       {!loading && !error && products.length > 0 && (
-        <div className={scroll ? styles.scroller : styles.grid}>
-          {shown.map((product) => (
-            <ProductCard key={product.id} product={product} teamSlug={teamSlug} />
-          ))}
-        </div>
+        scroll ? (
+          <div className={styles.scrollerCube}>
+            <div className={styles.scroller}>
+              {shown.map((product) => (
+                <ProductCard key={product.id} product={product} teamSlug={teamSlug} />
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className={styles.grid}>
+            {shown.map((product) => (
+              <ProductCard key={product.id} product={product} teamSlug={teamSlug} />
+            ))}
+          </div>
+        )
       )}
 
       {hasMore && (

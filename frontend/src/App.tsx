@@ -8,6 +8,7 @@ import { Editor } from './components/layout/Editor';
 import { CartDrawer } from './components/merch/CartDrawer';
 import { Home } from './pages/Home';
 import { useCartStore } from './stores/cart';
+import { fetchProducts } from './lib/shopify';
 
 // Code-split everything off the landing path. Home stays eager so the
 // first paint never waits on a network chunk. Each chunk is a named loader so
@@ -57,6 +58,9 @@ const NotFound = lazy(load.NotFound);
 // first click into them resolves instantly instead of fetching a cold chunk.
 function warmRoutes() {
   load.WC26(); load.Team(); load.MatchDetail(); load.Merch(); load.ProductDetail(); load.Teams();
+  // Warm the shop catalog into the session cache too — match/team closets
+  // then render instantly instead of waiting on /api/products at scroll time.
+  fetchProducts().catch(() => {});
 }
 
 function PageFallback() {

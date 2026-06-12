@@ -43,11 +43,12 @@
   transform-origin: 0 0;
 }
 
-/* the crest floats on a square blueprint grid filling the whole card */
+/* the crest floats on a square blueprint grid filling the whole card —
+   square stage + centered crest = identical padding on all four sides */
 .stage {
   align-self: stretch;
   margin: 0;
-  padding: 36px 0;
+  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
