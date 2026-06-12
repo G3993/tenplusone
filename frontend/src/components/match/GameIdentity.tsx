@@ -3,9 +3,12 @@ import { Link } from 'react-router';
 import { useMatchLive } from '../../lib/useMatchLive';
 import { getTeamByName } from '../../data/teams';
 import { getLogoPixels } from '../../data/team-logos/index.ts';
+import { ROSTERS } from '../../data/rosters';
 import { MotifCrest } from '../logos/MotifCrest';
 import { teamSeed } from '../logos/spectrumMotif';
 import styles from './GameIdentity.module.css';
+
+const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 /** The match result as art: once the game is FINISHED, reveal the Game
  *  Identity — the winner's crest rendered through the stats motif, animating
@@ -16,9 +19,28 @@ export function GameIdentity({ matchId, home, away }: {
   home: string;
   away: string;
 }) {
-  const { stats, teams, frozen } = useMatchLive(matchId);
+  const { stats, teams, frozen, scorers } = useMatchLive(matchId);
 
   const finished = frozen && stats.status === 'FINISHED';
+
+  // The squads, with real scorers flagged (matched by surname against the
+  // ESPN goal events) — feeds the ASCII roster layer on the identity.
+  const rosterMap = useMemo(() => {
+    const build = (name: string, sideKey: 'home' | 'away') => {
+      const team = getTeamByName(name);
+      const squad = team ? ROSTERS[team.slug] ?? [] : [];
+      const goals = scorers.filter((s) => s.team === sideKey);
+      return squad.map((p) => ({
+        num: p.n,
+        name: p.name,
+        scored: goals.some((g) => {
+          const last = fold(g.name).split(' ').pop() ?? '';
+          return last.length > 2 && fold(p.name).includes(last);
+        }),
+      }));
+    };
+    return { [home]: build(home, 'home'), [away]: build(away, 'away') };
+  }, [home, away, scorers]);
 
   // Draws: which of the two identities is on stage.
   const [side, setSide] = useState<'home' | 'away'>('home');
@@ -61,6 +83,7 @@ export function GameIdentity({ matchId, home, away }: {
           pixels={getLogoPixels(team.slug, team.name[0])}
           size={size}
           stats={line as unknown as Record<string, number>}
+          roster={rosterMap[name]}
         />
       </Link>
     );

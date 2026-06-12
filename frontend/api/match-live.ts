@@ -41,6 +41,8 @@ interface LivePayload {
   /** For LIVE games: the real current minute the playhead should hold at. */
   liveMinute?: number;
   events: MatchEvent[];
+  /** Real goal scorers (live source only): side + player name + minute. */
+  scorers?: { team: 'home' | 'away'; name: string; minute: number }[];
 }
 
 export interface TeamStatLine {
@@ -245,8 +247,9 @@ async function fetchLive(id: string): Promise<LivePayload | null> {
     const home = lineFrom(statsFor(homeC), homeGoals);
     const away = lineFrom(statsFor(awayC), awayGoals);
 
-    // 3. timeline: goals + cards with real minutes
+    // 3. timeline: goals + cards with real minutes (+ scorer names)
     const events: MatchEvent[] = [];
+    const scorers: { team: 'home' | 'away'; name: string; minute: number }[] = [];
     for (const k of sum.keyEvents || []) {
       const text = (k.type?.text || '').toLowerCase();
       const teamName = k.team?.displayName || '';
@@ -259,6 +262,8 @@ async function fetchLive(id: string): Promise<LivePayload | null> {
       const minute = clockToMinute(k.clock?.displayValue);
       if (text.includes('goal') && !text.includes('own goal called back')) {
         events.push({ minute, type: 'goal', team: side });
+        const who = k.participants?.[0]?.athlete?.displayName || '';
+        if (who) scorers.push({ team: side, name: who, minute });
       } else if (text.includes('card')) {
         events.push({ minute, type: 'card', team: side });
       }
@@ -286,6 +291,7 @@ async function fetchLive(id: string): Promise<LivePayload | null> {
       },
       teamStats: { home, away },
       events,
+      scorers,
     };
   } catch {
     return null;

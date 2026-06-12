@@ -31,6 +31,8 @@ interface LivePayload {
   final: { homeGoals: number; awayGoals: number; possession: number; cards: number; shots: number; xg: number };
   teamStats?: { home: TeamStatLine; away: TeamStatLine };
   events: MatchEvent[];
+  /** Real goal scorers (live source only): side + player name + minute. */
+  scorers?: { team: 'home' | 'away'; name: string; minute: number }[];
 }
 
 /** Interpolate a final stat line to the playhead: counts accumulate with the
@@ -163,6 +165,7 @@ export function useMatchLive(matchId: string) {
     minute,
     frozen,
     source: payload?.source ?? null,
+    scorers: payload?.scorers ?? [],
     replay: () => setRunId((n) => n + 1),
   };
 }

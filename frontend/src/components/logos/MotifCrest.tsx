@@ -28,12 +28,15 @@ interface MotifCrestProps {
   /** Per-crest stat line for the 'stats' motif: glyph counts equal these real
    *  numbers (2 goals → exactly 2 balls) instead of the global engine feed. */
   stats?: Record<string, number>;
+  /** ASCII roster layer for the 'stats' motif: number + name per player,
+   *  scorers rendered bright. */
+  roster?: Array<{ num: number | null; name: string; scored?: boolean }>;
   className?: string;
 }
 
 const FPS_MS = 1000 / 14; // throttle — many of these animate at once on the grid
 
-export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId, spin = false, still = false, stats, className }: MotifCrestProps) {
+export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId, spin = false, still = false, stats, roster, className }: MotifCrestProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const theme = useThemeStore((s) => s.theme);
 
@@ -59,7 +62,7 @@ export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId
       );
       renderMotif(cv, enginePixels, {
         cell, off: 'rgba(0,0,0,0)', bg: 'rgba(0,0,0,0)', applyFill: true,
-        teamId, time, animate, stats,
+        teamId, time, animate, stats, roster,
       });
       cv.style.width = size + 'px';
       cv.style.height = size + 'px';
@@ -82,7 +85,7 @@ export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [pixels, seed, size, motif, shape, teamId, theme, spin, still, stats]);
+  }, [pixels, seed, size, motif, shape, teamId, theme, spin, still, stats, roster]);
 
   if (spin) {
     // Vary speed + phase per team so they don't rotate in lockstep.

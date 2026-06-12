@@ -1070,6 +1070,42 @@ import { ROSTERS } from '../../data/rosters';
                 if (!has(col + 1, row)) { ctx.beginPath(); ctx.moveTo(x + cell, y); ctx.lineTo(x + cell, y + cell); ctx.stroke(); }
             }
         }
+
+        // --- ASCII roster layer (internet treatment, on top of everything):
+        // the squad that played this game streams across the identity, one
+        // character per logo pixel — "12 ACEVEDO · 9 JIMENEZ · …". Players who
+        // scored burn bright; the rest are a faint transmission.
+        const roster = opts.roster;
+        if (roster && roster.length) {
+            const stream = [];
+            for (const p of roster) {
+                const seg = `${p.num != null ? p.num : ''} ${String(p.name || '').toUpperCase()}`.trim() + ' · ';
+                for (const chr of seg) stream.push({ ch: chr, hot: !!p.scored });
+            }
+            const cellsRM = [];
+            for (let pid = 1; pid <= GRID * GRID; pid++) if (set.has(pid)) cellsRM.push(pid - 1);
+            const scroll = animate ? Math.floor(t * 5) : 0;
+            ctx.font = `bold ${Math.round(cell * 0.6)}px "Courier New", ui-monospace, monospace`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let i = 0; i < cellsRM.length; i++) {
+                const e = stream[(i + scroll) % stream.length];
+                if (!e || e.ch === ' ') continue;
+                const idx = cellsRM[i];
+                const x = (idx % GRID) * cell + cell / 2;
+                const y = Math.floor(idx / GRID) * cell + cell / 2;
+                if (e.hot) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = 'rgba(255,255,255,0.95)';
+                    ctx.shadowBlur = cell * 0.45;
+                } else {
+                    ctx.fillStyle = 'rgba(255,255,255,0.34)';
+                    ctx.shadowBlur = 0;
+                }
+                ctx.fillText(e.ch, x, y + cell * 0.03);
+            }
+            ctx.shadowBlur = 0;
+        }
     }
 
     // ----- Sweep renderer: Minesweeper style -----
