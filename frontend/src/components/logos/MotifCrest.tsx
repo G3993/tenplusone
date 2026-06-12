@@ -25,12 +25,15 @@ interface MotifCrestProps {
   spin?: boolean;
   /** Paint a single static frame — no rAF loop, no spin. A still neon crest. */
   still?: boolean;
+  /** Per-crest stat line for the 'stats' motif: glyph counts equal these real
+   *  numbers (2 goals → exactly 2 balls) instead of the global engine feed. */
+  stats?: Record<string, number>;
   className?: string;
 }
 
 const FPS_MS = 1000 / 14; // throttle — many of these animate at once on the grid
 
-export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId, spin = false, still = false, className }: MotifCrestProps) {
+export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId, spin = false, still = false, stats, className }: MotifCrestProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const theme = useThemeStore((s) => s.theme);
 
@@ -56,7 +59,7 @@ export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId
       );
       renderMotif(cv, enginePixels, {
         cell, off: 'rgba(0,0,0,0)', bg: 'rgba(0,0,0,0)', applyFill: true,
-        teamId, time, animate,
+        teamId, time, animate, stats,
       });
       cv.style.width = size + 'px';
       cv.style.height = size + 'px';
@@ -79,7 +82,7 @@ export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [pixels, seed, size, motif, shape, teamId, theme, spin, still]);
+  }, [pixels, seed, size, motif, shape, teamId, theme, spin, still, stats]);
 
   if (spin) {
     // Vary speed + phase per team so they don't rotate in lockstep.

@@ -836,9 +836,36 @@ import { ROSTERS } from '../../data/rosters';
         // Match element per cell (like Sweep's mines/numbers/flags but soccer)
         const ink = '#0f3d1c';
 
+        // --- TRUE-COUNT allocation: the tiles ARE the box score ---
+        // One glyph per real unit (2 goals → exactly 2 balls); the volume
+        // stats use a stated scale (1 boot = 50 passes, 1 ring = 10% poss.).
+        const S = opts.stats || matchStats;
+        const yellowN = S.yellowCards != null ? S.yellowCards : Math.max(0, S.cards || 0);
+        const redN = S.redCards || 0;
+        const statCounts = [
+            ['goals',      Math.max(0, Math.round(S.goals || 0))],
+            ['shots',      Math.max(0, Math.round(S.shotsOnTarget != null ? S.shotsOnTarget : (S.shots || 0)))],
+            ['corners',    Math.max(0, Math.round(S.corners || 0))],
+            ['cardY',      Math.max(0, Math.round(yellowN))],
+            ['cardR',      Math.max(0, Math.round(redN))],
+            ['offsides',   Math.max(0, Math.round(S.offsides || 0))],
+            ['fouls',      Math.max(0, Math.round(S.fouls || 0))],
+            ['possession', Math.max(0, Math.round((S.possession || 0) / 10))],
+            ['passes',     Math.max(0, Math.round((S.passes || 0) / 50))],
+        ];
+        // deterministic scatter: shuffle the logo's pixels by seed, then deal
+        // out exactly N cells per stat
+        const statCells = [];
+        for (let pid = 1; pid <= GRID * GRID; pid++) if (set.has(pid)) statCells.push(pid - 1);
+        statCells.sort((a, b) => (pseed(a, aSeed + 7) % 99991) - (pseed(b, aSeed + 7) % 99991));
+        const assigned = new Map();
+        let dealt = 0;
+        for (const [type, n] of statCounts) {
+            for (let k = 0; k < n && dealt < statCells.length; k++) assigned.set(statCells[dealt++], type);
+        }
+
         // --- Scorer number tiles: shirt numbers of players who scored ---
         // Placed deterministically; double-digit numbers occupy two adjacent cells.
-        const sp2 = statParams();
         const numberCells = new Set(); // cells consumed by a multi-cell number
         const scorerList = (scorers && scorers.length) ? scorers : [];
         let placed = 0;
@@ -846,8 +873,9 @@ import { ROSTERS } from '../../data/rosters';
             if (!set.has(pid)) continue;
             const idx = pid - 1, col = idx % GRID, row = Math.floor(idx / GRID);
             if (numberCells.has(idx)) continue;
-            // host on cells the stat picker flags as 'goals'
-            if (matchStatForPixel(idx, aSeed) !== 'goals') continue;
+            // host on plain-grass cells (never covering a stat glyph)
+            if (assigned.has(idx)) continue;
+            if (pseed(idx, aSeed + 13) % 4 !== 0) continue;
             const num = scorerList[placed];
             const digits = String(num);
             const double = digits.length > 1;
@@ -873,13 +901,16 @@ import { ROSTERS } from '../../data/rosters';
             placed++;
         }
 
+        const sp2 = statParams();
         for (let pid = 1; pid <= GRID * GRID; pid++) {
             if (!set.has(pid)) continue;
             const idx = pid - 1, col = idx % GRID, row = Math.floor(idx / GRID);
             if (numberCells.has(idx)) continue; // skip cells taken by scorer numbers
+            // only cells dealt a real stat draw a glyph — the rest stay grass,
+            // so the glyph counts on the crest ARE the final box score
+            const stat = assigned.get(idx);
+            if (!stat) continue;
             const x = col * cell, y = row * cell, cx = x + cell/2, cy = y + cell/2;
-            const stat = matchStatForPixel(idx, aSeed);
-            const sd = pseed(idx, aSeed);
             const wob = animate ? Math.sin(t*2 + idx*0.2) : 0;
             // shots stat → bolder white lines across the board
             const lw = Math.max(1, cell * (0.06 + sp2.thickness * 0.06));
@@ -967,9 +998,9 @@ import { ROSTERS } from '../../data/rosters';
                 }
                 // outer rim
                 ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI*2); ctx.stroke();
-            } else if (stat === 'cards') {
-                // Card — yellow/red rectangle
-                ctx.fillStyle = (sd % 3 === 0) ? '#e10600' : '#f5d800';
+            } else if (stat === 'cardY' || stat === 'cardR') {
+                // Card — one rectangle per real booking, true to its color
+                ctx.fillStyle = stat === 'cardR' ? '#e10600' : '#f5d800';
                 ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.18);
                 ctx.fillRect(-cell*0.16, -cell*0.26, cell*0.32, cell*0.52);
                 ctx.restore();

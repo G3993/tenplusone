@@ -16,7 +16,7 @@ export function GameIdentity({ matchId, home, away }: {
   home: string;
   away: string;
 }) {
-  const { stats, frozen } = useMatchLive(matchId);
+  const { stats, teams, frozen } = useMatchLive(matchId);
 
   const finished = frozen && stats.status === 'FINISHED';
 
@@ -46,11 +46,12 @@ export function GameIdentity({ matchId, home, away }: {
 
   if (!finished) return null;
 
-  // The identity itself: the stats motif — colored and animated by the
-  // match's final numbers, not the plain 3D mark.
+  // The identity itself: the stats motif fed the shown team's REAL final
+  // line — glyph counts on the crest equal the box score (2 goals = 2 balls).
   const renderCrest = (name: string, size: number) => {
     const team = getTeamByName(name);
     if (!team) return null;
+    const line = teams ? (name === home ? teams.home : teams.away) : undefined;
     return (
       <Link to={`/team/${team.slug}`} className={styles.crestLink} aria-label={name}>
         <MotifCrest
@@ -59,6 +60,7 @@ export function GameIdentity({ matchId, home, away }: {
           seed={teamSeed(team.slug)}
           pixels={getLogoPixels(team.slug, team.name[0])}
           size={size}
+          stats={line as unknown as Record<string, number>}
         />
       </Link>
     );
