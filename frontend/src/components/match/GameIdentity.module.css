@@ -43,21 +43,13 @@
   transform-origin: 0 0;
 }
 
-/* the two team logos, side by side at the top of the scoreboard band */
+/* the two team logos, side by side above the result line */
 .headCrests {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: clamp(28px, 8vw, 56px);
-  margin-bottom: 8px;
-}
-
-.ft {
-  font-family: var(--display);
-  font-size: 20px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--green);
+  margin-top: 8px;
 }
 
 /* MEX  2 – 0  RSA */
@@ -84,20 +76,22 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* the crest floats on a square blueprint grid spanning the card */
+/* the crest floats on a square blueprint grid — the card's top section,
+   bleeding to the card edges */
 .stage {
   align-self: stretch;
-  margin: 16px -24px 0;
-  padding: 30px 0;
+  margin: -32px -24px 0;
+  padding: 36px 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background:
     linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  background-size: 26px 26px;
+  /* one grid cell = one logo pixel: the crest engine draws round(280/32) = 9px
+     cells at the 280 render, so the blueprint grid uses the same pitch */
+  background-size: 9px 9px;
   background-position: center;
-  border-top: 1px solid var(--nav-border, #1a1a1a);
   border-bottom: 1px solid var(--nav-border, #1a1a1a);
 }
 
@@ -112,16 +106,8 @@
   gap: 28px;
 }
 
-.winner {
-  font-family: var(--display);
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--bright);
-}
-
 @media (max-width: 560px) {
   .wrap { margin-top: 34px; padding-top: 26px; }
+  .stage { margin-top: -26px; }
   .drawPair { gap: 16px; }
 }

@@ -60,17 +60,7 @@ export function GameIdentity({ matchId, home, away }: {
 
   return (
     <section className={styles.wrap} aria-label="game identity">
-      <div className={styles.headCrests}>
-        {headCrest(home)}
-        {headCrest(away)}
-      </div>
-      <span className={styles.ft}>FT</span>
-      <div className={styles.scoreline}>
-        <span className={styles.scoreTeam}>{homeCode}</span>
-        <span className={styles.score}>{stats.homeGoals} – {stats.awayGoals}</span>
-        <span className={styles.scoreTeam}>{awayCode}</span>
-      </div>
-
+      {/* section 1 — the game identity itself, on the blueprint grid */}
       <div className={styles.stage}>
         {winnerName ? (
           renderCrest(winnerName, 280)
@@ -82,7 +72,16 @@ export function GameIdentity({ matchId, home, away }: {
         )}
       </div>
 
-      {winnerName && <div className={styles.winner}>{winnerName}</div>}
+      {/* section 2 — the matchup: both logos, result under them */}
+      <div className={styles.headCrests}>
+        {headCrest(home)}
+        {headCrest(away)}
+      </div>
+      <div className={styles.scoreline}>
+        <span className={styles.scoreTeam}>{homeCode}</span>
+        <span className={styles.score}>{stats.homeGoals} – {stats.awayGoals}</span>
+        <span className={styles.scoreTeam}>{awayCode}</span>
+      </div>
     </section>
   );
 }
