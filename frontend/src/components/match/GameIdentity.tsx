@@ -4,7 +4,6 @@ import { useMatchLive } from '../../lib/useMatchLive';
 import { getTeamByName } from '../../data/teams';
 import { getLogoPixels } from '../../data/team-logos/index.ts';
 import { MotifCrest } from '../logos/MotifCrest';
-import { MatchCrest3D } from './MatchCrest3D';
 import { teamSeed } from '../logos/spectrumMotif';
 import styles from './GameIdentity.module.css';
 
@@ -47,17 +46,6 @@ export function GameIdentity({ matchId, home, away }: {
   const homeCode = getTeamByName(home)?.code ?? home;
   const awayCode = getTeamByName(away)?.code ?? away;
 
-  // the two team logos, inside the card's scoreboard band
-  const headCrest = (name: string) => {
-    const team = getTeamByName(name);
-    if (!team) return null;
-    return (
-      <Link to={`/team/${team.slug}`} className={styles.crestLink} aria-label={name}>
-        <MatchCrest3D slug={team.slug} name={team.name} size={132} />
-      </Link>
-    );
-  };
-
   return (
     <section className={styles.wrap} aria-label="game identity">
       {/* section 1 — the game identity itself, on the blueprint grid */}
@@ -72,15 +60,11 @@ export function GameIdentity({ matchId, home, away }: {
         )}
       </div>
 
-      {/* section 2 — the matchup: both logos, result under them */}
-      <div className={styles.headCrests}>
-        {headCrest(home)}
-        {headCrest(away)}
-      </div>
+      {/* section 2 — the match details, one color */}
       <div className={styles.scoreline}>
-        <span className={styles.scoreTeam}>{homeCode}</span>
-        <span className={styles.score}>{stats.homeGoals} – {stats.awayGoals}</span>
-        <span className={styles.scoreTeam}>{awayCode}</span>
+        <span>{homeCode}</span>
+        <span>{stats.homeGoals} – {stats.awayGoals}</span>
+        <span>{awayCode}</span>
       </div>
     </section>
   );

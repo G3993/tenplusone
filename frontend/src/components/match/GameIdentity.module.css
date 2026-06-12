@@ -43,36 +43,20 @@
   transform-origin: 0 0;
 }
 
-/* the two team logos, side by side above the result line */
-.headCrests {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: clamp(28px, 8vw, 56px);
-  margin-top: 8px;
-}
-
-/* MEX  2 – 0  RSA */
+/* MEX  2 – 0  RSA — the match details, one color */
 .scoreline {
   display: flex;
   align-items: baseline;
   justify-content: center;
   gap: 18px;
+  margin-top: 6px;
   font-family: var(--display);
   font-weight: 800;
-  text-transform: uppercase;
-  line-height: 1;
-}
-
-.scoreTeam {
   font-size: clamp(28px, 5vw, 38px);
   letter-spacing: 0.06em;
+  text-transform: uppercase;
+  line-height: 1;
   color: var(--bright);
-}
-
-.score {
-  font-size: clamp(28px, 5vw, 38px);
-  color: var(--green);
   font-variant-numeric: tabular-nums;
 }
 

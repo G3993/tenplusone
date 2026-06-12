@@ -108,12 +108,7 @@ export function MatchDetail() {
       )}
 
       {/* the 11 live attributes that drive the art — Google-style stat sheet */}
-      <MatchStatsPanel
-        matchId={match.id}
-        home={match.h}
-        away={match.a}
-        odds={match.odds as [number, number, number]}
-      />
+      <MatchStatsPanel matchId={match.id} home={match.h} away={match.a} />
 
       {/* live score — centered (FINISHED score lives on the identity card) */}
       {status === 'LIVE' && (
