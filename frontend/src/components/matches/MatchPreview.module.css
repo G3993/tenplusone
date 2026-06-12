@@ -208,6 +208,13 @@
   text-transform: lowercase;
   padding: 0 4px;
 }
+/* final score in the centre of a finished card (mirrors .metaVs slot) */
+.metaScore {
+  font-weight: 800;
+  color: #ffffff;
+  padding: 0 10px;
+  font-variant-numeric: tabular-nums;
+}
 .metaWhen {
   font-family: var(--display);
   font-size: 20px;
