@@ -7,9 +7,9 @@ import { useState } from 'react';
 // Real garment photos shipped with the store (used on product cards too), with
 // the chest/centre print box for each.
 const GARMENTS = [
-  { src: '/shirt-white.png', label: 'tee', price: '$35', top: 33, w: 30 },
-  { src: '/crew-white.png', label: 'crewneck', price: '$50', top: 31, w: 27 },
-  { src: '/shirt-white.png', label: 'long sleeve', price: '$45', top: 33, w: 30 },
+  { src: '/shirt-white.png', label: 'tee', price: '$35', top: 21, w: 27 },
+  { src: '/crew-white.png', label: 'crewneck', price: '$50', top: 23, w: 25 },
+  { src: '/shirt-white.png', label: 'long sleeve', price: '$45', top: 21, w: 27 },
 ];
 
 export function IdentityMerch({ title, accent, capture }: {

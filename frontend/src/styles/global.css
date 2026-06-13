@@ -143,12 +143,20 @@ button:focus-visible {
   padding: 20px;
 }
 .gi-merch {
+  --d: 8px;
+  position: relative;
   width: 100%; max-width: 760px; max-height: 92vh; overflow-y: auto;
-  background: #0a0a0a; border: 1px solid var(--hairline, #1a1a1a);
-  box-shadow: 0 0 30px rgba(0,0,0,0.6);
+  background: #0a0a0a; border: 1px solid var(--nav-border, #1a1a1a);
   padding: 22px;
   font-family: var(--font);
 }
+.gi-merch::before, .gi-merch::after {
+  content: ''; position: absolute; box-sizing: border-box;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.14) 0 1px, rgba(0,0,0,0) 1px 3px), #111111;
+  border: 1px solid var(--nav-border, #1a1a1a);
+}
+.gi-merch::before { left: -1px; right: -1px; top: calc(-1*var(--d) - 1px); height: var(--d); transform: skewX(-45deg); transform-origin: 0 100%; }
+.gi-merch::after { top: -1px; bottom: -1px; right: calc(-1*var(--d) - 1px); width: var(--d); transform: skewY(-45deg); transform-origin: 0 0; }
 .gi-merch-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .gi-merch-title { font-size: 22px; color: var(--bright, #fff); text-transform: uppercase; letter-spacing: 0.04em; }
 .gi-merch-x { font-size: 30px; line-height: 1; color: var(--dim, #888); background: none; border: none; cursor: pointer; }

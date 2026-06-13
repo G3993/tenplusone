@@ -173,8 +173,9 @@ export function GameIdentity({ matchId, home, away, venue }: {
         {venue && <div className={styles.venue}>{venue}</div>}
       </div>
 
-      {/* controls live OUTSIDE the grid: play/pause, draw toggle, variations */}
-      <div className={styles.controls} style={{ '--team': accent } as CSSProperties}>
+      {/* one container holding all the controls + the claim CTA */}
+      <div className={styles.controlsCard} style={{ '--team': accent } as CSSProperties}>
+      <div className={styles.controls}>
         <button
           type="button"
           className={styles.playBtn}
@@ -243,7 +244,8 @@ export function GameIdentity({ matchId, home, away, venue }: {
         </div>
       </div>
 
-      <IdentityMerch title={merchTitle} accent={accent} capture={captureIdentity} />
+        <IdentityMerch title={merchTitle} accent={accent} capture={captureIdentity} />
+      </div>
     </>
   );
 }
