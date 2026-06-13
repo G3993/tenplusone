@@ -88,21 +88,53 @@ button:focus-visible {
 
 /* ── Game-identity merch (claim 1-of-1) ─────────────────────────────── */
 .gi-claim {
+  --d: 6px;
+  position: relative;
   display: block;
-  margin: 14px auto 0;
+  width: fit-content;
+  margin: 16px auto 0;
+}
+/* shared 3D cube button (Cta3D family), tinted to the team color */
+.gi-claim, .gi-merch-buy {
   font-family: var(--display);
-  font-size: 20px;
+  font-size: 21px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: #04100a;
-  background: var(--team, #1d6fe0);
-  border: none;
-  padding: 13px 30px;
+  color: color-mix(in srgb, var(--team, #1d6fe0) 45%, #fff);
+  background:
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--team, #1d6fe0) 18%, transparent) 0 1px, transparent 1px 4px),
+    color-mix(in srgb, var(--team, #1d6fe0) 14%, #000);
+  border: 1px solid var(--team, #1d6fe0);
+  padding: 14px 32px;
   cursor: pointer;
-  transition: filter 0.12s, transform 0.12s;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--team, #1d6fe0) 26%, transparent);
+  text-shadow: 0 0 8px color-mix(in srgb, var(--team, #1d6fe0) 45%, transparent);
+  transition: transform 0.13s ease, box-shadow 0.13s ease;
 }
-.gi-claim:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.gi-claim::before, .gi-claim::after,
+.gi-merch-buy::before, .gi-merch-buy::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, color-mix(in srgb, var(--team, #1d6fe0) 36%, transparent) 0 1px, transparent 1px 3px),
+    color-mix(in srgb, var(--team, #1d6fe0) 30%, #000);
+  border: 1px solid color-mix(in srgb, var(--team, #1d6fe0) 60%, #000);
+}
+.gi-claim::before, .gi-merch-buy::before {
+  left: -1px; right: -1px; top: calc(-1 * var(--d) - 1px); height: var(--d);
+  transform: skewX(-45deg); transform-origin: 0 100%;
+}
+.gi-claim::after, .gi-merch-buy::after {
+  top: -1px; bottom: -1px; right: calc(-1 * var(--d) - 1px); width: var(--d);
+  transform: skewY(-45deg); transform-origin: 0 0;
+}
+.gi-claim:hover, .gi-merch-buy:hover:not(:disabled) {
+  --d: 3px; transform: translate(3px, -3px);
+  box-shadow: 0 0 22px color-mix(in srgb, var(--team, #1d6fe0) 40%, transparent);
+}
+.gi-claim:active, .gi-merch-buy:active:not(:disabled) { --d: 1px; transform: translate(5px, -5px); }
 
 .gi-merch-overlay {
   position: fixed; inset: 0; z-index: 300;
@@ -131,9 +163,9 @@ button:focus-visible {
 .gi-garment-print { position: absolute; left: 50%; transform: translateX(-50%); image-rendering: pixelated; }
 .gi-merch-cell figcaption { font-size: 15px; color: var(--dim, #888); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 6px; }
 .gi-merch-buy {
-  display: block; width: 100%; margin-top: 18px;
-  font-family: var(--display); font-size: 24px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-  color: #04100a; background: var(--team, #1d6fe0); border: none; padding: 15px; cursor: pointer;
+  --d: 7px;
+  position: relative;
+  display: block; width: calc(100% - 7px); margin: 22px auto 0;
 }
 .gi-merch-buy:disabled { opacity: 0.6; cursor: default; }
 .gi-merch-msg { font-size: 16px; color: color-mix(in srgb, var(--team,#1d6fe0) 70%, #fff); text-align: center; margin: 12px 0 0; }
