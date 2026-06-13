@@ -35,7 +35,7 @@ interface LivePayload {
   scorers?: { team: 'home' | 'away'; name: string; minute: number }[];
   /** Players who actually played (live source only): side + shirt number +
    *  scored flag — feeds the ASCII number layer on the crest. */
-  lineup?: { team: 'home' | 'away'; num: number | null; scored: boolean }[];
+  lineup?: { team: 'home' | 'away'; num: number | null; scored: boolean; starter?: boolean }[];
 }
 
 /** Interpolate a final stat line to the playhead: counts accumulate with the

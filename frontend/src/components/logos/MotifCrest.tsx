@@ -34,12 +34,15 @@ interface MotifCrestProps {
   /** Draw the game-stats overlay (glyphs + numbers) on top of this style —
    *  lets any treatment carry the match's box score, not just 'stats'. */
   statsOverlay?: boolean;
+  /** Where the stat overlay lives: on the logo (inside), the negative space
+   *  around it (outside), or everywhere (both). */
+  statPlacement?: 'inside' | 'outside' | 'both';
   className?: string;
 }
 
 const FPS_MS = 1000 / 14; // throttle — many of these animate at once on the grid
 
-export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId, spin = false, still = false, stats, roster, statsOverlay = false, className }: MotifCrestProps) {
+export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId, spin = false, still = false, stats, roster, statsOverlay = false, statPlacement = 'inside', className }: MotifCrestProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const theme = useThemeStore((s) => s.theme);
 
@@ -65,7 +68,7 @@ export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId
       );
       renderMotif(cv, enginePixels, {
         cell, off: 'rgba(0,0,0,0)', bg: 'rgba(0,0,0,0)', applyFill: true,
-        teamId, time, animate, stats, roster, statsOverlay,
+        teamId, time, animate, stats, roster, statsOverlay, statPlacement,
       });
       cv.style.width = size + 'px';
       cv.style.height = size + 'px';
@@ -88,7 +91,7 @@ export function MotifCrest({ pixels, seed, size, motif, shape = 'square', teamId
     };
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, [pixels, seed, size, motif, shape, teamId, theme, spin, still, stats, roster, statsOverlay]);
+  }, [pixels, seed, size, motif, shape, teamId, theme, spin, still, stats, roster, statsOverlay, statPlacement]);
 
   if (spin) {
     // Vary speed + phase per team so they don't rotate in lockstep.

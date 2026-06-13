@@ -835,20 +835,30 @@ import { ROSTERS } from '../../data/rosters';
             ['possession', Math.max(0, Math.round((S.possession||0)/10))],
             ['passes',     Math.max(0, Math.round((S.passes||0)/50))],
         ];
+        // placement: stats can live on the logo pixels (inside), the negative
+        // space around it (outside), or everywhere (both)
+        const placement = opts.statPlacement || 'inside';
+        const wants = (pid) => { const inside = set.has(pid); return placement==='outside' ? !inside : placement==='both' ? true : inside; };
         const statCells = [];
-        for (let pid=1; pid<=GRID*GRID; pid++) if (set.has(pid)) statCells.push(pid-1);
+        for (let pid=1; pid<=GRID*GRID; pid++) if (wants(pid)) statCells.push(pid-1);
         statCells.sort((a,b)=> (pseed(a,aSeed+7)%99991) - (pseed(b,aSeed+7)%99991));
         const assigned = new Map();
         let dealt=0;
         for (const [type,n] of statCounts){ for(let k=0;k<n && dealt<statCells.length;k++) assigned.set(statCells[dealt++], type); }
 
-        // scorer-once hero tokens: each unique scorer number, placed once, big
+        // scorer-once hero tokens: each unique scorer number, placed once, big.
+        // prefer the negative space (outside the logo) so they stand out.
         const used = new Set();
         const roster = opts.roster || [];
         const scorerNums = [];
         for (const p of roster){ if (p.scored && p.num!=null && !scorerNums.includes(p.num)) scorerNums.push(p.num); }
         if (scorerNums.length){
-            const grass = statCells.filter((idx)=> !assigned.has(idx));
+            // scorers go in the negative space around the logo to stand out;
+            // fall back to free logo cells if the crest leaves no room outside
+            const outside = [];
+            for (let pid=1; pid<=GRID*GRID; pid++) if (!set.has(pid)) outside.push(pid-1);
+            let grass = outside.filter((idx)=> !assigned.has(idx));
+            if (grass.length < scorerNums.length * 2) grass = statCells.filter((idx)=> !assigned.has(idx));
             grass.sort((a,b)=> (pseed(a,aSeed+101)%99991) - (pseed(b,aSeed+101)%99991));
             let gi=0;
             for (const num of scorerNums){
@@ -859,7 +869,7 @@ import { ROSTERS } from '../../data/rosters';
                     if (used.has(idx)) continue;
                     const col=idx%GRID, row=Math.floor(idx/GRID);
                     if (!isRev(row-0.6)) continue;
-                    if (dbl){ if (!has(col+1,row)) continue; const r2=row*GRID+(col+1); if (assigned.has(r2) || used.has(r2)) continue; }
+                    if (dbl){ if (col+1>=GRID) continue; const r2=row*GRID+(col+1); if (assigned.has(r2) || used.has(r2)) continue; }
                     const x=col*cell, y=row*cell;
                     const bw=(dbl?2:1)*cell;
                     ctx.save();
@@ -882,12 +892,9 @@ import { ROSTERS } from '../../data/rosters';
         }
 
         // glyph loop — each assigned cell draws its symbol (counts = box score)
-        for (let pid=1; pid<=GRID*GRID; pid++){
-            if (!set.has(pid)) continue;
-            const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
+        for (const [idx, stat] of assigned){
+            const col=idx%GRID, row=Math.floor(idx/GRID);
             if (used.has(idx)) continue;
-            const stat = assigned.get(idx);
-            if (!stat) continue;
             if (!isRev(row-0.6)) continue;
             const x=col*cell, y=row*cell, cx=x+cell/2, cy=y+cell/2;
             const wob = animate?Math.sin(t*2+idx*0.2):0;
@@ -1014,16 +1021,20 @@ import { ROSTERS } from '../../data/rosters';
         const t = opts.time||0, animate=!!opts.animate;
         const reveal = statReveal(opts);
         const frontier = reveal*(GRID+3);
+        // stream the STARTING XI shirt numbers (scorers shown once as tokens);
+        // p.starter===false drops subs, undefined (sim fallback) keeps all
         const stream = [];
         for (const p of roster){
-            if (p.scored) continue;
+            if (p.scored || p.starter === false) continue;
             const digits = p.num!=null?String(p.num):'';
             for (const d of digits) stream.push(d);
             stream.push('·'); stream.push(' ');
         }
         if (!stream.length) { stream.push('·'); stream.push(' '); }
+        const placement = opts.statPlacement || 'inside';
+        const wants = (pid) => { const inside = set.has(pid); return placement==='outside' ? !inside : placement==='both' ? true : inside; };
         const cells = [];
-        for (let pid=1; pid<=GRID*GRID; pid++) if (set.has(pid)) cells.push(pid-1);
+        for (let pid=1; pid<=GRID*GRID; pid++) if (wants(pid)) cells.push(pid-1);
         const scroll = animate?Math.floor(t*5):0;
         const flick = animate?0.86 + 0.14*Math.sin(t*6):1;
         ctx.textAlign='center'; ctx.textBaseline='middle';
@@ -1035,12 +1046,15 @@ import { ROSTERS } from '../../data/rosters';
             if (!ch || ch===' ') continue;
             const row = Math.floor(idx/GRID);
             if (!(row < frontier - 1)) continue;
+            // outside numbers read fainter so the logo stays the hero
+            const inside = set.has(row*GRID + (idx%GRID) + 1);
+            const alpha = (inside ? 0.5 : 0.32) * flick;
             const x = (idx%GRID)*cell + cell/2;
             const y = row*cell + cell/2;
             ctx.save();
             ctx.font = `bold ${baseFont}px "Courier New", ui-monospace, monospace`;
-            ctx.fillStyle = `rgba(225,255,235,${(0.5*flick).toFixed(3)})`;
-            ctx.shadowColor = 'rgba(180,255,205,0.5)'; ctx.shadowBlur = cell*0.22;
+            ctx.fillStyle = `rgba(225,255,235,${alpha.toFixed(3)})`;
+            ctx.shadowColor = 'rgba(180,255,205,0.45)'; ctx.shadowBlur = cell*0.2;
             ctx.fillText(ch, x, y + cell*0.03);
             ctx.restore();
         }

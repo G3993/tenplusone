@@ -29,10 +29,11 @@ const VARIANTS: { key: string; label: string; motif: string }[] = [
  *  Identity — the winner's crest rendered through the stats motif, animating
  *  with the real final numbers (the engine is fed by MatchStatsPanel on the
  *  same page). Draws show one crest at a time with a slider between the two. */
-export function GameIdentity({ matchId, home, away }: {
+export function GameIdentity({ matchId, home, away, venue }: {
   matchId: string;
   home: string;
   away: string;
+  venue?: string;
 }) {
   const { stats, teams, frozen, scorers, lineup } = useMatchLive(matchId);
 
@@ -45,13 +46,14 @@ export function GameIdentity({ matchId, home, away }: {
     const build = (name: string, sideKey: 'home' | 'away') => {
       const live = lineup.filter((p) => p.team === sideKey);
       if (live.length) {
-        return live.map((p) => ({ num: p.num, scored: p.scored }));
+        return live.map((p) => ({ num: p.num, scored: p.scored, starter: p.starter !== false }));
       }
       const team = getTeamByName(name);
       const squad = team ? ROSTERS[team.slug] ?? [] : [];
       const goals = scorers.filter((s) => s.team === sideKey);
-      return squad.map((p) => ({
+      return squad.slice(0, 11).map((p) => ({
         num: p.n,
+        starter: true,
         scored: goals.some((g) => {
           const last = fold(g.name).split(' ').pop() ?? '';
           return last.length > 2 && fold(p.name).includes(last);
@@ -70,6 +72,8 @@ export function GameIdentity({ matchId, home, away }: {
   // which style treatment the identity is rendered in
   const [variant, setVariant] = useState('stats');
   const variantMotif = (VARIANTS.find((v) => v.key === variant) ?? VARIANTS[0]).motif;
+  // where the stats live relative to the logo
+  const [placement, setPlacement] = useState<'inside' | 'outside' | 'both'>('inside');
 
   // Crest render size tracks the card's real width (~72% so the logo fills
   // the grid and the stat detail is legible), snapped to multiples of 32 so
@@ -111,6 +115,7 @@ export function GameIdentity({ matchId, home, away }: {
           pixels={getLogoPixels(team.slug, team.name[0])}
           size={size}
           still={!playing}
+          statPlacement={placement}
           stats={line as unknown as Record<string, number>}
           roster={rosterMap[name]}
         />
@@ -128,6 +133,7 @@ export function GameIdentity({ matchId, home, away }: {
         <div className={styles.stage} style={{ '--cell': `${cell}px` } as CSSProperties}>
           {renderCrest(shown, crestSize)}
         </div>
+        {venue && <div className={styles.venue}>{venue}</div>}
       </div>
 
       {/* controls live OUTSIDE the grid: play/pause, draw toggle, variations */}
@@ -167,6 +173,22 @@ export function GameIdentity({ matchId, home, away }: {
             ))}
           </div>
         )}
+
+        {/* stat placement — inside the logo, the negative space, or both */}
+        <div className={`${styles.variants} ${styles.placementRow}`} role="tablist" aria-label="stat placement">
+          {(['inside', 'outside', 'both'] as const).map((p) => (
+            <button
+              key={p}
+              type="button"
+              role="tab"
+              aria-selected={placement === p}
+              className={`${styles.variant} ${placement === p ? styles.variantOn : ''}`}
+              onClick={() => setPlacement(p)}
+            >
+              {p}
+            </button>
+          ))}
+        </div>
 
         {/* variation slider — the same match stats in every logo style */}
         <div className={styles.variants} role="tablist" aria-label="identity style">

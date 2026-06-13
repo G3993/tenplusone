@@ -104,7 +104,7 @@ export function MatchDetail() {
       )}
 
       {status === 'FINISHED' && (
-        <GameIdentity matchId={match.id} home={match.h} away={match.a} />
+        <GameIdentity matchId={match.id} home={match.h} away={match.a} venue={match.v} />
       )}
 
       {/* the 11 live attributes that drive the art — Google-style stat sheet */}

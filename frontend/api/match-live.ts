@@ -44,8 +44,8 @@ interface LivePayload {
   /** Real goal scorers (live source only): side + player name + minute. */
   scorers?: { team: 'home' | 'away'; name: string; minute: number }[];
   /** Players who actually took the field (started or subbed in), with shirt
-   *  number + a scored flag — drives the ASCII number layer on the crest. */
-  lineup?: { team: 'home' | 'away'; num: number | null; scored: boolean }[];
+   *  number + scored + starter flags — drives the ASCII number layer. */
+  lineup?: { team: 'home' | 'away'; num: number | null; scored: boolean; starter: boolean }[];
 }
 
 export interface TeamStatLine {
@@ -284,7 +284,7 @@ async function fetchLive(id: string): Promise<LivePayload | null> {
 
     // 4. lineup: who actually played (starters + subs who came on), per side,
     //    with shirt number + a scored flag (matched by surname to the goals).
-    const lineup: { team: 'home' | 'away'; num: number | null; scored: boolean }[] = [];
+    const lineup: { team: 'home' | 'away'; num: number | null; scored: boolean; starter: boolean }[] = [];
     for (const teamRoster of sum.rosters || []) {
       const tName = teamRoster.team?.displayName || '';
       const side: 'home' | 'away' | null = sameName(tName, match.h) ? 'home'
@@ -300,7 +300,7 @@ async function fetchLive(id: string): Promise<LivePayload | null> {
           return gl.length > 2 && norm(who).includes(gl);
         });
         const jersey = p.jersey != null && p.jersey !== '' ? Number(p.jersey) : null;
-        lineup.push({ team: side, num: Number.isFinite(jersey as number) ? (jersey as number) : null, scored });
+        lineup.push({ team: side, num: Number.isFinite(jersey as number) ? (jersey as number) : null, scored, starter: !!p.starter });
       }
     }
 
