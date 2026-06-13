@@ -19,20 +19,24 @@ export function GameIdentity({ matchId, home, away }: {
   home: string;
   away: string;
 }) {
-  const { stats, teams, frozen, scorers } = useMatchLive(matchId);
+  const { stats, teams, frozen, scorers, lineup } = useMatchLive(matchId);
 
   const finished = frozen && stats.status === 'FINISHED';
 
-  // The squads, with real scorers flagged (matched by surname against the
-  // ESPN goal events) — feeds the ASCII roster layer on the identity.
+  // The numbers that played, with scorers flagged. Prefer the real ESPN
+  // lineup (who actually took the field); fall back to the full squad with
+  // surname-matched scorers when there's no live lineup (simulated games).
   const rosterMap = useMemo(() => {
     const build = (name: string, sideKey: 'home' | 'away') => {
+      const live = lineup.filter((p) => p.team === sideKey);
+      if (live.length) {
+        return live.map((p) => ({ num: p.num, scored: p.scored }));
+      }
       const team = getTeamByName(name);
       const squad = team ? ROSTERS[team.slug] ?? [] : [];
       const goals = scorers.filter((s) => s.team === sideKey);
       return squad.map((p) => ({
         num: p.n,
-        name: p.name,
         scored: goals.some((g) => {
           const last = fold(g.name).split(' ').pop() ?? '';
           return last.length > 2 && fold(p.name).includes(last);
@@ -40,22 +44,23 @@ export function GameIdentity({ matchId, home, away }: {
       }));
     };
     return { [home]: build(home, 'home'), [away]: build(away, 'away') };
-  }, [home, away, scorers]);
+  }, [home, away, scorers, lineup]);
 
   // Draws: which of the two identities is on stage.
   const [side, setSide] = useState<'home' | 'away'>('home');
 
-  // Crest render size tracks the card's real width (~53%, the 384-in-720
-  // proportion), snapped to multiples of 32 so each logo pixel is a whole
-  // number of px — the grid pitch derives from it and never warps.
+  // Crest render size tracks the card's real width (~72% so the logo fills
+  // the grid and the stat detail is legible), snapped to multiples of 32 so
+  // each logo pixel is a whole number of px — the grid pitch derives from it
+  // and never warps.
   const wrapRef = useRef<HTMLElement>(null);
-  const [crestSize, setCrestSize] = useState(384);
+  const [crestSize, setCrestSize] = useState(512);
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
     const ro = new ResizeObserver((entries) => {
       const w = entries[0].contentRect.width;
-      setCrestSize(Math.max(160, Math.min(384, Math.round((w * 0.533) / 32) * 32)));
+      setCrestSize(Math.max(224, Math.min(640, Math.round((w * 0.72) / 32) * 32)));
     });
     ro.observe(el);
     return () => ro.disconnect();

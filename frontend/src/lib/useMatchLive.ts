@@ -33,6 +33,9 @@ interface LivePayload {
   events: MatchEvent[];
   /** Real goal scorers (live source only): side + player name + minute. */
   scorers?: { team: 'home' | 'away'; name: string; minute: number }[];
+  /** Players who actually played (live source only): side + shirt number +
+   *  scored flag — feeds the ASCII number layer on the crest. */
+  lineup?: { team: 'home' | 'away'; num: number | null; scored: boolean }[];
 }
 
 /** Interpolate a final stat line to the playhead: counts accumulate with the
@@ -166,6 +169,7 @@ export function useMatchLive(matchId: string) {
     frozen,
     source: payload?.source ?? null,
     scorers: payload?.scorers ?? [],
+    lineup: payload?.lineup ?? [],
     replay: () => setRunId((n) => n + 1),
   };
 }

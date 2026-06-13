@@ -43,6 +43,9 @@ interface LivePayload {
   events: MatchEvent[];
   /** Real goal scorers (live source only): side + player name + minute. */
   scorers?: { team: 'home' | 'away'; name: string; minute: number }[];
+  /** Players who actually took the field (started or subbed in), with shirt
+   *  number + a scored flag — drives the ASCII number layer on the crest. */
+  lineup?: { team: 'home' | 'away'; num: number | null; scored: boolean }[];
 }
 
 export interface TeamStatLine {
@@ -270,6 +273,28 @@ async function fetchLive(id: string): Promise<LivePayload | null> {
     }
     events.sort((a, b) => a.minute - b.minute);
 
+    // 4. lineup: who actually played (starters + subs who came on), per side,
+    //    with shirt number + a scored flag (matched by surname to the goals).
+    const lineup: { team: 'home' | 'away'; num: number | null; scored: boolean }[] = [];
+    for (const teamRoster of sum.rosters || []) {
+      const tName = teamRoster.team?.displayName || '';
+      const side: 'home' | 'away' | null = sameName(tName, match.h) ? 'home'
+        : sameName(tName, match.a) ? 'away' : null;
+      if (!side) continue;
+      const goals = scorers.filter((s) => s.team === side);
+      for (const p of teamRoster.roster || []) {
+        const subbedIn = p.subbedIn && typeof p.subbedIn === 'object' && p.subbedIn.didSub;
+        if (!p.starter && !subbedIn) continue; // didn't play
+        const who = p.athlete?.displayName || '';
+        const scored = goals.some((g) => {
+          const gl = norm(g.name).split(/\s+/).pop() || '';
+          return gl.length > 2 && norm(who).includes(gl);
+        });
+        const jersey = p.jersey != null && p.jersey !== '' ? Number(p.jersey) : null;
+        lineup.push({ team: side, num: Number.isFinite(jersey as number) ? (jersey as number) : null, scored });
+      }
+    }
+
     const state = comp.status?.type?.state; // 'pre' | 'in' | 'post'
     const status = state === 'post' ? 'FINISHED' : state === 'in' ? 'LIVE' : 'SCHEDULED';
     const liveMinute = status === 'LIVE' ? clockToMinute(comp.status?.displayClock) : 90;
@@ -292,6 +317,7 @@ async function fetchLive(id: string): Promise<LivePayload | null> {
       teamStats: { home, away },
       events,
       scorers,
+      lineup,
     };
   } catch {
     return null;

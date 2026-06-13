@@ -28,9 +28,9 @@ interface MotifCrestProps {
   /** Per-crest stat line for the 'stats' motif: glyph counts equal these real
    *  numbers (2 goals → exactly 2 balls) instead of the global engine feed. */
   stats?: Record<string, number>;
-  /** ASCII roster layer for the 'stats' motif: number + name per player,
-   *  scorers rendered bright. */
-  roster?: Array<{ num: number | null; name: string; scored?: boolean }>;
+  /** ASCII number layer for the 'stats' motif: shirt number per player who
+   *  played, scorers rendered wider + bright. */
+  roster?: Array<{ num: number | null; scored?: boolean }>;
   className?: string;
 }
 

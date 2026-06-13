@@ -805,12 +805,23 @@ import { ROSTERS } from '../../data/rosters';
         // No background — only logo pixels
         const aSeed = fillSeed + (animate ? Math.floor(t * 0.25) : 0);
 
+        // --- REVEAL: on the first ~1.6s of animation, the final logo assembles
+        // top-to-bottom behind a glowing wavefront, then settles. Drives the
+        // "final-whistle reveal". Non-animated paints land fully revealed. ---
+        const ease = (x) => 1 - Math.pow(1 - x, 3);
+        const wantReveal = animate && (opts.reveal === true || (opts.roster && opts.roster.length));
+        const reveal = wantReveal ? ease(Math.min(1, t / 1.6)) : 1;
+        const frontier = reveal * (GRID + 3);              // rows lit so far (top→down)
+        const isRevealed = (row) => row < frontier;
+        const flashAt = (row) => { const d = frontier - row; return (d >= 0 && d < 2.4) ? (1 - d / 2.4) : 0; };
+
         // Grass mowing stripes — two greens with random per-cell shade variation
         const grassA = [58,157,78], grassB = [50,144,68];
         // raised-cell bevel like Minesweeper but green
         for (let pid = 1; pid <= GRID * GRID; pid++) {
             if (!set.has(pid)) continue;
             const idx = pid - 1, col = idx % GRID, row = Math.floor(idx / GRID);
+            if (!isRevealed(row)) continue; // hasn't assembled yet
             const x = col * cell, y = row * cell;
             // mowing stripe pattern (alternating bands)
             const band = (Math.floor(col / 2) % 2) === 0;
@@ -831,6 +842,9 @@ import { ROSTERS } from '../../data/rosters';
             ctx.fillStyle = `rgba(0,0,0,${(bevel + 0.06).toFixed(2)})`;
             ctx.fillRect(x, y + cell - Math.max(1, cell * 0.1), cell, Math.max(1, cell * 0.1));
             ctx.fillRect(x + cell - Math.max(1, cell * 0.1), y, Math.max(1, cell * 0.1), cell);
+            // glowing wavefront just behind the reveal edge
+            const fl = flashAt(row);
+            if (fl > 0) { ctx.fillStyle = `rgba(210,255,224,${(fl * 0.7).toFixed(3)})`; ctx.fillRect(x, y, cell, cell); }
         }
 
         // Match element per cell (like Sweep's mines/numbers/flags but soccer)
@@ -910,6 +924,7 @@ import { ROSTERS } from '../../data/rosters';
             // so the glyph counts on the crest ARE the final box score
             const stat = assigned.get(idx);
             if (!stat) continue;
+            if (!isRevealed(row - 0.6)) continue; // settles just after its tile lands
             const x = col * cell, y = row * cell, cx = x + cell/2, cy = y + cell/2;
             const wob = animate ? Math.sin(t*2 + idx*0.2) : 0;
             // shots stat → bolder white lines across the board
@@ -917,6 +932,14 @@ import { ROSTERS } from '../../data/rosters';
 
             ctx.save();
             ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            // EXAGGERATE: blow each glyph up ~30% about its cell + give the
+            // headline stats (goals, cards) a colored glow so the box score
+            // reads at a glance — 2 goals = 2 glowing balls.
+            ctx.translate(cx, cy); ctx.scale(1.32, 1.32); ctx.translate(-cx, -cy);
+            if (stat === 'goals') { ctx.shadowColor = 'rgba(225,6,0,0.95)'; ctx.shadowBlur = cell * 0.55; }
+            else if (stat === 'cardR') { ctx.shadowColor = 'rgba(225,6,0,0.8)'; ctx.shadowBlur = cell * 0.45; }
+            else if (stat === 'cardY') { ctx.shadowColor = 'rgba(245,216,0,0.7)'; ctx.shadowBlur = cell * 0.4; }
+            else { ctx.shadowColor = 'rgba(255,255,255,0.45)'; ctx.shadowBlur = cell * 0.18; }
 
             if (stat === 'corners') {
                 // Corner flag — pole + triangular flag on grass
@@ -1061,6 +1084,7 @@ import { ROSTERS } from '../../data/rosters';
         ctx.strokeStyle = 'rgba(255,255,255,0.9)';
         ctx.lineWidth = Math.max(1, cell * 0.08);
         for (let row = 0; row < GRID; row++) {
+            if (!isRevealed(row)) continue;
             for (let col = 0; col < GRID; col++) {
                 if (!has(col, row)) continue;
                 const x = col * cell, y = row * cell;
@@ -1071,38 +1095,55 @@ import { ROSTERS } from '../../data/rosters';
             }
         }
 
-        // --- ASCII roster layer (internet treatment, on top of everything):
-        // the squad that played this game streams across the identity, one
-        // character per logo pixel — "12 ACEVEDO · 9 JIMENEZ · …". Players who
-        // scored burn bright; the rest are a faint transmission.
+        // --- ASCII number layer (internet treatment, on top of everything):
+        // the shirt numbers of everyone who played this game stream across the
+        // identity, one character per logo pixel — "16 · 13 · 4 · …". A
+        // scorer's number runs WIDER and burns bright; the rest are a steady
+        // green transmission, so the readout reads as live match data. ---
         const roster = opts.roster;
         if (roster && roster.length) {
+            // token stream: digits of each number, then a separator dot
             const stream = [];
             for (const p of roster) {
-                const seg = `${p.num != null ? p.num : ''} ${String(p.name || '').toUpperCase()}`.trim() + ' · ';
-                for (const chr of seg) stream.push({ ch: chr, hot: !!p.scored });
+                const digits = p.num != null ? String(p.num) : '';
+                for (const d of digits) stream.push({ ch: d, hot: !!p.scored });
+                stream.push({ ch: '·', hot: false });
+                stream.push({ ch: ' ', hot: false });
             }
             const cellsRM = [];
             for (let pid = 1; pid <= GRID * GRID; pid++) if (set.has(pid)) cellsRM.push(pid - 1);
             const scroll = animate ? Math.floor(t * 5) : 0;
-            ctx.font = `bold ${Math.round(cell * 0.6)}px "Courier New", ui-monospace, monospace`;
+            // subtle global flicker so the readout feels live
+            const flick = animate ? 0.86 + 0.14 * Math.sin(t * 6) : 1;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
+            const baseFont = Math.round(cell * 0.74);
             for (let i = 0; i < cellsRM.length; i++) {
                 const e = stream[(i + scroll) % stream.length];
                 if (!e || e.ch === ' ') continue;
                 const idx = cellsRM[i];
+                const row = Math.floor(idx / GRID);
+                if (!isRevealed(row - 1)) continue; // numbers land after the tile
                 const x = (idx % GRID) * cell + cell / 2;
-                const y = Math.floor(idx / GRID) * cell + cell / 2;
+                const y = row * cell + cell / 2;
+                ctx.save();
                 if (e.hot) {
+                    // scorer number — wider, larger, glowing white
+                    ctx.translate(x, y + cell * 0.03);
+                    ctx.scale(1.7, 1.12);
+                    ctx.font = `900 ${Math.round(cell * 0.92)}px "Courier New", ui-monospace, monospace`;
                     ctx.fillStyle = '#ffffff';
-                    ctx.shadowColor = 'rgba(255,255,255,0.95)';
-                    ctx.shadowBlur = cell * 0.45;
+                    ctx.shadowColor = 'rgba(255,255,255,0.98)';
+                    ctx.shadowBlur = cell * 0.7;
+                    ctx.fillText(e.ch, 0, 0);
                 } else {
-                    ctx.fillStyle = 'rgba(255,255,255,0.34)';
-                    ctx.shadowBlur = 0;
+                    ctx.font = `bold ${baseFont}px "Courier New", ui-monospace, monospace`;
+                    ctx.fillStyle = `rgba(225,255,235,${(0.5 * flick).toFixed(3)})`;
+                    ctx.shadowColor = 'rgba(180,255,205,0.5)';
+                    ctx.shadowBlur = cell * 0.22;
+                    ctx.fillText(e.ch, x, y + cell * 0.03);
                 }
-                ctx.fillText(e.ch, x, y + cell * 0.03);
+                ctx.restore();
             }
             ctx.shadowBlur = 0;
         }
