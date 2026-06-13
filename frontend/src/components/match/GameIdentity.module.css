@@ -102,7 +102,7 @@
   transition: color 0.12s;
 }
 
-.playBtn:hover { color: var(--bright, #fff); }
+.playBtn:hover { color: var(--team, #1d6fe0); }
 
 /* draw toggle — two small dots */
 .pairNav {
@@ -112,20 +112,28 @@
   gap: 8px;
 }
 
-.pairDot {
-  width: 12px;
-  height: 12px;
+/* draw + style toggles share one round-dot language, team-accent when active */
+.pairDot,
+.styleDot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
   box-sizing: border-box;
   background: transparent;
-  border: 1px solid var(--nav-border, #1a1a1a);
+  border: 1px solid var(--dim, #555);
   cursor: pointer;
   padding: 0;
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.12s, border-color 0.12s, transform 0.12s;
 }
-
-.pairDot:hover { border-color: #1d6fe0; }
-.pairDotOn,
-.pairDotOn:hover { background: #1d6fe0; border-color: #1d6fe0; }
+.pairDot:hover,
+.styleDot:hover { border-color: var(--team, #1d6fe0); }
+.pairDotOn, .pairDotOn:hover,
+.styleDotOn, .styleDotOn:hover {
+  background: var(--team, #1d6fe0);
+  border-color: var(--team, #1d6fe0);
+  transform: scale(1.2);
+}
 
 /* variation slider — minimal text pills, horizontally scrollable */
 .variants {
@@ -160,8 +168,8 @@
 .variant:hover { color: var(--bright, #fff); }
 .variantOn,
 .variantOn:hover {
-  color: #6db4ff;
-  border-bottom-color: #1d6fe0;
+  color: var(--team, #1d6fe0);
+  border-bottom-color: var(--team, #1d6fe0);
 }
 
 /* style treatments as little swipeable dots (no labels) */
@@ -176,25 +184,6 @@
 }
 .styleDots::-webkit-scrollbar { display: none; }
 
-.styleDot {
-  flex-shrink: 0;
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  box-sizing: border-box;
-  background: transparent;
-  border: 1px solid var(--dim, #555);
-  cursor: pointer;
-  padding: 0;
-  transition: background 0.12s, border-color 0.12s, transform 0.12s;
-}
-.styleDot:hover { border-color: var(--bright, #fff); }
-.styleDotOn,
-.styleDotOn:hover {
-  background: var(--bright, #fff);
-  border-color: var(--bright, #fff);
-  transform: scale(1.2);
-}
 
 @media (max-width: 560px) {
   .frame { margin-top: 34px; }

@@ -174,7 +174,7 @@ export function GameIdentity({ matchId, home, away, venue }: {
       </div>
 
       {/* controls live OUTSIDE the grid: play/pause, draw toggle, variations */}
-      <div className={styles.controls}>
+      <div className={styles.controls} style={{ '--team': accent } as CSSProperties}>
         <button
           type="button"
           className={styles.playBtn}
