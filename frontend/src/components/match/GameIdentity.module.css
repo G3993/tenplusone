@@ -1,33 +1,35 @@
 /* Game Identity — the final-whistle reveal: the match result rendered as the
    winner's stat-driven crest, framed and centered above the closet. */
 
-/* 3D cube container framed in the shown team's color, the grid inside it */
+/* 3D cube container — the site's container geometry exactly (1px border, 8px
+   isometric extrusion, scanline faces), tinted to the shown team's color */
 .frame {
   --team: #1d6fe0;
-  --d: 10px;
+  --d: 8px;
   width: 100%;
   /* sized to the viewport: the square + the controls below fit above the fold */
   max-width: min(720px, calc(100dvh - var(--nav-h, 74px) - 250px));
   margin: 36px auto 0;
   box-sizing: border-box;
-  border: 4px solid var(--team);
+  border: 1px solid var(--team);
   background: #000000;
   position: relative;
-  box-shadow: 0 0 26px color-mix(in srgb, var(--team) 32%, transparent);
+  isolation: isolate;
 }
-/* isometric top + right faces in a darker shade of the team color */
 .frame::before,
 .frame::after {
   content: '';
   position: absolute;
   box-sizing: border-box;
-  background: color-mix(in srgb, var(--team) 48%, #000);
-  border: 1px solid color-mix(in srgb, var(--team) 70%, #000);
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    color-mix(in srgb, var(--team) 42%, #000);
+  border: 1px solid var(--team);
 }
 .frame::before {
   left: -1px;
   right: -1px;
-  top: calc(-1 * var(--d) - 4px);
+  top: calc(-1 * var(--d) - 1px);
   height: var(--d);
   transform: skewX(-45deg);
   transform-origin: 0 100%;
@@ -35,7 +37,7 @@
 .frame::after {
   top: -1px;
   bottom: -1px;
-  right: calc(-1 * var(--d) - 4px);
+  right: calc(-1 * var(--d) - 1px);
   width: var(--d);
   transform: skewY(-45deg);
   transform-origin: 0 0;
