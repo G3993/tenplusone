@@ -1,17 +1,44 @@
 /* Game Identity — the final-whistle reveal: the match result rendered as the
    winner's stat-driven crest, framed and centered above the closet. */
 
-/* the thick blue frame is ON the grid square (inside, around the grid) */
+/* 3D cube container framed in the shown team's color, the grid inside it */
 .frame {
+  --team: #1d6fe0;
+  --d: 10px;
   width: 100%;
   /* sized to the viewport: the square + the controls below fit above the fold */
   max-width: min(720px, calc(100dvh - var(--nav-h, 74px) - 250px));
   margin: 36px auto 0;
   box-sizing: border-box;
-  border: 6px solid #1d6fe0;
-  box-shadow: 0 0 22px rgba(29, 111, 224, 0.32), inset 0 0 0 1px rgba(120, 180, 255, 0.4);
+  border: 4px solid var(--team);
   background: #000000;
   position: relative;
+  box-shadow: 0 0 26px color-mix(in srgb, var(--team) 32%, transparent);
+}
+/* isometric top + right faces in a darker shade of the team color */
+.frame::before,
+.frame::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--team) 48%, #000);
+  border: 1px solid color-mix(in srgb, var(--team) 70%, #000);
+}
+.frame::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 4px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+.frame::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 4px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
 }
 
 /* stadium / location nameplate, faint, along the bottom of the frame */
@@ -135,6 +162,38 @@
 .variantOn:hover {
   color: #6db4ff;
   border-bottom-color: #1d6fe0;
+}
+
+/* style treatments as little swipeable dots (no labels) */
+.styleDots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  justify-content: flex-end;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.styleDots::-webkit-scrollbar { display: none; }
+
+.styleDot {
+  flex-shrink: 0;
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  box-sizing: border-box;
+  background: transparent;
+  border: 1px solid var(--dim, #555);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.12s, border-color 0.12s, transform 0.12s;
+}
+.styleDot:hover { border-color: var(--bright, #fff); }
+.styleDotOn,
+.styleDotOn:hover {
+  background: var(--bright, #fff);
+  border-color: var(--bright, #fff);
+  transform: scale(1.2);
 }
 
 @media (max-width: 560px) {

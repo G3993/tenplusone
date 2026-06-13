@@ -1,7 +1,7 @@
-import { useMemo, useState, useEffect, useRef, type CSSProperties } from 'react';
+import { useMemo, useState, useEffect, useRef, type CSSProperties, type TouchEvent as ReactTouchEvent } from 'react';
 import { Link } from 'react-router';
 import { useMatchLive } from '../../lib/useMatchLive';
-import { getTeamByName } from '../../data/teams';
+import { getTeamByName, teamAccent } from '../../data/teams';
 import { getLogoPixels } from '../../data/team-logos/index.ts';
 import { ROSTERS } from '../../data/rosters';
 import { MotifCrest } from '../logos/MotifCrest';
@@ -70,8 +70,18 @@ export function GameIdentity({ matchId, home, away, venue }: {
   // play to run the assemble reveal + live readout animation.
   const [playing, setPlaying] = useState(false);
   // which style treatment the identity is rendered in
-  const [variant, setVariant] = useState('stats');
-  const variantMotif = (VARIANTS.find((v) => v.key === variant) ?? VARIANTS[0]).motif;
+  const [variantIdx, setVariantIdx] = useState(0);
+  const variantMotif = VARIANTS[variantIdx].motif;
+  const stepVariant = (d: number) => setVariantIdx((i) => (i + d + VARIANTS.length) % VARIANTS.length);
+  // swipe across the container to flip styles
+  const touchX = useRef<number | null>(null);
+  const onTouchStart = (e: ReactTouchEvent) => { touchX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: ReactTouchEvent) => {
+    if (touchX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    if (dx <= -40) stepVariant(1); else if (dx >= 40) stepVariant(-1);
+    touchX.current = null;
+  };
   // where the stats live relative to the logo
   const [placement, setPlacement] = useState<'inside' | 'outside' | 'both'>('inside');
 
@@ -125,11 +135,21 @@ export function GameIdentity({ matchId, home, away, venue }: {
 
   const shown = winnerName ?? (side === 'home' ? home : away);
   const cell = crestSize / 32;
+  const shownTeam = getTeamByName(shown);
+  const accent = shownTeam ? teamAccent(shownTeam) : '#1d6fe0';
 
   return (
     <>
-      {/* the game identity, framed, on its blueprint grid */}
-      <div ref={wrapRef} className={styles.frame} aria-label="game identity">
+      {/* 3D cube container, framed in the shown team's color, the identity
+          grid living inside it */}
+      <div
+        ref={wrapRef}
+        className={styles.frame}
+        aria-label="game identity"
+        style={{ '--team': accent } as CSSProperties}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         <div className={styles.stage} style={{ '--cell': `${cell}px` } as CSSProperties}>
           {renderCrest(shown, crestSize)}
         </div>
@@ -190,19 +210,18 @@ export function GameIdentity({ matchId, home, away, venue }: {
           ))}
         </div>
 
-        {/* variation slider — the same match stats in every logo style */}
-        <div className={styles.variants} role="tablist" aria-label="identity style">
-          {VARIANTS.map((v) => (
+        {/* style dots — swipe the container or tap a dot to flip treatments */}
+        <div className={styles.styleDots} role="tablist" aria-label="identity style">
+          {VARIANTS.map((v, i) => (
             <button
               key={v.key}
               type="button"
               role="tab"
-              aria-selected={variant === v.key}
-              className={`${styles.variant} ${variant === v.key ? styles.variantOn : ''}`}
-              onClick={() => setVariant(v.key)}
-            >
-              {v.label}
-            </button>
+              aria-selected={variantIdx === i}
+              aria-label={v.label}
+              className={`${styles.styleDot} ${variantIdx === i ? styles.styleDotOn : ''}`}
+              onClick={() => setVariantIdx(i)}
+            />
           ))}
         </div>
       </div>
