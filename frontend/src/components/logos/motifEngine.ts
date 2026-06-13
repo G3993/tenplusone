@@ -1011,52 +1011,49 @@ import { ROSTERS } from '../../data/rosters';
         return { assigned, used };
     }
 
-    // The streaming ASCII shirt-number readout (scorers excluded — they appear
-    // once as hero tokens). Skips any cell already holding a glyph/token.
+    // Each player who played gets their shirt number ONCE — no repeats, no
+    // streaming. Only the XI + the subs who came on (roster IS the lineup);
+    // scorers are already placed as bright hero tokens, so they're skipped.
     function drawAsciiNumbers(ctx, pixels, opts, assigned, used){
         const cell = opts.cell || 16;
         const roster = opts.roster;
         if (!roster || !roster.length) return;
         const set = new Set(pixels);
         const t = opts.time||0, animate=!!opts.animate;
+        const aSeed = fillSeed + (animate?Math.floor(t*0.25):0);
         const reveal = statReveal(opts);
         const frontier = reveal*(GRID+3);
-        // stream the STARTING XI shirt numbers (scorers shown once as tokens);
-        // p.starter===false drops subs, undefined (sim fallback) keeps all
-        const stream = [];
-        for (const p of roster){
-            if (p.scored || p.starter === false) continue;
-            const digits = p.num!=null?String(p.num):'';
-            for (const d of digits) stream.push(d);
-            stream.push('·'); stream.push(' ');
-        }
-        if (!stream.length) { stream.push('·'); stream.push(' '); }
         const placement = opts.statPlacement || 'inside';
         const wants = (pid) => { const inside = set.has(pid); return placement==='outside' ? !inside : placement==='both' ? true : inside; };
-        const cells = [];
-        for (let pid=1; pid<=GRID*GRID; pid++) if (wants(pid)) cells.push(pid-1);
-        const scroll = animate?Math.floor(t*5):0;
-        const flick = animate?0.86 + 0.14*Math.sin(t*6):1;
+        // candidate cells (free of glyphs/tokens), spread deterministically
+        const cand = [];
+        for (let pid=1; pid<=GRID*GRID; pid++){ if (!wants(pid)) continue; const idx=pid-1; if (assigned.has(idx) || used.has(idx)) continue; cand.push(idx); }
+        cand.sort((a,b)=> (pseed(a,aSeed+211)%99991) - (pseed(b,aSeed+211)%99991));
+        const taken = new Set();
         ctx.textAlign='center'; ctx.textBaseline='middle';
-        const baseFont = Math.round(cell*0.74);
-        for (let i=0;i<cells.length;i++){
-            const idx = cells[i];
-            if (assigned.has(idx) || used.has(idx)) continue;
-            const ch = stream[(i+scroll)%stream.length];
-            if (!ch || ch===' ') continue;
-            const row = Math.floor(idx/GRID);
-            if (!(row < frontier - 1)) continue;
-            // outside numbers read fainter so the logo stays the hero
-            const inside = set.has(row*GRID + (idx%GRID) + 1);
-            const alpha = (inside ? 0.5 : 0.32) * flick;
-            const x = (idx%GRID)*cell + cell/2;
-            const y = row*cell + cell/2;
-            ctx.save();
-            ctx.font = `bold ${baseFont}px "Courier New", ui-monospace, monospace`;
-            ctx.fillStyle = `rgba(225,255,235,${alpha.toFixed(3)})`;
-            ctx.shadowColor = 'rgba(180,255,205,0.45)'; ctx.shadowBlur = cell*0.2;
-            ctx.fillText(ch, x, y + cell*0.03);
-            ctx.restore();
+        const font = `bold ${Math.round(cell*0.72)}px "Courier New", ui-monospace, monospace`;
+        let ci = 0;
+        for (const p of roster){
+            if (p.scored || p.num==null) continue; // scorers shown as hero tokens
+            const digits = String(p.num); const dbl = digits.length>1;
+            for (let scan=0; scan<cand.length; scan++){
+                const idx = cand[(ci+scan)%cand.length];
+                if (taken.has(idx)) continue;
+                const col=idx%GRID, row=Math.floor(idx/GRID);
+                if (!(row < frontier - 1)) continue;
+                if (dbl){ if (col+1>=GRID) continue; const r2=row*GRID+(col+1); if (assigned.has(r2)||used.has(r2)||taken.has(r2)) continue; }
+                const inside = set.has(idx+1);
+                const x=col*cell, y=row*cell;
+                ctx.save();
+                ctx.font = font;
+                ctx.fillStyle = `rgba(230,255,238,${inside?0.62:0.42})`;
+                ctx.shadowColor = 'rgba(180,255,205,0.4)'; ctx.shadowBlur = cell*0.18;
+                for (let di=0; di<digits.length; di++) ctx.fillText(digits[di], x+di*cell+cell/2, y+cell/2+cell*0.03);
+                ctx.restore();
+                taken.add(idx); if (dbl) taken.add(row*GRID+col+1);
+                ci += 7;
+                break;
+            }
         }
         ctx.shadowBlur = 0;
     }

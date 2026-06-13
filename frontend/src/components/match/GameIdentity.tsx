@@ -5,7 +5,9 @@ import { getTeamByName, teamAccent } from '../../data/teams';
 import { getLogoPixels } from '../../data/team-logos/index.ts';
 import { ROSTERS } from '../../data/rosters';
 import { MotifCrest } from '../logos/MotifCrest';
+import { setMotif, setMotifDark, setMotifShape, setMotifSeed, renderMotif } from '../logos/motifEngine';
 import { teamSeed } from '../logos/spectrumMotif';
+import { IdentityMerch } from './IdentityMerch';
 import styles from './GameIdentity.module.css';
 
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -138,6 +140,21 @@ export function GameIdentity({ matchId, home, away, venue }: {
   const shownTeam = getTeamByName(shown);
   const accent = shownTeam ? teamAccent(shownTeam) : '#1d6fe0';
 
+  // Capture the EXACT identity on screen (style + placement + box score) to a
+  // print canvas — the bridge from "the result formed" to "buy the 1-of-1".
+  const captureIdentity = (cv: HTMLCanvasElement, capCell: number) => {
+    if (!shownTeam) return;
+    const line = teams ? (shown === home ? teams.home : teams.away) : undefined;
+    const enginePixels = getLogoPixels(shownTeam.slug, shownTeam.name[0]).map((v) => v + 1);
+    setMotif(variantMotif); setMotifDark(true); setMotifShape('square'); setMotifSeed(teamSeed(shownTeam.slug));
+    renderMotif(cv, enginePixels, {
+      cell: capCell, applyFill: true, teamId: shownTeam.slug, animate: false, forExport: true,
+      bg: 'rgba(0,0,0,0)', off: 'rgba(0,0,0,0)',
+      stats: line, roster: rosterMap[shown], statsOverlay: true, statPlacement: placement,
+    });
+  };
+  const merchTitle = `${getTeamByName(home)?.code ?? home} ${stats.homeGoals}–${stats.awayGoals} ${getTeamByName(away)?.code ?? away} · ${shown} identity`;
+
   return (
     <>
       {/* 3D cube container, framed in the shown team's color, the identity
@@ -225,6 +242,8 @@ export function GameIdentity({ matchId, home, away, venue }: {
           ))}
         </div>
       </div>
+
+      <IdentityMerch title={merchTitle} accent={accent} capture={captureIdentity} />
     </>
   );
 }

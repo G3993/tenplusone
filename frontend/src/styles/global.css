@@ -85,3 +85,53 @@ button:focus-visible {
 }
 
 .toast.on { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ── Game-identity merch (claim 1-of-1) ─────────────────────────────── */
+.gi-claim {
+  display: block;
+  margin: 14px auto 0;
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #04100a;
+  background: var(--team, #1d6fe0);
+  border: none;
+  padding: 13px 30px;
+  cursor: pointer;
+  transition: filter 0.12s, transform 0.12s;
+}
+.gi-claim:hover { filter: brightness(1.12); transform: translateY(-1px); }
+
+.gi-merch-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,0.82);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.gi-merch {
+  width: 100%; max-width: 760px; max-height: 92vh; overflow-y: auto;
+  background: #050505; border: 1px solid var(--team, #1d6fe0);
+  box-shadow: 0 0 40px color-mix(in srgb, var(--team, #1d6fe0) 35%, transparent);
+  padding: 22px;
+  font-family: var(--font);
+}
+.gi-merch-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.gi-merch-title { font-size: 22px; color: var(--bright, #fff); text-transform: uppercase; letter-spacing: 0.04em; }
+.gi-merch-x { font-size: 30px; line-height: 1; color: var(--dim, #888); background: none; border: none; cursor: pointer; }
+.gi-merch-x:hover { color: #fff; }
+.gi-merch-sub { font-size: 16px; color: var(--dim, #888); margin: 4px 0 16px; }
+.gi-merch-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.gi-merch-grid figure { margin: 0; text-align: center; }
+.gi-merch-grid canvas { width: 100%; height: auto; aspect-ratio: 1/1; background: #0b0b0b; border: 1px solid var(--hairline, #1a1a1a); display: block; }
+.gi-merch-grid .gi-merch-art { background: #000; }
+.gi-merch-grid figcaption { font-size: 15px; color: var(--dim, #888); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 6px; }
+.gi-merch-buy {
+  display: block; width: 100%; margin-top: 18px;
+  font-family: var(--display); font-size: 24px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #04100a; background: var(--team, #1d6fe0); border: none; padding: 15px; cursor: pointer;
+}
+.gi-merch-buy:disabled { opacity: 0.6; cursor: default; }
+.gi-merch-msg { font-size: 16px; color: color-mix(in srgb, var(--team,#1d6fe0) 70%, #fff); text-align: center; margin: 12px 0 0; }
+@media (max-width: 560px) { .gi-merch-grid { grid-template-columns: 1fr; } }
