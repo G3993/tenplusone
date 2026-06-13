@@ -49,6 +49,10 @@ export function GameIdentity({ matchId, home, away }: {
   // Draws: which of the two identities is on stage.
   const [side, setSide] = useState<'home' | 'away'>('home');
 
+  // Paused by default so the logo + every stat sit in one readable frame;
+  // play to run the assemble reveal + live readout animation.
+  const [playing, setPlaying] = useState(false);
+
   // Crest render size tracks the card's real width (~72% so the logo fills
   // the grid and the stat detail is legible), snapped to multiples of 32 so
   // each logo pixel is a whole number of px — the grid pitch derives from it
@@ -87,6 +91,7 @@ export function GameIdentity({ matchId, home, away }: {
           seed={teamSeed(team.slug)}
           pixels={getLogoPixels(team.slug, team.name[0])}
           size={size}
+          still={!playing}
           stats={line as unknown as Record<string, number>}
           roster={rosterMap[name]}
         />
@@ -99,6 +104,25 @@ export function GameIdentity({ matchId, home, away }: {
 
   return (
     <section ref={wrapRef} className={styles.wrap} aria-label="game identity">
+      <button
+        type="button"
+        className={styles.playBtn}
+        onClick={() => setPlaying((p) => !p)}
+        aria-label={playing ? 'pause animation' : 'play animation'}
+        aria-pressed={playing}
+      >
+        {playing ? (
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <rect x="6" y="5" width="4" height="14" fill="currentColor" />
+            <rect x="14" y="5" width="4" height="14" fill="currentColor" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path d="M7 5l12 7-12 7z" fill="currentColor" />
+          </svg>
+        )}
+      </button>
+
       {/* the game identity, alone on its blueprint grid */}
       <div className={styles.stage} style={{ '--cell': `${cell}px` } as CSSProperties}>
         {renderCrest(shown, crestSize)}

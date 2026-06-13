@@ -69,6 +69,32 @@
   text-decoration: none;
 }
 
+/* play / pause — small control in the card's top-right corner */
+.playBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  color: #cfe4ff;
+  background: rgba(8, 14, 26, 0.72);
+  border: 1px solid #1d6fe0;
+  border-radius: 0;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+
+.playBtn:hover {
+  color: #ffffff;
+  background: rgba(29, 111, 224, 0.9);
+  box-shadow: 0 0 12px rgba(29, 111, 224, 0.5);
+}
+
 
 /* draw slider — two pixel dots under the stage, one per identity */
 .pairNav {
