@@ -60,6 +60,7 @@ export interface TeamStatLine {
   redCards: number;
   offsides: number;
   corners: number;
+  var?: number;
 }
 
 /** Deterministic PRNG so a given match id always simulates the same game. */
@@ -272,6 +273,14 @@ async function fetchLive(id: string): Promise<LivePayload | null> {
       }
     }
     events.sort((a, b) => a.minute - b.minute);
+
+    // VAR: did the video assistant referee get involved? (match-level count)
+    const varCount = (sum.keyEvents || []).filter((k: any) => {
+      const txt = `${k.type?.text || ''} ${k.text || ''}`.toLowerCase();
+      return txt.includes('var') || txt.includes('video review') || txt.includes('overturn');
+    }).length;
+    home.var = varCount;
+    away.var = varCount;
 
     // 4. lineup: who actually played (starters + subs who came on), per side,
     //    with shirt number + a scored flag (matched by surname to the goals).

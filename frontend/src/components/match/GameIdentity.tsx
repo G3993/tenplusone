@@ -10,6 +10,21 @@ import styles from './GameIdentity.module.css';
 
 const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
+// Style variations of the identity — the same match box score (the stat
+// overlay) riding on every logo treatment, so each match gets a unique,
+// stat-driven mark in whichever style you pick.
+const VARIANTS: { key: string; label: string; motif: string }[] = [
+  { key: 'stats', label: 'pitch', motif: 'stats' },
+  { key: 'team3d', label: '3d neon', motif: 'team3d' },
+  { key: 'chrome', label: 'chrome', motif: 'chrome' },
+  { key: 'lines', label: 'lines', motif: 'lines' },
+  { key: 'mesh', label: 'nets', motif: 'mesh' },
+  { key: 'pattern', label: 'pattern', motif: 'pattern' },
+  { key: 'abstract', label: 'abstract', motif: 'abstract' },
+  { key: 'internet', label: 'internet', motif: 'internet' },
+  { key: 'solid', label: 'b&w', motif: 'solid' },
+];
+
 /** The match result as art: once the game is FINISHED, reveal the Game
  *  Identity — the winner's crest rendered through the stats motif, animating
  *  with the real final numbers (the engine is fed by MatchStatsPanel on the
@@ -52,12 +67,15 @@ export function GameIdentity({ matchId, home, away }: {
   // Paused by default so the logo + every stat sit in one readable frame;
   // play to run the assemble reveal + live readout animation.
   const [playing, setPlaying] = useState(false);
+  // which style treatment the identity is rendered in
+  const [variant, setVariant] = useState('stats');
+  const variantMotif = (VARIANTS.find((v) => v.key === variant) ?? VARIANTS[0]).motif;
 
   // Crest render size tracks the card's real width (~72% so the logo fills
   // the grid and the stat detail is legible), snapped to multiples of 32 so
   // each logo pixel is a whole number of px — the grid pitch derives from it
   // and never warps.
-  const wrapRef = useRef<HTMLElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const [crestSize, setCrestSize] = useState(512);
   useEffect(() => {
     const el = wrapRef.current;
@@ -86,7 +104,8 @@ export function GameIdentity({ matchId, home, away }: {
     return (
       <Link to={`/team/${team.slug}`} className={styles.crestLink} aria-label={name}>
         <MotifCrest
-          motif="stats"
+          motif={variantMotif as never}
+          statsOverlay
           teamId={team.slug}
           seed={teamSeed(team.slug)}
           pixels={getLogoPixels(team.slug, team.name[0])}
@@ -103,47 +122,68 @@ export function GameIdentity({ matchId, home, away }: {
   const cell = crestSize / 32;
 
   return (
-    <section ref={wrapRef} className={styles.wrap} aria-label="game identity">
-      <button
-        type="button"
-        className={styles.playBtn}
-        onClick={() => setPlaying((p) => !p)}
-        aria-label={playing ? 'pause animation' : 'play animation'}
-        aria-pressed={playing}
-      >
-        {playing ? (
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-            <rect x="6" y="5" width="4" height="14" fill="currentColor" />
-            <rect x="14" y="5" width="4" height="14" fill="currentColor" />
-          </svg>
-        ) : (
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-            <path d="M7 5l12 7-12 7z" fill="currentColor" />
-          </svg>
-        )}
-      </button>
-
-      {/* the game identity, alone on its blueprint grid */}
-      <div className={styles.stage} style={{ '--cell': `${cell}px` } as CSSProperties}>
-        {renderCrest(shown, crestSize)}
+    <>
+      {/* the game identity, framed, on its blueprint grid */}
+      <div ref={wrapRef} className={styles.frame} aria-label="game identity">
+        <div className={styles.stage} style={{ '--cell': `${cell}px` } as CSSProperties}>
+          {renderCrest(shown, crestSize)}
+        </div>
       </div>
 
-      {/* draw: both teams produced an identity — slide between them */}
-      {!winnerName && (
-        <div className={styles.pairNav} role="tablist" aria-label="draw — both identities">
-          {([['home', home], ['away', away]] as const).map(([s, name]) => (
+      {/* controls live OUTSIDE the grid: play/pause, draw toggle, variations */}
+      <div className={styles.controls}>
+        <button
+          type="button"
+          className={styles.playBtn}
+          onClick={() => setPlaying((p) => !p)}
+          aria-label={playing ? 'pause animation' : 'play animation'}
+          aria-pressed={playing}
+        >
+          {playing ? (
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <rect x="6" y="5" width="4" height="14" fill="currentColor" />
+              <rect x="14" y="5" width="4" height="14" fill="currentColor" />
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path d="M7 5l12 7-12 7z" fill="currentColor" />
+            </svg>
+          )}
+        </button>
+
+        {/* draw: flip between both teams' identities */}
+        {!winnerName && (
+          <div className={styles.pairNav} role="tablist" aria-label="draw — both identities">
+            {([['home', home], ['away', away]] as const).map(([s, name]) => (
+              <button
+                key={s}
+                type="button"
+                role="tab"
+                aria-selected={side === s}
+                aria-label={name}
+                className={`${styles.pairDot} ${side === s ? styles.pairDotOn : ''}`}
+                onClick={() => setSide(s)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* variation slider — the same match stats in every logo style */}
+        <div className={styles.variants} role="tablist" aria-label="identity style">
+          {VARIANTS.map((v) => (
             <button
-              key={s}
+              key={v.key}
               type="button"
               role="tab"
-              aria-selected={side === s}
-              aria-label={name}
-              className={`${styles.pairDot} ${side === s ? styles.pairDotOn : ''}`}
-              onClick={() => setSide(s)}
-            />
+              aria-selected={variant === v.key}
+              className={`${styles.variant} ${variant === v.key ? styles.variantOn : ''}`}
+              onClick={() => setVariant(v.key)}
+            >
+              {v.label}
+            </button>
           ))}
         </div>
-      )}
-    </section>
+      </div>
+    </>
   );
 }

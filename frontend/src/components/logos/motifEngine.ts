@@ -790,6 +790,269 @@ import { ROSTERS } from '../../data/rosters';
 
 
     // ----- Stats renderer: merged shape mosaic + match-stat symbols -----
+    // ---------------------------------------------------------------------
+    // STAT OVERLAY — the glyph + scorer-token + ASCII-number layers, factored
+    // out so the same "what happened in this game" overlay can ride on top of
+    // ANY logo style (3D neon, lines, chrome, …), not just the green pitch.
+    // ---------------------------------------------------------------------
+    function statReveal(opts){
+        const t = opts.time||0, animate=!!opts.animate;
+        const want = animate && (opts.reveal===true || (opts.roster && opts.roster.length));
+        const ez = (x)=> 1 - Math.pow(1-x,3);
+        return want ? ez(Math.min(1, t/1.6)) : 1;
+    }
+
+    // Deal one glyph per real unit of the box score, place each scorer's number
+    // ONCE as a bright hero token, draw the glyphs. Returns the consumed cells.
+    function drawStatGlyphs(ctx, pixels, opts){
+        const cell = opts.cell || 16;
+        const set = new Set(pixels);
+        const has = (c,r)=> c>=0&&c<GRID&&r>=0&&r<GRID&&set.has(r*GRID+c+1);
+        const t = opts.time||0, animate=!!opts.animate;
+        const aSeed = fillSeed + (animate?Math.floor(t*0.25):0);
+        const reveal = statReveal(opts);
+        const frontier = reveal*(GRID+3);
+        const isRev = (row)=> row < frontier;
+        const ink = '#0f3d1c';
+        const sp2 = statParams();
+
+        const S = opts.stats || matchStats;
+        const yellowN = S.yellowCards!=null?S.yellowCards:Math.max(0,S.cards||0);
+        const redN = S.redCards||0;
+        const sot = Math.max(0, Math.round(S.shotsOnTarget!=null?S.shotsOnTarget:0));
+        const shotsTotal = Math.max(0, Math.round(S.shots||0));
+        const shotsOff = Math.max(0, shotsTotal - sot);
+        const statCounts = [
+            ['goals',      Math.max(0, Math.round(S.goals||0))],
+            ['sot',        sot],
+            ['shots',      shotsOff],
+            ['corners',    Math.max(0, Math.round(S.corners||0))],
+            ['cardY',      Math.max(0, Math.round(yellowN))],
+            ['cardR',      Math.max(0, Math.round(redN))],
+            ['offsides',   Math.max(0, Math.round(S.offsides||0))],
+            ['fouls',      Math.max(0, Math.round(S.fouls||0))],
+            ['var',        Math.max(0, Math.round(S.var||0))],
+            ['possession', Math.max(0, Math.round((S.possession||0)/10))],
+            ['passes',     Math.max(0, Math.round((S.passes||0)/50))],
+        ];
+        const statCells = [];
+        for (let pid=1; pid<=GRID*GRID; pid++) if (set.has(pid)) statCells.push(pid-1);
+        statCells.sort((a,b)=> (pseed(a,aSeed+7)%99991) - (pseed(b,aSeed+7)%99991));
+        const assigned = new Map();
+        let dealt=0;
+        for (const [type,n] of statCounts){ for(let k=0;k<n && dealt<statCells.length;k++) assigned.set(statCells[dealt++], type); }
+
+        // scorer-once hero tokens: each unique scorer number, placed once, big
+        const used = new Set();
+        const roster = opts.roster || [];
+        const scorerNums = [];
+        for (const p of roster){ if (p.scored && p.num!=null && !scorerNums.includes(p.num)) scorerNums.push(p.num); }
+        if (scorerNums.length){
+            const grass = statCells.filter((idx)=> !assigned.has(idx));
+            grass.sort((a,b)=> (pseed(a,aSeed+101)%99991) - (pseed(b,aSeed+101)%99991));
+            let gi=0;
+            for (const num of scorerNums){
+                const digits = String(num);
+                const dbl = digits.length>1;
+                for (let scan=0; scan<grass.length; scan++){
+                    const idx = grass[(gi+scan)%grass.length];
+                    if (used.has(idx)) continue;
+                    const col=idx%GRID, row=Math.floor(idx/GRID);
+                    if (!isRev(row-0.6)) continue;
+                    if (dbl){ if (!has(col+1,row)) continue; const r2=row*GRID+(col+1); if (assigned.has(r2) || used.has(r2)) continue; }
+                    const x=col*cell, y=row*cell;
+                    const bw=(dbl?2:1)*cell;
+                    ctx.save();
+                    ctx.shadowColor='rgba(255,255,255,0.95)'; ctx.shadowBlur=cell*0.6;
+                    ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(x,y,bw,cell);
+                    ctx.fillStyle='#ffffff';
+                    ctx.textAlign='center'; ctx.textBaseline='middle';
+                    ctx.font=`900 ${Math.round(cell*0.96)}px "Courier New", ui-monospace, monospace`;
+                    ctx.shadowColor='rgba(255,255,255,0.98)'; ctx.shadowBlur=cell*0.7;
+                    for (let di=0; di<digits.length; di++){
+                        ctx.save(); ctx.translate(x+di*cell+cell/2, y+cell/2+cell*0.03); ctx.scale(1.3,1.12);
+                        ctx.fillText(digits[di],0,0); ctx.restore();
+                    }
+                    ctx.restore();
+                    used.add(idx); if (dbl) used.add(row*GRID+(col+1));
+                    break;
+                }
+                gi += 3;
+            }
+        }
+
+        // glyph loop — each assigned cell draws its symbol (counts = box score)
+        for (let pid=1; pid<=GRID*GRID; pid++){
+            if (!set.has(pid)) continue;
+            const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
+            if (used.has(idx)) continue;
+            const stat = assigned.get(idx);
+            if (!stat) continue;
+            if (!isRev(row-0.6)) continue;
+            const x=col*cell, y=row*cell, cx=x+cell/2, cy=y+cell/2;
+            const wob = animate?Math.sin(t*2+idx*0.2):0;
+            const lw = Math.max(1, cell*(0.06 + sp2.thickness*0.06));
+            ctx.save();
+            ctx.lineCap='round'; ctx.lineJoin='round';
+            ctx.translate(cx,cy); ctx.scale(1.32,1.32); ctx.translate(-cx,-cy);
+            if (stat==='goals'){ ctx.shadowColor='rgba(225,6,0,0.95)'; ctx.shadowBlur=cell*0.55; }
+            else if (stat==='cardR'){ ctx.shadowColor='rgba(225,6,0,0.8)'; ctx.shadowBlur=cell*0.45; }
+            else if (stat==='cardY'){ ctx.shadowColor='rgba(245,216,0,0.7)'; ctx.shadowBlur=cell*0.4; }
+            else if (stat==='sot'){ ctx.shadowColor='rgba(245,189,25,0.9)'; ctx.shadowBlur=cell*0.5; }
+            else { ctx.shadowColor='rgba(255,255,255,0.45)'; ctx.shadowBlur=cell*0.18; }
+
+            if (stat === 'corners') {
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = lw;
+                ctx.beginPath(); ctx.moveTo(cx - cell*0.18, y + cell*0.78); ctx.lineTo(cx - cell*0.18, y + cell*0.22); ctx.stroke();
+                ctx.fillStyle = '#e10600';
+                ctx.beginPath();
+                ctx.moveTo(cx - cell*0.18, y + cell*0.22);
+                ctx.lineTo(cx + cell*0.2 + wob*cell*0.03, y + cell*0.32);
+                ctx.lineTo(cx - cell*0.18, y + cell*0.42);
+                ctx.closePath(); ctx.fill();
+            } else if (stat === 'shots') {
+                // total shot (off target) — crosshair / bullseye
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, cell*0.07);
+                ctx.beginPath(); ctx.arc(cx, cy, cell*0.26, 0, Math.PI*2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx - cell*0.34, cy); ctx.lineTo(cx + cell*0.34, cy); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(cx, cy - cell*0.34); ctx.lineTo(cx, cy + cell*0.34); ctx.stroke();
+                ctx.fillStyle = '#e10600';
+                ctx.beginPath(); ctx.arc(cx, cy, cell*0.08, 0, Math.PI*2); ctx.fill();
+            } else if (stat === 'sot') {
+                // shot ON target — bursting star
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                const SP = 5, RO = cell*0.36, RI = cell*0.15;
+                for (let k = 0; k < SP*2; k++) {
+                    const a = k * Math.PI / SP - Math.PI/2;
+                    const rr = (k % 2) ? RI : RO;
+                    const px = cx + Math.cos(a)*rr, py = cy + Math.sin(a)*rr;
+                    k===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+                }
+                ctx.closePath(); ctx.fill();
+                ctx.fillStyle = '#f5bd19'; ctx.beginPath(); ctx.arc(cx, cy, cell*0.07, 0, Math.PI*2); ctx.fill();
+            } else if (stat === 'possession') {
+                // possession — soccer cleat
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.translate(0, wob * cell * 0.04);
+                const s = cell;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.moveTo(-s*0.34, s*0.06);
+                ctx.quadraticCurveTo(-s*0.36, -s*0.14, -s*0.16, -s*0.16);
+                ctx.lineTo(s*0.06, -s*0.18);
+                ctx.quadraticCurveTo(s*0.2, -s*0.18, s*0.24, -s*0.04);
+                ctx.lineTo(s*0.3, s*0.02);
+                ctx.quadraticCurveTo(s*0.34, s*0.16, s*0.18, s*0.18);
+                ctx.lineTo(-s*0.28, s*0.18);
+                ctx.quadraticCurveTo(-s*0.36, s*0.18, -s*0.34, s*0.06);
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = ink;
+                ctx.fillRect(-s*0.3, s*0.16, s*0.5, s*0.05);
+                for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.arc(-s*0.24 + k*s*0.14, s*0.24, s*0.03, 0, Math.PI*2); ctx.fill(); }
+                ctx.strokeStyle = ink; ctx.lineWidth = Math.max(0.6, s*0.03);
+                for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(-s*0.04 + k*s*0.07, -s*0.16); ctx.lineTo(-s*0.08 + k*s*0.07, -s*0.04); ctx.stroke(); }
+                ctx.restore();
+            } else if (stat === 'passes') {
+                // passes — pitch center-circle
+                ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = Math.max(1, cell*0.06);
+                ctx.beginPath(); ctx.arc(cx, cy, cell*0.28, 0, Math.PI*2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + cell, cy); ctx.stroke();
+                ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, cy, cell*0.05, 0, Math.PI*2); ctx.fill();
+            } else if (stat === 'goals') {
+                const br = cell * 0.28;
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = ink;
+                ctx.beginPath();
+                for (let k = 0; k < 5; k++) { const a = k * Math.PI*2/5 - Math.PI/2; const px = cx + Math.cos(a)*br*0.42, py = cy + Math.sin(a)*br*0.42; k===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py); }
+                ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = ink; ctx.lineWidth = Math.max(0.6, cell*0.035);
+                for (let k = 0; k < 5; k++) { const a = k * Math.PI*2/5 - Math.PI/2; ctx.beginPath(); ctx.moveTo(cx + Math.cos(a)*br*0.42, cy + Math.sin(a)*br*0.42); ctx.lineTo(cx + Math.cos(a)*br, cy + Math.sin(a)*br); ctx.stroke(); }
+                ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI*2); ctx.stroke();
+            } else if (stat === 'cardY' || stat === 'cardR') {
+                ctx.fillStyle = stat === 'cardR' ? '#e10600' : '#f5d800';
+                ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.18);
+                ctx.fillRect(-cell*0.16, -cell*0.26, cell*0.32, cell*0.52);
+                ctx.restore();
+            } else if (stat === 'offsides') {
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, cell*0.06);
+                ctx.setLineDash([cell*0.12, cell*0.1]);
+                ctx.beginPath(); ctx.moveTo(x + cell*0.15, y + cell*0.2); ctx.lineTo(x + cell*0.85, y + cell*0.8); ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.fillStyle = '#f5d800'; ctx.beginPath(); ctx.arc(x + cell*0.78, y + cell*0.28, cell*0.08, 0, Math.PI*2); ctx.fill();
+            } else if (stat === 'var') {
+                // VAR — TV review screen with a check
+                ctx.fillStyle = '#1f2937';
+                ctx.beginPath(); ctx.roundRect(cx - cell*0.26, cy - cell*0.2, cell*0.52, cell*0.34, cell*0.05); ctx.fill();
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, cell*0.05);
+                ctx.beginPath(); ctx.roundRect(cx - cell*0.26, cy - cell*0.2, cell*0.52, cell*0.34, cell*0.05); ctx.stroke();
+                ctx.strokeStyle = '#19e36a'; ctx.lineWidth = Math.max(1.4, cell*0.09); ctx.lineCap='round'; ctx.lineJoin='round';
+                ctx.beginPath(); ctx.moveTo(cx - cell*0.12, cy); ctx.lineTo(cx - cell*0.02, cy + cell*0.1); ctx.lineTo(cx + cell*0.16, cy - cell*0.12); ctx.stroke();
+            } else { // fouls — referee whistle
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath(); ctx.roundRect(cx - cell*0.24, cy - cell*0.13, cell*0.36, cell*0.26, cell*0.07); ctx.fill();
+                ctx.fillRect(cx + cell*0.08, cy - cell*0.05, cell*0.18, cell*0.1);
+                ctx.fillStyle = ink; ctx.beginPath(); ctx.arc(cx - cell*0.06, cy, cell*0.055, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, cell*0.05);
+                ctx.beginPath(); ctx.arc(cx + cell*0.32, cy, cell*0.12, -0.7, 0.7); ctx.stroke();
+            }
+            ctx.restore();
+        }
+        return { assigned, used };
+    }
+
+    // The streaming ASCII shirt-number readout (scorers excluded — they appear
+    // once as hero tokens). Skips any cell already holding a glyph/token.
+    function drawAsciiNumbers(ctx, pixels, opts, assigned, used){
+        const cell = opts.cell || 16;
+        const roster = opts.roster;
+        if (!roster || !roster.length) return;
+        const set = new Set(pixels);
+        const t = opts.time||0, animate=!!opts.animate;
+        const reveal = statReveal(opts);
+        const frontier = reveal*(GRID+3);
+        const stream = [];
+        for (const p of roster){
+            if (p.scored) continue;
+            const digits = p.num!=null?String(p.num):'';
+            for (const d of digits) stream.push(d);
+            stream.push('·'); stream.push(' ');
+        }
+        if (!stream.length) { stream.push('·'); stream.push(' '); }
+        const cells = [];
+        for (let pid=1; pid<=GRID*GRID; pid++) if (set.has(pid)) cells.push(pid-1);
+        const scroll = animate?Math.floor(t*5):0;
+        const flick = animate?0.86 + 0.14*Math.sin(t*6):1;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        const baseFont = Math.round(cell*0.74);
+        for (let i=0;i<cells.length;i++){
+            const idx = cells[i];
+            if (assigned.has(idx) || used.has(idx)) continue;
+            const ch = stream[(i+scroll)%stream.length];
+            if (!ch || ch===' ') continue;
+            const row = Math.floor(idx/GRID);
+            if (!(row < frontier - 1)) continue;
+            const x = (idx%GRID)*cell + cell/2;
+            const y = row*cell + cell/2;
+            ctx.save();
+            ctx.font = `bold ${baseFont}px "Courier New", ui-monospace, monospace`;
+            ctx.fillStyle = `rgba(225,255,235,${(0.5*flick).toFixed(3)})`;
+            ctx.shadowColor = 'rgba(180,255,205,0.5)'; ctx.shadowBlur = cell*0.22;
+            ctx.fillText(ch, x, y + cell*0.03);
+            ctx.restore();
+        }
+        ctx.shadowBlur = 0;
+    }
+
+    // Draw the full stat overlay (glyphs + tokens + numbers) onto any base.
+    function drawStatOverlay(ctx, pixels, opts){
+        const r = drawStatGlyphs(ctx, pixels, opts);
+        drawAsciiNumbers(ctx, pixels, opts, r.assigned, r.used);
+    }
+
     function renderStats(canvas, pixels, opts = {}) {
         const cell = opts.cell || 16;
         const dpr = opts.forExport ? 1 : Math.min(window.devicePixelRatio || 1, 3);
@@ -847,238 +1110,7 @@ import { ROSTERS } from '../../data/rosters';
             if (fl > 0) { ctx.fillStyle = `rgba(210,255,224,${(fl * 0.7).toFixed(3)})`; ctx.fillRect(x, y, cell, cell); }
         }
 
-        // Match element per cell (like Sweep's mines/numbers/flags but soccer)
-        const ink = '#0f3d1c';
-
-        // --- TRUE-COUNT allocation: the tiles ARE the box score ---
-        // One glyph per real unit (2 goals → exactly 2 balls); the volume
-        // stats use a stated scale (1 boot = 50 passes, 1 ring = 10% poss.).
-        const S = opts.stats || matchStats;
-        const yellowN = S.yellowCards != null ? S.yellowCards : Math.max(0, S.cards || 0);
-        const redN = S.redCards || 0;
-        const statCounts = [
-            ['goals',      Math.max(0, Math.round(S.goals || 0))],
-            ['shots',      Math.max(0, Math.round(S.shotsOnTarget != null ? S.shotsOnTarget : (S.shots || 0)))],
-            ['corners',    Math.max(0, Math.round(S.corners || 0))],
-            ['cardY',      Math.max(0, Math.round(yellowN))],
-            ['cardR',      Math.max(0, Math.round(redN))],
-            ['offsides',   Math.max(0, Math.round(S.offsides || 0))],
-            ['fouls',      Math.max(0, Math.round(S.fouls || 0))],
-            ['possession', Math.max(0, Math.round((S.possession || 0) / 10))],
-            ['passes',     Math.max(0, Math.round((S.passes || 0) / 50))],
-        ];
-        // deterministic scatter: shuffle the logo's pixels by seed, then deal
-        // out exactly N cells per stat
-        const statCells = [];
-        for (let pid = 1; pid <= GRID * GRID; pid++) if (set.has(pid)) statCells.push(pid - 1);
-        statCells.sort((a, b) => (pseed(a, aSeed + 7) % 99991) - (pseed(b, aSeed + 7) % 99991));
-        const assigned = new Map();
-        let dealt = 0;
-        for (const [type, n] of statCounts) {
-            for (let k = 0; k < n && dealt < statCells.length; k++) assigned.set(statCells[dealt++], type);
-        }
-
-        // --- Scorer number tiles: shirt numbers of players who scored ---
-        // Placed deterministically; double-digit numbers occupy two adjacent cells.
-        const numberCells = new Set(); // cells consumed by a multi-cell number
-        const scorerList = (scorers && scorers.length) ? scorers : [];
-        let placed = 0;
-        for (let pid = 1; pid <= GRID * GRID && placed < scorerList.length; pid++) {
-            if (!set.has(pid)) continue;
-            const idx = pid - 1, col = idx % GRID, row = Math.floor(idx / GRID);
-            if (numberCells.has(idx)) continue;
-            // host on plain-grass cells (never covering a stat glyph)
-            if (assigned.has(idx)) continue;
-            if (pseed(idx, aSeed + 13) % 4 !== 0) continue;
-            const num = scorerList[placed];
-            const digits = String(num);
-            const double = digits.length > 1;
-            // need a right neighbor for double digit
-            if (double && !has(col + 1, row)) continue;
-            const x = col * cell, y = row * cell;
-            const wCells = double ? 2 : 1;
-            const bw = wCells * cell;
-            // recessed number tile (darker grass, inset) spanning the cells
-            ctx.fillStyle = 'rgba(0,0,0,0.28)';
-            ctx.fillRect(x, y, bw, cell);
-            ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineWidth = 0.5;
-            ctx.strokeRect(x + 0.5, y + 0.5, bw - 1, cell - 1);
-            // number in scoreboard white — each digit centered within its OWN pixel
-            ctx.fillStyle = '#ffffff';
-            ctx.font = `bold ${Math.round(cell * 0.7)}px "Arial", sans-serif`;
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            for (let di = 0; di < digits.length; di++) {
-                ctx.fillText(digits[di], x + di * cell + cell/2, y + cell/2 + cell*0.04);
-            }
-            numberCells.add(idx);
-            if (double) numberCells.add(idx + 1);
-            placed++;
-        }
-
-        const sp2 = statParams();
-        for (let pid = 1; pid <= GRID * GRID; pid++) {
-            if (!set.has(pid)) continue;
-            const idx = pid - 1, col = idx % GRID, row = Math.floor(idx / GRID);
-            if (numberCells.has(idx)) continue; // skip cells taken by scorer numbers
-            // only cells dealt a real stat draw a glyph — the rest stay grass,
-            // so the glyph counts on the crest ARE the final box score
-            const stat = assigned.get(idx);
-            if (!stat) continue;
-            if (!isRevealed(row - 0.6)) continue; // settles just after its tile lands
-            const x = col * cell, y = row * cell, cx = x + cell/2, cy = y + cell/2;
-            const wob = animate ? Math.sin(t*2 + idx*0.2) : 0;
-            // shots stat → bolder white lines across the board
-            const lw = Math.max(1, cell * (0.06 + sp2.thickness * 0.06));
-
-            ctx.save();
-            ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-            // EXAGGERATE: blow each glyph up ~30% about its cell + give the
-            // headline stats (goals, cards) a colored glow so the box score
-            // reads at a glance — 2 goals = 2 glowing balls.
-            ctx.translate(cx, cy); ctx.scale(1.32, 1.32); ctx.translate(-cx, -cy);
-            if (stat === 'goals') { ctx.shadowColor = 'rgba(225,6,0,0.95)'; ctx.shadowBlur = cell * 0.55; }
-            else if (stat === 'cardR') { ctx.shadowColor = 'rgba(225,6,0,0.8)'; ctx.shadowBlur = cell * 0.45; }
-            else if (stat === 'cardY') { ctx.shadowColor = 'rgba(245,216,0,0.7)'; ctx.shadowBlur = cell * 0.4; }
-            else { ctx.shadowColor = 'rgba(255,255,255,0.45)'; ctx.shadowBlur = cell * 0.18; }
-
-            if (stat === 'corners') {
-                // Corner flag — pole + triangular flag on grass
-                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = lw;
-                ctx.beginPath(); ctx.moveTo(cx - cell*0.18, y + cell*0.78); ctx.lineTo(cx - cell*0.18, y + cell*0.22); ctx.stroke();
-                ctx.fillStyle = '#e10600';
-                ctx.beginPath();
-                ctx.moveTo(cx - cell*0.18, y + cell*0.22);
-                ctx.lineTo(cx + cell*0.2 + wob*cell*0.03, y + cell*0.32);
-                ctx.lineTo(cx - cell*0.18, y + cell*0.42);
-                ctx.closePath(); ctx.fill();
-            } else if (stat === 'shots') {
-                // Shot on target — crosshair / target reticle
-                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, cell*0.07);
-                ctx.beginPath(); ctx.arc(cx, cy, cell*0.26, 0, Math.PI*2); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(cx - cell*0.34, cy); ctx.lineTo(cx + cell*0.34, cy); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(cx, cy - cell*0.34); ctx.lineTo(cx, cy + cell*0.34); ctx.stroke();
-                ctx.fillStyle = '#e10600';
-                ctx.beginPath(); ctx.arc(cx, cy, cell*0.08, 0, Math.PI*2); ctx.fill();
-            } else if (stat === 'passes') {
-                // Passes — mini soccer shoe (cleat) silhouette
-                ctx.save();
-                ctx.translate(cx, cy);
-                // gentle bob when animated
-                ctx.translate(0, wob * cell * 0.04);
-                const s = cell;
-                ctx.fillStyle = '#ffffff';
-                // boot body: heel (right) → arch → toe (left), curved sole
-                ctx.beginPath();
-                ctx.moveTo(-s*0.34, s*0.06);          // toe tip
-                ctx.quadraticCurveTo(-s*0.36, -s*0.14, -s*0.16, -s*0.16); // toe upper
-                ctx.lineTo(s*0.06, -s*0.18);          // instep
-                ctx.quadraticCurveTo(s*0.2, -s*0.18, s*0.24, -s*0.04);    // ankle front
-                ctx.lineTo(s*0.3, s*0.02);            // heel top
-                ctx.quadraticCurveTo(s*0.34, s*0.16, s*0.18, s*0.18);     // heel back
-                ctx.lineTo(-s*0.28, s*0.18);          // sole
-                ctx.quadraticCurveTo(-s*0.36, s*0.18, -s*0.34, s*0.06);   // toe curve
-                ctx.closePath();
-                ctx.fill();
-                // sole + studs (dark)
-                ctx.fillStyle = ink;
-                ctx.fillRect(-s*0.3, s*0.16, s*0.5, s*0.05);
-                for (let k = 0; k < 4; k++) {
-                    ctx.beginPath();
-                    ctx.arc(-s*0.24 + k*s*0.14, s*0.24, s*0.03, 0, Math.PI*2);
-                    ctx.fill();
-                }
-                // lace stripes
-                ctx.strokeStyle = ink; ctx.lineWidth = Math.max(0.6, s*0.03);
-                for (let k = 0; k < 3; k++) {
-                    ctx.beginPath();
-                    ctx.moveTo(-s*0.04 + k*s*0.07, -s*0.16);
-                    ctx.lineTo(-s*0.08 + k*s*0.07, -s*0.04);
-                    ctx.stroke();
-                }
-                ctx.restore();
-            } else if (stat === 'goals') {
-                // Goal — small soccer ball (white with black pentagon + seams)
-                const br = cell * 0.28;
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI*2); ctx.fill();
-                // central black pentagon
-                ctx.fillStyle = ink;
-                ctx.beginPath();
-                for (let k = 0; k < 5; k++) {
-                    const a = k * Math.PI*2/5 - Math.PI/2;
-                    const px = cx + Math.cos(a)*br*0.42, py = cy + Math.sin(a)*br*0.42;
-                    k===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
-                }
-                ctx.closePath(); ctx.fill();
-                // seams radiating from pentagon vertices to the rim
-                ctx.strokeStyle = ink; ctx.lineWidth = Math.max(0.6, cell*0.035);
-                for (let k = 0; k < 5; k++) {
-                    const a = k * Math.PI*2/5 - Math.PI/2;
-                    ctx.beginPath();
-                    ctx.moveTo(cx + Math.cos(a)*br*0.42, cy + Math.sin(a)*br*0.42);
-                    ctx.lineTo(cx + Math.cos(a)*br, cy + Math.sin(a)*br);
-                    ctx.stroke();
-                }
-                // outer rim
-                ctx.beginPath(); ctx.arc(cx, cy, br, 0, Math.PI*2); ctx.stroke();
-            } else if (stat === 'cardY' || stat === 'cardR') {
-                // Card — one rectangle per real booking, true to its color
-                ctx.fillStyle = stat === 'cardR' ? '#e10600' : '#f5d800';
-                ctx.save(); ctx.translate(cx, cy); ctx.rotate(-0.18);
-                ctx.fillRect(-cell*0.16, -cell*0.26, cell*0.32, cell*0.52);
-                ctx.restore();
-            } else if (stat === 'possession') {
-                // Possession — pitch center-circle motif
-                ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = Math.max(1, cell*0.06);
-                ctx.beginPath(); ctx.arc(cx, cy, cell*0.28, 0, Math.PI*2); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(x, cy); ctx.lineTo(x + cell, cy); ctx.stroke();
-                ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx, cy, cell*0.05, 0, Math.PI*2); ctx.fill();
-            } else if (stat === 'offsides') {
-                // Offside — dashed line + flag dot
-                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, cell*0.06);
-                ctx.setLineDash([cell*0.12, cell*0.1]);
-                ctx.beginPath(); ctx.moveTo(x + cell*0.15, y + cell*0.2); ctx.lineTo(x + cell*0.85, y + cell*0.8); ctx.stroke();
-                ctx.setLineDash([]);
-                ctx.fillStyle = '#f5d800'; ctx.beginPath(); ctx.arc(x + cell*0.78, y + cell*0.28, cell*0.08, 0, Math.PI*2); ctx.fill();
-            } else if (stat === 'saves') {
-                // Save — goalkeeper glove (rounded mitt with fingers)
-                ctx.fillStyle = '#c084fc';
-                ctx.beginPath(); ctx.arc(cx, cy + cell*0.05, cell*0.2, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#9333ea';
-                for (let k = -1; k <= 1; k++) {
-                    ctx.beginPath(); ctx.roundRect(cx + k*cell*0.12 - cell*0.04, cy - cell*0.24, cell*0.08, cell*0.16, cell*0.04); ctx.fill();
-                }
-            } else if (stat === 'var') {
-                // VAR → robotic VR goggles / visor headset
-                ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-                // head strap going around
-                ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = Math.max(1, cell*0.06);
-                ctx.beginPath(); ctx.moveTo(cx - cell*0.28, cy); ctx.lineTo(cx + cell*0.28, cy); ctx.stroke();
-                // goggles body (rounded visor)
-                ctx.fillStyle = '#1f2937';
-                ctx.beginPath(); ctx.roundRect(cx - cell*0.26, cy - cell*0.16, cell*0.52, cell*0.3, cell*0.1); ctx.fill();
-                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, cell*0.05);
-                ctx.beginPath(); ctx.roundRect(cx - cell*0.26, cy - cell*0.16, cell*0.52, cell*0.3, cell*0.1); ctx.stroke();
-                // two glowing robot eyes/lenses
-                ctx.fillStyle = '#00e5ff';
-                ctx.beginPath(); ctx.arc(cx - cell*0.11, cy, cell*0.075, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(cx + cell*0.11, cy, cell*0.075, 0, Math.PI*2); ctx.fill();
-                // bright eye highlights
-                ctx.fillStyle = '#ffffff';
-                ctx.beginPath(); ctx.arc(cx - cell*0.13, cy - cell*0.02, cell*0.025, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(cx + cell*0.09, cy - cell*0.02, cell*0.025, 0, Math.PI*2); ctx.fill();
-                // little antenna nub on top (robot)
-                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(0.8, cell*0.04);
-                ctx.beginPath(); ctx.moveTo(cx, cy - cell*0.16); ctx.lineTo(cx, cy - cell*0.26); ctx.stroke();
-                ctx.fillStyle = '#e10600'; ctx.beginPath(); ctx.arc(cx, cy - cell*0.28, cell*0.035, 0, Math.PI*2); ctx.fill();
-            } else { // fouls
-                // Foul — whistle X
-                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1.2, cell*0.1);
-                ctx.beginPath(); ctx.moveTo(cx - cell*0.2, cy - cell*0.2); ctx.lineTo(cx + cell*0.2, cy + cell*0.2); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(cx + cell*0.2, cy - cell*0.2); ctx.lineTo(cx - cell*0.2, cy + cell*0.2); ctx.stroke();
-            }
-            ctx.restore();
-        }
+        const { assigned, used } = drawStatGlyphs(ctx, pixels, opts);
 
         // Pitch boundary line around the whole logo
         ctx.strokeStyle = 'rgba(255,255,255,0.9)';
@@ -1095,61 +1127,7 @@ import { ROSTERS } from '../../data/rosters';
             }
         }
 
-        // --- ASCII number layer (internet treatment, on top of everything):
-        // the shirt numbers of everyone who played this game stream across the
-        // identity, one character per logo pixel — "16 · 13 · 4 · …". A
-        // scorer's number runs WIDER and burns bright; the rest are a steady
-        // green transmission, so the readout reads as live match data. ---
-        const roster = opts.roster;
-        if (roster && roster.length) {
-            // token stream: digits of each number, then a separator dot
-            const stream = [];
-            for (const p of roster) {
-                const digits = p.num != null ? String(p.num) : '';
-                for (const d of digits) stream.push({ ch: d, hot: !!p.scored });
-                stream.push({ ch: '·', hot: false });
-                stream.push({ ch: ' ', hot: false });
-            }
-            const cellsRM = [];
-            for (let pid = 1; pid <= GRID * GRID; pid++) if (set.has(pid)) cellsRM.push(pid - 1);
-            const scroll = animate ? Math.floor(t * 5) : 0;
-            // subtle global flicker so the readout feels live
-            const flick = animate ? 0.86 + 0.14 * Math.sin(t * 6) : 1;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            const baseFont = Math.round(cell * 0.74);
-            for (let i = 0; i < cellsRM.length; i++) {
-                const e = stream[(i + scroll) % stream.length];
-                if (!e || e.ch === ' ') continue;
-                const idx = cellsRM[i];
-                // a cell already showing a stat symbol (or a scorer tile) keeps
-                // it clean — no number behind the glyph
-                if (assigned.has(idx) || numberCells.has(idx)) continue;
-                const row = Math.floor(idx / GRID);
-                if (!isRevealed(row - 1)) continue; // numbers land after the tile
-                const x = (idx % GRID) * cell + cell / 2;
-                const y = row * cell + cell / 2;
-                ctx.save();
-                if (e.hot) {
-                    // scorer number — wider, larger, glowing white
-                    ctx.translate(x, y + cell * 0.03);
-                    ctx.scale(1.7, 1.12);
-                    ctx.font = `900 ${Math.round(cell * 0.92)}px "Courier New", ui-monospace, monospace`;
-                    ctx.fillStyle = '#ffffff';
-                    ctx.shadowColor = 'rgba(255,255,255,0.98)';
-                    ctx.shadowBlur = cell * 0.7;
-                    ctx.fillText(e.ch, 0, 0);
-                } else {
-                    ctx.font = `bold ${baseFont}px "Courier New", ui-monospace, monospace`;
-                    ctx.fillStyle = `rgba(225,255,235,${(0.5 * flick).toFixed(3)})`;
-                    ctx.shadowColor = 'rgba(180,255,205,0.5)';
-                    ctx.shadowBlur = cell * 0.22;
-                    ctx.fillText(e.ch, x, y + cell * 0.03);
-                }
-                ctx.restore();
-            }
-            ctx.shadowBlur = 0;
-        }
+        drawAsciiNumbers(ctx, pixels, opts, assigned, used);
     }
 
     // ----- Sweep renderer: Minesweeper style -----
@@ -2240,30 +2218,12 @@ import { ROSTERS } from '../../data/rosters';
     function renderFlat(canvas, pixels, opts = {}) {
         const cell = opts.cell || 8;
         const off = opts.off || '#ffffff';
-        // B+W mode
-        if (opts.applyFill && activeFill === 'bw') { renderFluid(canvas, pixels, opts); return; }
-        // Lines mode
-        if (opts.applyFill && activeFill === 'lines') { renderLines(canvas, pixels, opts); return; }
-        // Net mode
-        if (opts.applyFill && activeFill === 'mesh') { renderMesh(canvas, pixels, opts); return; }
-        // 3D mode
-        if (opts.applyFill && activeFill === 'cube') { renderCube(canvas, pixels, opts); return; }
-        // Shapes mode
-        if (opts.applyFill && activeFill === 'stats') { renderStats(canvas, pixels, opts); return; }
-        // Sweep mode
-        if (opts.applyFill && activeFill === 'sweep') { renderSweep(canvas, pixels, opts); return; }
-        // Pattern mode
-        if (opts.applyFill && activeFill === 'pattern') { renderPattern(canvas, pixels, opts); return; }
-        // Abstract mode
-        if (opts.applyFill && activeFill === 'abstract') { renderAbstract(canvas, pixels, opts); return; }
-        // Bauhaus mode
-        if (opts.applyFill && activeFill === 'bauhaus') { renderBauhaus(canvas, pixels, opts); return; }
-        // Chrome mode
-        if (opts.applyFill && activeFill === 'chrome') { renderChrome(canvas, pixels, opts); return; }
-        // Solid mode (latest — rich B&W treatment, not a flat fill)
-        if (opts.applyFill && activeFill === 'solid') { renderSolid(canvas, pixels, opts); return; }
-        // Team 3D mode (latest — neon extruded lit-sign crest)
-        if (opts.applyFill && activeFill === 'team3d') { renderTeam3D(canvas, pixels, opts); return; }
+        // opts.statsOverlay: draw the game-stats overlay on top of whatever base
+        // style ran (so e.g. the 3D neon crest also carries the box score).
+        // The native 'stats' style draws its own overlay, so it's exempt.
+        const overlay = () => { if (opts.statsOverlay && activeFill !== 'stats') drawStatOverlay(canvas.getContext('2d'), pixels, opts); };
+        const RENDERERS = { bw: renderFluid, lines: renderLines, mesh: renderMesh, cube: renderCube, stats: renderStats, sweep: renderSweep, pattern: renderPattern, abstract: renderAbstract, bauhaus: renderBauhaus, chrome: renderChrome, solid: renderSolid, team3d: renderTeam3D };
+        if (opts.applyFill && RENDERERS[activeFill]) { RENDERERS[activeFill](canvas, pixels, opts); overlay(); return; }
         const dpr = opts.forExport ? 1 : Math.min(window.devicePixelRatio || 1, 3);
         const W = GRID * cell, H = GRID * cell;
         canvas.width = W * dpr; canvas.height = H * dpr;
@@ -2393,6 +2353,8 @@ import { ROSTERS } from '../../data/rosters';
             ctx.strokeRect(m, pcy - boxH / 2, boxW, boxH);
             ctx.strokeRect(m + pw - boxW, pcy - boxH / 2, boxW, boxH);
         }
+        // stat overlay on the general (e.g. internet) path too
+        overlay();
     }
 
 

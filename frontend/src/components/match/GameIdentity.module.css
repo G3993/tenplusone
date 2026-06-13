@@ -1,65 +1,29 @@
 /* Game Identity — the final-whistle reveal: the match result rendered as the
-   winner's stat-driven crest. Centered, ceremonial, above the closet. */
-.wrap {
-  --d: 8px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+   winner's stat-driven crest, framed and centered above the closet. */
+
+/* the thick blue frame is ON the grid square (inside, around the grid) */
+.frame {
   width: 100%;
-  /* sized to the viewport: the square card + the scoreline row below it fit
-     above the fold, so the result is visible without scrolling */
+  /* sized to the viewport: the square + the controls below fit above the fold */
   max-width: min(720px, calc(100dvh - var(--nav-h, 74px) - 250px));
   margin: 36px auto 0;
-  padding: 0;
-  /* thick blue frame around the identity poster */
-  border: 6px solid #1d6fe0;
-  box-shadow: 0 0 22px rgba(29, 111, 224, 0.35), inset 0 0 0 1px rgba(120, 180, 255, 0.45);
-  background: #000000;
-  text-align: center;
-}
-.wrap::before,
-.wrap::after {
-  content: '';
-  position: absolute;
   box-sizing: border-box;
-  background:
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
-    #111111;
-  border: 1px solid var(--nav-border, #1a1a1a);
-}
-.wrap::before {
-  left: -1px;
-  right: -1px;
-  top: calc(-1 * var(--d) - 1px);
-  height: var(--d);
-  transform: skewX(-45deg);
-  transform-origin: 0 100%;
-}
-.wrap::after {
-  top: -1px;
-  bottom: -1px;
-  right: calc(-1 * var(--d) - 1px);
-  width: var(--d);
-  transform: skewY(-45deg);
-  transform-origin: 0 0;
+  border: 6px solid #1d6fe0;
+  box-shadow: 0 0 22px rgba(29, 111, 224, 0.32), inset 0 0 0 1px rgba(120, 180, 255, 0.4);
+  background: #000000;
 }
 
-/* the crest floats on a square blueprint grid filling the whole card —
+/* the crest floats on a square blueprint grid filling the framed square —
    square stage + centered crest = identical padding on all four sides */
 .stage {
-  align-self: stretch;
-  margin: 0;
-  aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  aspect-ratio: 1 / 1;
   background:
     linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  /* one grid cell = one logo pixel — pitch comes from the crest render size
-     (size/32), set inline as --cell so the two never drift */
+  /* one grid cell = one logo pixel — pitch from the crest render size */
   background-size: var(--cell, 12px) var(--cell, 12px);
   background-position: center;
 }
@@ -69,62 +33,93 @@
   text-decoration: none;
 }
 
-/* play / pause — small control in the card's top-right corner */
+/* ── controls (outside the grid) ──────────────────────────────────── */
+.controls {
+  width: 100%;
+  max-width: min(720px, calc(100dvh - var(--nav-h, 74px) - 250px));
+  margin: 12px auto 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* play / pause — minimal, icon only, no shape */
 .playBtn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 2;
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  color: #cfe4ff;
-  background: rgba(8, 14, 26, 0.72);
-  border: 1px solid #1d6fe0;
-  border-radius: 0;
-  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  color: var(--dim, #888);
+  background: none;
+  border: none;
   padding: 0;
-  transition: color 0.12s, background 0.12s, box-shadow 0.12s;
+  cursor: pointer;
+  transition: color 0.12s;
 }
 
-.playBtn:hover {
-  color: #ffffff;
-  background: rgba(29, 111, 224, 0.9);
-  box-shadow: 0 0 12px rgba(29, 111, 224, 0.5);
-}
+.playBtn:hover { color: var(--bright, #fff); }
 
-
-/* draw slider — two pixel dots under the stage, one per identity */
+/* draw toggle — two small dots */
 .pairNav {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 14px 0 16px;
+  gap: 8px;
 }
 
 .pairDot {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   box-sizing: border-box;
   background: transparent;
   border: 1px solid var(--nav-border, #1a1a1a);
   cursor: pointer;
   padding: 0;
-  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+  transition: background 0.12s, border-color 0.12s;
 }
 
-.pairDot:hover { border-color: #35d06b; }
-
+.pairDot:hover { border-color: #1d6fe0; }
 .pairDotOn,
-.pairDotOn:hover {
-  background: var(--green);
-  border-color: #35d06b;
-  box-shadow: 0 0 8px rgba(74, 222, 128, 0.45);
+.pairDotOn:hover { background: #1d6fe0; border-color: #1d6fe0; }
+
+/* variation slider — minimal text pills, horizontally scrollable */
+.variants {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+}
+.variants::-webkit-scrollbar { display: none; }
+
+.variant {
+  flex-shrink: 0;
+  font-family: var(--font);
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--dim, #888);
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 4px 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.variant:hover { color: var(--bright, #fff); }
+.variantOn,
+.variantOn:hover {
+  color: #6db4ff;
+  border-bottom-color: #1d6fe0;
 }
 
 @media (max-width: 560px) {
-  .wrap { margin-top: 34px; }
+  .frame { margin-top: 34px; }
+  .variant { font-size: 15px; }
 }
