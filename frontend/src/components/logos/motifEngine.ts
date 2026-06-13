@@ -1122,6 +1122,9 @@ import { ROSTERS } from '../../data/rosters';
                 const e = stream[(i + scroll) % stream.length];
                 if (!e || e.ch === ' ') continue;
                 const idx = cellsRM[i];
+                // a cell already showing a stat symbol (or a scorer tile) keeps
+                // it clean — no number behind the glyph
+                if (assigned.has(idx) || numberCells.has(idx)) continue;
                 const row = Math.floor(idx / GRID);
                 if (!isRevealed(row - 1)) continue; // numbers land after the tile
                 const x = (idx % GRID) * cell + cell / 2;
