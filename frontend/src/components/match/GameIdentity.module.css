@@ -13,8 +13,9 @@
   max-width: min(720px, calc(100dvh - var(--nav-h, 74px) - 250px));
   margin: 36px auto 0;
   padding: 0;
-  /* same gray 3D card as the match/group containers */
-  border: 1px solid var(--nav-border, #1a1a1a);
+  /* thick blue frame around the identity poster */
+  border: 6px solid #1d6fe0;
+  box-shadow: 0 0 22px rgba(29, 111, 224, 0.35), inset 0 0 0 1px rgba(120, 180, 255, 0.45);
   background: #000000;
   text-align: center;
 }
