@@ -212,35 +212,36 @@ export function GameIdentity({ matchId, home, away, venue }: {
           </div>
         )}
 
-        {/* stat placement — inside the logo, the negative space, or both */}
-        <div className={`${styles.variants} ${styles.placementRow}`} role="tablist" aria-label="stat placement">
-          {(['inside', 'outside', 'both'] as const).map((p) => (
-            <button
-              key={p}
-              type="button"
-              role="tab"
-              aria-selected={placement === p}
-              className={`${styles.variant} ${placement === p ? styles.variantOn : ''}`}
-              onClick={() => setPlacement(p)}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
+        {/* stats placement — one button, tap to cycle inside → outside → both */}
+        <button
+          type="button"
+          className={`${styles.variant} ${styles.variantOn} ${styles.placementRow}`}
+          onClick={() => setPlacement((p) => (p === 'inside' ? 'outside' : p === 'outside' ? 'both' : 'inside'))}
+          aria-label={`stats placement: ${placement} — tap to cycle`}
+        >
+          STATS
+        </button>
 
-        {/* style dots — swipe the container or tap a dot to flip treatments */}
+        {/* style pager — a 3-dot window that slides through the treatments */}
         <div className={styles.styleDots} role="tablist" aria-label="identity style">
-          {VARIANTS.map((v, i) => (
-            <button
-              key={v.key}
-              type="button"
-              role="tab"
-              aria-selected={variantIdx === i}
-              aria-label={v.label}
-              className={`${styles.styleDot} ${variantIdx === i ? styles.styleDotOn : ''}`}
-              onClick={() => setVariantIdx(i)}
-            />
-          ))}
+          {(() => {
+            const N = VARIANTS.length;
+            const start = Math.max(0, Math.min(variantIdx - 1, N - 3));
+            return [0, 1, 2].map((k) => {
+              const i = start + k;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  role="tab"
+                  aria-selected={variantIdx === i}
+                  aria-label={VARIANTS[i].label}
+                  className={`${styles.styleDot} ${variantIdx === i ? styles.styleDotOn : ''}`}
+                  onClick={() => setVariantIdx(i)}
+                />
+              );
+            });
+          })()}
         </div>
       </div>
 
