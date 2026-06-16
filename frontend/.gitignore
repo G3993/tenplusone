@@ -27,3 +27,6 @@ dist-ssr
 
 # archived/removed code (kept on disk, out of build)
 .archive/
+
+# Remotion render outputs (large binaries, not for deploy)
+remotion-out/

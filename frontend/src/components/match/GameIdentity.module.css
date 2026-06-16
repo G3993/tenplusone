@@ -7,9 +7,10 @@
   --team: #1d6fe0;
   --d: 8px;
   width: 100%;
-  /* sized to the viewport: the square + the controls below fit above the fold */
-  max-width: min(720px, calc(100dvh - var(--nav-h, 74px) - 250px));
-  margin: 36px auto 0;
+  /* the identity is the showcase — fill as much of the viewport as fits while
+     the square + the controls below still clear the fold */
+  max-width: min(880px, calc(100dvh - var(--nav-h, 74px) - 190px));
+  margin: 32px auto 0;
   box-sizing: border-box;
   border: 1px solid var(--team);
   background: #000000;
@@ -65,12 +66,54 @@
   align-items: center;
   justify-content: center;
   aspect-ratio: 1 / 1;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-  /* one grid cell = one logo pixel — pitch from the crest render size */
-  background-size: var(--cell, 12px) var(--cell, 12px);
-  background-position: center;
+  background: #000;
+}
+
+/* TIE: both identities side by side, each half-width, sharing the stage. */
+.drawPair {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* one identity = the square stack + its nameplate underneath */
+.identityCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+/* nameplate — flag + team name, so it's always clear whose identity this is */
+.teamTag {
+  --tag: #1d6fe0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+.teamFlag { font-size: 18px; line-height: 1; }
+.teamName {
+  font-family: var(--font);
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--tag);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.teamBadge {
+  font-family: var(--font);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #000;
+  background: var(--tag);
+  padding: 2px 6px;
+  border-radius: 2px;
 }
 
 .crestLink {
@@ -78,22 +121,212 @@
   text-decoration: none;
 }
 
+/* the logo + the generative stat field share one centered square; the field
+   sits behind (negative space), the logo on top. The blueprint grid lives HERE
+   (not the stage) so its cells line up exactly with the field + logo pixels —
+   the 3D logo reads as if it's rising out of the grid. */
+.stack {
+  position: relative;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: var(--cell, 12px) var(--cell, 12px);
+  background-position: 0 0;
+}
+.fieldLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.crestTop {
+  position: relative;
+  z-index: 1;
+}
+
 /* ── controls (outside the grid) ──────────────────────────────────── */
+/* same 3D cube geometry as the identity frame, tinted to the team color */
 .controlsCard {
+  --team: #1d6fe0;
+  --d: 8px;
   width: 100%;
-  max-width: min(720px, calc(100dvh - var(--nav-h, 74px) - 250px));
-  margin: 12px auto 0;
+  max-width: min(880px, calc(100dvh - var(--nav-h, 74px) - 190px));
+  margin: 20px auto 0;
   box-sizing: border-box;
-  border: 1px solid var(--nav-border, #1a1a1a);
-  background: #0a0a0a;
-  padding: 12px 16px 16px;
+  border: 1px solid var(--team);
+  background: #000000;
+  padding: 16px 18px;
+  position: relative;
+  isolation: isolate;
+}
+.controlsCard::before,
+.controlsCard::after {
+  content: '';
+  position: absolute;
+  box-sizing: border-box;
+  background:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.14) 0 1px, rgba(0, 0, 0, 0) 1px 3px),
+    color-mix(in srgb, var(--team) 42%, #000);
+  border: 1px solid var(--team);
+}
+.controlsCard::before {
+  left: -1px;
+  right: -1px;
+  top: calc(-1 * var(--d) - 1px);
+  height: var(--d);
+  transform: skewX(-45deg);
+  transform-origin: 0 100%;
+}
+.controlsCard::after {
+  top: -1px;
+  bottom: -1px;
+  right: calc(-1 * var(--d) - 1px);
+  width: var(--d);
+  transform: skewY(-45deg);
+  transform-origin: 0 0;
 }
 .controls {
+  position: relative;
   width: 100%;
   display: flex;
   align-items: center;
   gap: 14px;
+  min-height: 38px;
 }
+
+/* the three identity controls — style · stats · colors, all on ONE row */
+.selectors {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 7px;
+}
+.selector { display: flex; align-items: center; gap: 4px; }
+.selLabel {
+  font-family: var(--font);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--dim, #888);
+}
+.selCtl { display: inline-flex; align-items: center; gap: 2px; }
+.selValue {
+  font-family: var(--font);
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--team, #1d6fe0);
+  min-width: 40px;
+  text-align: center;
+}
+.selectors .styleArrow svg { width: 15px; height: 15px; }
+.drawRow { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 14px; }
+
+/* floating dock — play/pause · download · collect (right side) */
+.dock {
+  --team: #1d6fe0;
+  position: fixed;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+  background: rgba(10, 10, 12, 0.82);
+  border: 1px solid color-mix(in srgb, var(--team) 50%, #1a1a1a);
+  border-radius: 999px;
+  backdrop-filter: blur(8px);
+}
+.dockBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  color: var(--bright, #fff);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.12s, background 0.12s;
+}
+.dockBtn:hover { color: var(--team, #1d6fe0); background: rgba(255, 255, 255, 0.06); }
+@media (max-width: 700px) {
+  .dock {
+    right: 50%; top: auto; bottom: 16px;
+    transform: translateX(50%);
+    flex-direction: row;
+  }
+  .selectors { flex-wrap: wrap; gap: 10px 18px; }
+}
+
+/* play + STATS sit on the left; the Collect group is absolutely centered */
+.leftGroup {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.centerGroup {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* STATS sits at the far right of the container */
+.rightGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+/* style nav arrows flanking the Collect button */
+.styleArrow {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  color: var(--team, #1d6fe0);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.12s, transform 0.12s;
+}
+.styleArrow:hover { color: var(--bright, #fff); transform: scale(1.18); }
+.styleArrow:active { transform: scale(0.92); }
+
+/* field colour-mood toggle (team / color / gray) */
+.paletteBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.palDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  box-sizing: border-box;
+  transition: transform 0.12s;
+}
+.paletteBtn:hover .palDot { transform: scale(1.18); }
+.pal_team { background: var(--team, #1d6fe0); }
+.pal_color { background: conic-gradient(#f15a24, #2db84c, #8fb8e8, #f5c518, #f5a3c7, #f15a24); }
+.pal_gray { background: #8a8a8a; }
 
 /* play / pause — minimal, icon only, no shape */
 .playBtn {
@@ -181,20 +414,11 @@
   border-bottom-color: var(--team, #1d6fe0);
 }
 
-/* style treatments as little swipeable dots (no labels) */
-.styleDots {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  justify-content: flex-end;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.styleDots::-webkit-scrollbar { display: none; }
-
-
 @media (max-width: 560px) {
   .frame { margin-top: 34px; }
   .variant { font-size: 15px; }
+  /* tighter on mobile so the centered Collect group clears play/STATS */
+  .controls { gap: 10px; }
+  .leftGroup { gap: 10px; }
+  .styleArrow { width: 24px; height: 24px; }
 }

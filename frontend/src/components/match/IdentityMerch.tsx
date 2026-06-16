@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 
 /** Identity → merch. Captures the live game-identity art at print resolution,
  *  previews it on the site's real garment photos (the same mockups the shop
@@ -7,15 +8,19 @@ import { useState } from 'react';
 // Real garment photos shipped with the store (used on product cards too), with
 // the chest/centre print box for each.
 const GARMENTS = [
-  { src: '/shirt-white.png', label: 'tee', price: '$35', top: 21, w: 27 },
-  { src: '/crew-white.png', label: 'crewneck', price: '$50', top: 23, w: 25 },
-  { src: '/shirt-white.png', label: 'long sleeve', price: '$45', top: 21, w: 27 },
+  { src: '/shirt-white.png', label: 'tee', price: '$35', top: 29, w: 27 },
+  { src: '/crew-white.png', label: 'crewneck', price: '$50', top: 31, w: 25 },
+  { src: '/shirt-white.png', label: 'long sleeve', price: '$45', top: 29, w: 27 },
 ];
 
-export function IdentityMerch({ title, accent, capture }: {
+export function IdentityMerch({ title, accent, capture, icon, onShop }: {
   title: string;
   accent: string;
   capture: (cv: HTMLCanvasElement, cell: number) => void;
+  /** render a compact icon trigger (for the floating dock) instead of text */
+  icon?: boolean;
+  /** "shop the full drop ↓" — scroll the page down to the merch store */
+  onShop?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const [art, setArt] = useState<string>('');
@@ -48,11 +53,19 @@ export function IdentityMerch({ title, accent, capture }: {
 
   return (
     <>
-      <button type="button" className="gi-claim" style={{ '--team': accent } as React.CSSProperties} onClick={onOpen}>
-        CLAIM THIS · 1 / 1
-      </button>
+      {icon ? (
+        <button type="button" className="gi-collect-icon" style={{ '--team': accent } as React.CSSProperties} onClick={onOpen} aria-label="collect — open the drop" title="collect">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path d="M8.5 3.5 4 6l1.5 4 2-0.7V20.5h9V9.3l2 0.7L20 6l-4.5-2.5a3.2 3.2 0 0 1-7 0Z" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" strokeLinecap="round" />
+          </svg>
+        </button>
+      ) : (
+        <button type="button" className="gi-claim" style={{ '--team': accent } as React.CSSProperties} onClick={onOpen}>
+          Collect
+        </button>
+      )}
 
-      {open && (
+      {open && createPortal(
         <div className="gi-merch-overlay" onClick={() => setOpen(false)}>
           <div className="gi-merch" onClick={(e) => e.stopPropagation()} style={{ '--team': accent } as React.CSSProperties}>
             <div className="gi-merch-head">
@@ -86,11 +99,17 @@ export function IdentityMerch({ title, accent, capture }: {
 
             <button type="button" className="gi-merch-buy" style={{ '--team': accent } as React.CSSProperties}
               onClick={onClaim} disabled={claim === 'working' || claim === 'done'}>
-              {claim === 'working' ? 'CLAIMING…' : claim === 'done' ? 'CLAIMED ✓' : 'CLAIM YOUR 1 / 1'}
+              {claim === 'working' ? 'COLLECTING…' : claim === 'done' ? 'COLLECTED ✓' : 'COLLECT YOUR 1 / 1'}
             </button>
             {msg && <p className="gi-merch-msg">{msg}</p>}
+            {onShop && (
+              <button type="button" className="gi-merch-shop" onClick={() => { setOpen(false); onShop(); }}>
+                shop the full drop ↓
+              </button>
+            )}
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
   );

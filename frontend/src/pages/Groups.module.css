@@ -61,6 +61,7 @@
   align-items: baseline;
   gap: 8px;
   padding: 14px 18px;
+  background: #1c1c1f;
   border-bottom: 1px solid var(--nav-border, #1a1a1a);
 }
 

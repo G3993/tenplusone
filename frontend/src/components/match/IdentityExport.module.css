@@ -1,0 +1,43 @@
+/* export-results control — sits in the controls row; status floats under the card */
+.exportBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  color: var(--dim, #888);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: color 0.12s, transform 0.12s;
+}
+.exportBtn:hover:not(:disabled) { color: var(--team, #1d6fe0); transform: translateY(-1px); }
+.exportBtn:disabled { cursor: default; color: var(--team, #1d6fe0); }
+
+.spin {
+  width: 15px;
+  height: 15px;
+  box-sizing: border-box;
+  border: 2px solid color-mix(in srgb, var(--team, #1d6fe0) 35%, transparent);
+  border-top-color: var(--team, #1d6fe0);
+  border-radius: 50%;
+  animation: giExportSpin 0.7s linear infinite;
+}
+@keyframes giExportSpin { to { transform: rotate(360deg); } }
+
+/* status line, centered just below the controls card (card is position:relative) */
+.exportMsg {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: calc(100% + 8px);
+  font-family: var(--font);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: color-mix(in srgb, var(--team, #1d6fe0) 70%, #fff);
+  pointer-events: none;
+}

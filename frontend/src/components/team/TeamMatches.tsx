@@ -35,7 +35,7 @@ export function TeamMatches({ team }: { team: TeamData }) {
   return (
     <section className={styles.wrap}>
       <header className={styles.head}>
-        <span className={styles.eyebrow}>Upcoming Matches</span>
+        <span className={styles.eyebrow}>World Cup Matches</span>
       </header>
       <div className={styles.list}>
         {fixtures.map((m) => (

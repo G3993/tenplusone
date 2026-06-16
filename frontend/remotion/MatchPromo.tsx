@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   AbsoluteFill,
   useCurrentFrame,
   useVideoConfig,
-  interpolate,
   delayRender,
   continueRender,
+  staticFile,
 } from "remotion";
+import { loadFont } from "@remotion/fonts";
 import { MATCHES } from "../src/data/matches";
 import { getTeamByName } from "../src/data/teams";
 import { getLogoPixels } from "../src/data/team-logos";
 import { teamSeed } from "../src/components/logos/spectrumMotif";
-import { toAmerican } from "../src/lib/odds";
-import { MotifCrest } from "../src/components/logos/MotifCrest";
+import { setMotif, setMotifDark, setMotifShape, setMotifSeed, renderMotif } from "../src/components/logos/motifEngine";
 import { useThemeStore } from "../src/stores/theme";
 
 // ── one source of truth: drive the promo entirely off the site's match data ──
@@ -22,52 +22,10 @@ import { useThemeStore } from "../src/stores/theme";
 
 const GREEN = "rgba(74,222,128,1)";
 const GRID_LINE = "rgba(74,222,128,0.35)";
-const FONT = '"Helvetica Neue", "Inter", Arial, sans-serif';
-const MONO = '"JetBrains Mono", "SF Mono", ui-monospace, monospace';
 
-/** "13:00 CST" → "1:00 PM CST" */
-function to12h(t: string): string {
-  const mt = t.match(/^(\d{1,2}):(\d{2})\s*(.*)$/);
-  if (!mt) return t;
-  let h = Number(mt[1]);
-  const ampm = h >= 12 ? "PM" : "AM";
-  h = h % 12 || 12;
-  return `${h}:${mt[2]} ${ampm}${mt[3] ? ` ${mt[3]}` : ""}`;
-}
-
-// the green 3D odds cube (scanline face + isometric top/right extrusion)
-const OddsBox: React.FC<{ odds: string; sub: string; size: number }> = ({ odds, sub, size }) => {
-  const d = Math.round(size * 0.085);
-  const w = size;
-  const h = size * 0.92;
-  return (
-    <div style={{ position: "relative", width: w, height: h, marginRight: d + size * 0.16 }}>
-      {/* top face */}
-      <div style={{
-        position: "absolute", left: 0, top: -d, width: w, height: d,
-        background: "repeating-linear-gradient(0deg, rgba(74,222,128,0.45) 0 1px, transparent 1px 3px), #0a2c17",
-        border: "1px solid #2aa957", transform: "skewX(-45deg)", transformOrigin: "0 100%",
-      }} />
-      {/* right face */}
-      <div style={{
-        position: "absolute", top: 0, right: -d, width: d, height: h,
-        background: "repeating-linear-gradient(0deg, rgba(74,222,128,0.45) 0 1px, transparent 1px 3px), #0a2c17",
-        border: "1px solid #2aa957", transform: "skewY(-45deg)", transformOrigin: "0 0",
-      }} />
-      {/* front face */}
-      <div style={{
-        position: "absolute", inset: 0,
-        background: "repeating-linear-gradient(0deg, rgba(74,222,128,0.14) 0 1px, transparent 1px 4px), #04100a",
-        border: "1px solid #35d06b", boxShadow: "0 0 10px rgba(74,222,128,0.18)",
-        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-        gap: size * 0.06,
-      }}>
-        <span style={{ fontFamily: MONO, fontWeight: 700, fontSize: size * 0.26, color: "#c8ffda", letterSpacing: "0.02em" }}>{odds}</span>
-        <span style={{ fontFamily: MONO, fontWeight: 600, fontSize: size * 0.15, color: "rgba(120,220,160,0.75)", letterSpacing: "0.12em" }}>{sub}</span>
-      </div>
-    </div>
-  );
-};
+// iFC / tenplusone standard video font: PPNeueBit (8-bit pixel font).
+loadFont({ family: "PPNeueBit", url: staticFile("fonts/PPNeueBit-Bold.woff2"), weight: "700" }).catch(() => {});
+const FONT = '"PPNeueBit", "Helvetica Neue", Arial, sans-serif';
 
 // animated synthwave perspective grid floor (replicated from the site .field)
 // Synthwave floor drawn as real projected lines (not a scrolling CSS texture —
@@ -85,7 +43,7 @@ const PerspectiveGrid: React.FC<{ frame: number; width: number; height: number }
   const cx = width / 2;
   const ROWS = 20;
   const COLS = 24;
-  const SPEED = 0.011; // rows per frame toward the viewer — constant (linear)
+  const SPEED = 0.004; // rows per frame — constant (linear)
   const POW = 2.3; // perspective bunching toward the horizon
 
   const green = (a: number) => `rgba(74,222,128,${a.toFixed(3)})`;
@@ -93,7 +51,9 @@ const PerspectiveGrid: React.FC<{ frame: number; width: number; height: number }
 
   const rows: React.ReactNode[] = [];
   for (let k = 0; k < ROWS; k++) {
-    const u = ((k / ROWS + frame * SPEED) % 1 + 1) % 1; // 0 = horizon, 1 = past viewer
+    // minus → rows travel INWARD (up toward the horizon); still seamless since
+    // both wrap ends are invisible (horizon faded, bottom off-screen).
+    const u = ((k / ROWS - frame * SPEED) % 1 + 1) % 1; // 0 = horizon, 1 = past viewer
     const y = yAt(u);
     rows.push(
       <line key={`r${k}`} x1={0} y1={y} x2={width} y2={y}
@@ -126,14 +86,34 @@ const PerspectiveGrid: React.FC<{ frame: number; width: number; height: number }
   );
 };
 
-const Crest: React.FC<{ slug: string; pixels: number[]; size: number }> = ({ slug, pixels, size }) => (
-  <MotifCrest still motif="team3d" teamId={slug} pixels={pixels} seed={teamSeed(slug)} size={size} />
-);
+// frame-driven team3d crest — repaints every frame so the logo's colours cycle
+// and scanlines scroll (the site's animate=true behaviour), instead of frozen.
+const Crest: React.FC<{ slug: string; pixels: number[]; size: number; frame: number; fps: number }> = ({ slug, pixels, size, frame, fps }) => {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const cv = ref.current;
+    if (!cv) return;
+    const enginePixels = pixels.map((v) => v + 1); // site 0-based → engine 1-based
+    const cell = Math.max(3, Math.round(size / 32));
+    setMotif("team3d");
+    setMotifDark(true);
+    setMotifShape("square");
+    setMotifSeed(teamSeed(slug));
+    renderMotif(cv, enginePixels, {
+      cell, off: "rgba(0,0,0,0)", bg: "rgba(0,0,0,0)", applyFill: true,
+      teamId: slug, time: frame / fps, animate: true,
+    });
+    cv.style.width = size + "px";
+    cv.style.height = size + "px";
+  }, [pixels, size, slug, frame, fps]);
+  return <canvas ref={ref} style={{ width: size, height: size, display: "block" }} />;
+};
 
 export const MatchPromo: React.FC<{ matchId?: string }> = ({ matchId = "1" }) => {
   const frame = useCurrentFrame();
-  const { width, height } = useVideoConfig();
+  const { width, height, fps } = useVideoConfig();
   const portrait = height > width * 1.15;
+  const base = Math.min(width, height); // size text/odds consistently across formats
 
   // force dark theme (black promo) regardless of headless localStorage
   useEffect(() => useThemeStore.setState({ theme: "dark" }), []);
@@ -147,51 +127,43 @@ export const MatchPromo: React.FC<{ matchId?: string }> = ({ matchId = "1" }) =>
   const m = MATCHES.find((x) => String(x.id) === String(matchId)) ?? MATCHES[0];
   const home = getTeamByName(m.h);
   const away = getTeamByName(m.a);
-  const hCode = home?.code ?? m.h.slice(0, 3).toUpperCase();
-  const aCode = away?.code ?? m.a.slice(0, 3).toUpperCase();
   const hPix = home ? getLogoPixels(home.slug, home.name[0]) : [];
   const aPix = away ? getLogoPixels(away.slug, away.name[0]) : [];
 
-  const crestSize = portrait ? width * 0.42 : height * 0.34;
-  const oddsSize = portrait ? width * 0.18 : height * 0.085;
-
-  // entrance: fade + rise
-  const appear = (delay: number) => ({
-    opacity: interpolate(frame, [delay, delay + 16], [0, 1], { extrapolateRight: "clamp" }),
-    transform: `translateY(${interpolate(frame, [delay, delay + 16], [18, 0], { extrapolateRight: "clamp" })}px)`,
-  });
+  const crestSize = portrait ? width * 0.3 : height * 0.34;
 
   const nameStyle: React.CSSProperties = {
     fontFamily: FONT, fontWeight: 700, color: "#fff", textTransform: "uppercase",
-    fontSize: height * (portrait ? 0.03 : 0.034), letterSpacing: "0.04em", textAlign: "center",
+    fontSize: base * 0.055, letterSpacing: "0.04em", textAlign: "center",
   };
 
-  const TeamBlock: React.FC<{ slug: string; pixels: number[]; name: string; delay: number }> = ({ slug, pixels, name, delay }) => (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: height * 0.03, ...appear(delay) }}>
-      <Crest slug={slug} pixels={pixels} size={crestSize} />
-      <span style={nameStyle}>{name}</span>
+  const TeamBlock: React.FC<{ slug: string; pixels: number[]; name: string }> = ({ slug, pixels, name }) => (
+    // name is absolutely positioned below the crest so the block's box = crest
+    // height, which lets the row centre the VS on the crests (not the names).
+    <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <Crest slug={slug} pixels={pixels} size={crestSize} frame={frame} fps={fps} />
+      <span style={{ ...nameStyle, position: "absolute", top: "100%", marginTop: base * 0.04, left: "50%", transform: "translateX(-50%)", whiteSpace: "nowrap" }}>{name}</span>
     </div>
   );
 
   const Center = (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: height * 0.028, ...appear(6) }}>
-      <span style={{ fontFamily: FONT, fontWeight: 700, color: "#fff", fontSize: height * 0.05, letterSpacing: "0.01em" }}>
-        {hCode} <span style={{ color: GREEN }}>vs</span> {aCode}
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <span style={{ fontFamily: FONT, fontWeight: 700, color: GREEN, fontSize: base * 0.03, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+        vs
       </span>
-      <span style={{ fontFamily: FONT, fontWeight: 500, color: GREEN, fontSize: height * 0.026, letterSpacing: "0.02em" }}>
-        {[m.d, to12h(m.t)].filter(Boolean).join(" · ")}
-      </span>
-      <div style={{ display: "flex", marginTop: height * 0.02 }}>
-        <OddsBox odds={toAmerican(m.odds[0])} sub={hCode} size={oddsSize} />
-        <OddsBox odds={toAmerican(m.odds[1])} sub="DRAW" size={oddsSize} />
-        <OddsBox odds={toAmerican(m.odds[2])} sub={aCode} size={oddsSize} />
-      </div>
     </div>
   );
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#000" }}>
+      {/* bottom floor grid */}
       <PerspectiveGrid frame={frame} width={width} height={height} />
+      {/* portrait: mirrored ceiling grid at the top too */}
+      {portrait && (
+        <div style={{ position: "absolute", inset: 0, transform: "scaleY(-1)" }}>
+          <PerspectiveGrid frame={frame} width={width} height={height} />
+        </div>
+      )}
 
       {/* thin neon border frame */}
       <div style={{
@@ -201,19 +173,18 @@ export const MatchPromo: React.FC<{ matchId?: string }> = ({ matchId = "1" }) =>
         pointerEvents: "none",
       }} />
 
-      {portrait ? (
-        <AbsoluteFill style={{ flexDirection: "column", alignItems: "center", justifyContent: "space-around", padding: `${height * 0.06}px 0` }}>
-          {home && <TeamBlock slug={home.slug} pixels={hPix} name={home.name} delay={0} />}
-          {Center}
-          {away && <TeamBlock slug={away.slug} pixels={aPix} name={away.name} delay={3} />}
-        </AbsoluteFill>
-      ) : (
-        <AbsoluteFill style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: `0 ${width * 0.06}px` }}>
-          {home && <TeamBlock slug={home.slug} pixels={hPix} name={home.name} delay={0} />}
-          {Center}
-          {away && <TeamBlock slug={away.slug} pixels={aPix} name={away.name} delay={3} />}
-        </AbsoluteFill>
-      )}
+      {/* crests side by side with the VS centred between them (both formats) */}
+      <AbsoluteFill style={{
+        flexDirection: "row", alignItems: "center",
+        justifyContent: portrait ? "center" : "space-between",
+        gap: portrait ? base * 0.02 : 0,
+        // portrait: bottom padding lifts the vertically-centred row higher
+        padding: portrait ? `0 0 ${Math.round(height * 0.16)}px` : `0 ${width * 0.06}px`,
+      }}>
+        {home && <TeamBlock slug={home.slug} pixels={hPix} name={home.code} />}
+        {Center}
+        {away && <TeamBlock slug={away.slug} pixels={aPix} name={away.code} />}
+      </AbsoluteFill>
     </AbsoluteFill>
   );
 };

@@ -10,7 +10,7 @@ import styles from './MotifCrest.module.css';
 // `spin` mode: paint the crest once (no rAF) and rotate it in 3D via a GPU CSS
 // transform — cheap enough to run on every team in the home group list at once.
 
-export type MotifId = 'solid' | 'lines' | 'mesh' | 'cube' | 'teamColors' | 'team3d' | 'sweep' | 'pattern' | 'abstract' | 'internet' | 'chrome' | 'bauhaus' | 'stats';
+export type MotifId = 'solid' | 'lines' | 'mesh' | 'cube' | 'teamColors' | 'team3d' | 'sweep' | 'pattern' | 'abstract' | 'internet' | 'chrome' | 'bauhaus' | 'stats' | 'regions';
 
 interface MotifCrestProps {
   /** 0-based grid indices (site convention). Shifted +1 for the engine's 1-based grid. */
@@ -30,13 +30,14 @@ interface MotifCrestProps {
   stats?: Record<string, number>;
   /** ASCII number layer for the 'stats' motif: shirt number per player who
    *  played, scorers rendered wider + bright. */
-  roster?: Array<{ num: number | null; scored?: boolean }>;
+  roster?: Array<{ num: number | null; scored?: boolean; name?: string }>;
   /** Draw the game-stats overlay (glyphs + numbers) on top of this style —
    *  lets any treatment carry the match's box score, not just 'stats'. */
   statsOverlay?: boolean;
   /** Where the stat overlay lives: on the logo (inside), the negative space
-   *  around it (outside), or everywhere (both). */
-  statPlacement?: 'inside' | 'outside' | 'both';
+   *  around it (outside), the enclosed negative space inside the mark (holes),
+   *  or everywhere (both). */
+  statPlacement?: 'inside' | 'outside' | 'holes' | 'both';
   className?: string;
 }
 

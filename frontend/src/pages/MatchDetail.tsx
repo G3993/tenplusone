@@ -3,6 +3,7 @@ import { useParams, useSearchParams, Link } from 'react-router';
 import { MatchCrest3D } from '../components/match/MatchCrest3D';
 import { useCrestSize } from '../components/matches/MatchPreview';
 import { MatchCloset } from '../components/match/MatchCloset';
+import { MatchMerchHero } from '../components/match/MatchMerchHero';
 import { MatchPoll, type MatchPick } from '../components/match/MatchPoll';
 import { MatchStatsPanel } from '../components/match/MatchStatsPanel';
 import { GameIdentity } from '../components/match/GameIdentity';
@@ -120,7 +121,10 @@ export function MatchDetail() {
       )}
 
       {homeTeam && awayTeam && (
-        <MatchCloset home={homeTeam} away={awayTeam} pick={pick} />
+        <div id="match-merch">
+          {status === 'FINISHED' && <MatchMerchHero matchId={match.id} home={match.h} away={match.a} />}
+          <MatchCloset home={homeTeam} away={awayTeam} pick={pick} />
+        </div>
       )}
 
       <Back3D to="/matches">← back to matches</Back3D>

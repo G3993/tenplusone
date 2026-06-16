@@ -16,16 +16,24 @@
  *   PRINTIFY_TEE_BLUEPRINT  — blueprint id for the base tee
  *   PRINTIFY_TEE_PROVIDER   — print-provider id for that blueprint
  *
- * NOTE (known blocker, see memory ifc_3d_product_line): even after Printify
- * publishes to Shopify, the product only shows on the HEADLESS storefront once
- * it's published to publication 145681481898 — which needs an shpat_ admin token
- * with write_publications. That final publish is stubbed below.
+ * The product only shows on the HEADLESS storefront (www.internetfc.com) once
+ * it's published to publication 145681481898. Printify publishes the product to
+ * the Shopify *store*, but not to the headless sales channel — so step 4 below
+ * waits for Printify to sync the Shopify product, then publishes it to the
+ * headless publication via Shopify Admin (needs an shpat_ token with
+ * write_publications). It's best-effort: if the admin creds are absent the mint
+ * still succeeds, we just report headlessPublished:false. Set:
+ *   SHOPIFY_ADMIN_TOKEN     — shpat_ token with write_publications
+ *   SHOPIFY_STORE_DOMAIN    — e.g. internet-soccer-club.myshopify.com
+ *   SHOPIFY_PUBLICATION_ID  — headless publication id (defaults to 145681481898)
  *
  * Runs on the Vercel Edge runtime — Web APIs only.
  */
 export const config = { runtime: 'edge' };
 
 const PRINTIFY = 'https://api.printify.com/v1';
+const SHOPIFY_API_VERSION = '2024-10';
+const DEFAULT_PUBLICATION_ID = '145681481898';
 
 interface Body {
   matchId?: string;
@@ -100,14 +108,77 @@ export default async function handler(req: Request): Promise<Response> {
       body: JSON.stringify({ title: true, description: true, images: true, variants: true, tags: true }),
     });
 
-    // 4) TODO (known blocker): publish to the headless storefront publication
-    //    145681481898 via Shopify Admin (needs shpat_ with write_publications),
-    //    otherwise the product won't appear on www.internetfc.com.
+    // 4) Publish to the headless storefront publication so it appears on
+    //    www.internetfc.com. Printify syncs the Shopify product asynchronously;
+    //    poll for the synced Shopify product id, then publish it via Admin API.
+    const headless = await publishToHeadless(token, shopId, product.id);
 
-    return json({ configured: true, productId: product.id, title });
+    return json({ configured: true, productId: product.id, title, ...headless });
   } catch (err) {
     return json({ error: String(err) }, 500);
   }
+}
+
+/**
+ * After Printify pushes a product to Shopify it populates the product's
+ * `external` field with the Shopify product id. We poll for that, then publish
+ * the Shopify product to the headless publication. Best-effort: any failure
+ * returns headlessPublished:false with a reason instead of throwing, so the
+ * mint itself is never blocked.
+ */
+async function publishToHeadless(
+  printifyToken: string,
+  shopId: string,
+  printifyProductId: string,
+): Promise<{ headlessPublished: boolean; headlessReason?: string; shopifyProductId?: string }> {
+  const adminToken = process.env.SHOPIFY_ADMIN_TOKEN;
+  const domain = process.env.SHOPIFY_STORE_DOMAIN;
+  const publicationId = process.env.SHOPIFY_PUBLICATION_ID ?? DEFAULT_PUBLICATION_ID;
+  if (!adminToken || !domain) {
+    return { headlessPublished: false, headlessReason: 'SHOPIFY_ADMIN_TOKEN / SHOPIFY_STORE_DOMAIN not set' };
+  }
+
+  // Poll Printify for the synced Shopify product id (external.id).
+  const auth = { Authorization: `Bearer ${printifyToken}`, 'content-type': 'application/json' };
+  let shopifyId: string | undefined;
+  for (let attempt = 0; attempt < 8 && !shopifyId; attempt++) {
+    if (attempt > 0) await sleep(1500);
+    const r = await fetch(`${PRINTIFY}/shops/${shopId}/products/${printifyProductId}.json`, { headers: auth });
+    if (!r.ok) continue;
+    const p = await r.json();
+    const ext = p?.external?.id;
+    if (ext) shopifyId = String(ext);
+  }
+  if (!shopifyId) {
+    return { headlessPublished: false, headlessReason: 'Shopify product id not synced from Printify yet' };
+  }
+
+  // Publish the Shopify product to the headless publication.
+  const gid = `gid://shopify/Product/${shopifyId}`;
+  const pubGid = `gid://shopify/Publication/${publicationId}`;
+  const mutation = `mutation Publish($id: ID!, $pubId: ID!) {
+    publishablePublish(id: $id, input: [{ publicationId: $pubId }]) {
+      userErrors { field message }
+    }
+  }`;
+  const res = await fetch(`https://${domain}/admin/api/${SHOPIFY_API_VERSION}/graphql.json`, {
+    method: 'POST',
+    headers: { 'X-Shopify-Access-Token': adminToken, 'content-type': 'application/json' },
+    body: JSON.stringify({ query: mutation, variables: { id: gid, pubId: pubGid } }),
+  });
+  if (!res.ok) {
+    return { headlessPublished: false, headlessReason: `admin api ${res.status}`, shopifyProductId: shopifyId };
+  }
+  const out = await res.json();
+  const errs = out?.data?.publishablePublish?.userErrors ?? out?.errors;
+  if (errs && errs.length) {
+    return { headlessPublished: false, headlessReason: JSON.stringify(errs), shopifyProductId: shopifyId };
+  }
+  return { headlessPublished: true, shopifyProductId: shopifyId };
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function json(obj: unknown, status = 200): Response {

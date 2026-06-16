@@ -20,6 +20,17 @@ type VariantNode = {
 
 /** Canonical size ordering for apparel; unknowns sort to the end. */
 const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', '4XL', '5XL', 'One Size', 'OS'];
+
+// unisex tee measurements, in inches (chest = pit-to-pit, laid flat)
+const SIZE_CHART = [
+  { s: 'XS', chest: 18, length: 27, sleeve: 8 },
+  { s: 'S', chest: 20, length: 28, sleeve: 8.25 },
+  { s: 'M', chest: 22, length: 29, sleeve: 8.5 },
+  { s: 'L', chest: 24, length: 30, sleeve: 8.75 },
+  { s: 'XL', chest: 26, length: 31, sleeve: 9 },
+  { s: 'XXL', chest: 28, length: 32, sleeve: 9.25 },
+];
+const toCm = (v: number) => Math.round(v * 2.54);
 const sizeRank = (s: string) => {
   const i = SIZE_ORDER.indexOf(s.toUpperCase() === 'OS' ? 'OS' : s);
   return i === -1 ? 999 : i;
@@ -77,6 +88,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
+  const [unit, setUnit] = useState<'in' | 'cm'>('in');
   const [added, setAdded] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
   const [frame, setFrame] = useState(0);
@@ -265,24 +277,6 @@ export default function ProductDetail() {
           {team && <div className={styles.eyebrow}>{team.code} · world cup 2026</div>}
           <h1 className={styles.title}>{product.title}</h1>
           <div className={styles.price}>${price}</div>
-          <p className={styles.desc}>{product.description}</p>
-
-          {product.specs && product.specs.length > 0 && (
-            <dl className={styles.specs} aria-label="product specifications">
-              {product.specs.map((s) => (
-                <div key={s.label} className={styles.specRow}>
-                  <dt className={styles.specLabel}>{s.label}</dt>
-                  <dd className={styles.specValue}>{s.value}</dd>
-                </div>
-              ))}
-            </dl>
-          )}
-
-          <ul className={styles.trust} aria-label="trust signals">
-            <li>free shipping on orders over $75 (US)</li>
-            <li>30-day returns, no questions</li>
-            <li>printed on demand &middot; ships in 3 to 5 business days</li>
-          </ul>
 
           {multiColor && (
             <div className={styles.optGroup}>
@@ -346,6 +340,65 @@ export default function ProductDetail() {
             >
               buy now
             </button>
+          </div>
+
+          {/* everything-in-a-dropdown product info (House of Errors vibe):
+              terse details, a size chart with in/cm toggle, delivery */}
+          <div className={styles.accordions}>
+            <details className={styles.acc} open>
+              <summary className={styles.accHead}>details<span className={styles.accSign} aria-hidden="true" /></summary>
+              <div className={styles.accBody}>
+                <ul className={styles.accList}>
+                  {product.description && <li>{product.description}</li>}
+                  {(product.specs ?? []).map((s) => <li key={s.label}>{s.label}: {s.value}</li>)}
+                  <li>team crest, printed to order</li>
+                  <li>machine wash cold · tumble dry low</li>
+                </ul>
+              </div>
+            </details>
+
+            <details className={styles.acc}>
+              <summary className={styles.accHead}>size &amp; fit<span className={styles.accSign} aria-hidden="true" /></summary>
+              <div className={styles.accBody}>
+                <ul className={styles.accList}>
+                  <li>true to size</li>
+                  <li>classic unisex fit</li>
+                  <li>model is 6′1″ and wears medium</li>
+                </ul>
+                <div className={styles.unitRow} role="group" aria-label="size chart units">
+                  <button type="button" className={unit === 'in' ? `${styles.unitBtn} ${styles.unitOn}` : styles.unitBtn} onClick={() => setUnit('in')} aria-pressed={unit === 'in'}>inches</button>
+                  <button type="button" className={unit === 'cm' ? `${styles.unitBtn} ${styles.unitOn}` : styles.unitBtn} onClick={() => setUnit('cm')} aria-pressed={unit === 'cm'}>cm</button>
+                </div>
+                <table className={styles.sizeTable}>
+                  <thead>
+                    <tr><th>size</th><th>chest</th><th>length</th><th>sleeve</th></tr>
+                  </thead>
+                  <tbody>
+                    {SIZE_CHART.map((r) => (
+                      <tr key={r.s}>
+                        <th scope="row">{r.s}</th>
+                        <td>{unit === 'in' ? r.chest : toCm(r.chest)}</td>
+                        <td>{unit === 'in' ? r.length : toCm(r.length)}</td>
+                        <td>{unit === 'in' ? r.sleeve : toCm(r.sleeve)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className={styles.accNote}>measurements taken flat · chest is pit&#8209;to&#8209;pit</p>
+              </div>
+            </details>
+
+            <details className={styles.acc}>
+              <summary className={styles.accHead}>delivery<span className={styles.accSign} aria-hidden="true" /></summary>
+              <div className={styles.accBody}>
+                <ul className={styles.accList}>
+                  <li>printed on demand</li>
+                  <li>ships in 3 to 5 business days</li>
+                  <li>free us shipping over $75</li>
+                  <li>30-day returns, no questions</li>
+                </ul>
+              </div>
+            </details>
           </div>
         </div>
       </div>

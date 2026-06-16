@@ -22,7 +22,7 @@ function todayIndex(): number {
   return i === -1 ? DAYS.length - 1 : i;
 }
 
-export function UpcomingMatches({ showOdds = false, showCta = true, heading = 'matches' }: {
+export function UpcomingMatches({ showOdds = false, showCta = true, heading = 'World Cup Matches' }: {
   /** wc26 variant: odds buttons on, no CTA */
   showOdds?: boolean;
   showCta?: boolean;

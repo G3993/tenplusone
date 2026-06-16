@@ -62,7 +62,7 @@ export function WC26() {
       </section>
 
       <section id="matches" ref={(el) => { refs.current.matches = el; }} className={styles.section}>
-        <UpcomingMatches showOdds showCta={false} heading={null} />
+        <UpcomingMatches showOdds showCta={false} heading="World Cup Matches" />
       </section>
 
       <section id="bracket" ref={(el) => { refs.current.bracket = el; }} className={styles.section}>

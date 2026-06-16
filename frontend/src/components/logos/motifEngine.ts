@@ -298,6 +298,43 @@ import { ROSTERS } from '../../data/rosters';
         }
     }
 
+    // Shared down-right extrusion. Draws the slab side walls (right + bottom) at
+    // the OUTER boundary of the logo silhouette, so any flat style reads as a
+    // solid mark whose back plane sits on the grid and whose body rises toward
+    // the viewer. Call AFTER the background fill and BEFORE the flat top-face
+    // content so the content lands on the slab's top. `has(c,r)` tests the
+    // silhouette; pass a `wall`/`wallDark` color to tint the sides to the style.
+    function extrudeSilhouette(ctx, has, cell, opts = {}) {
+        const depth = opts.depth != null ? opts.depth : cell * (0.26 + statParams().complexity * 0.4);
+        const ox = depth * 0.6, oy = depth;
+        const wall = opts.wall || 'rgba(0,0,0,0.5)';        // right face
+        const wallDark = opts.wallDark || 'rgba(0,0,0,0.66)'; // bottom face (toward viewer)
+        const edge = opts.edge;
+        for (let row = 0; row < GRID; row++) {
+            for (let col = 0; col < GRID; col++) {
+                if (!has(col, row)) continue;
+                const x = col * cell, y = row * cell;
+                if (!has(col + 1, row)) {
+                    ctx.fillStyle = wall;
+                    ctx.beginPath();
+                    ctx.moveTo(x + cell, y); ctx.lineTo(x + cell + ox, y + oy);
+                    ctx.lineTo(x + cell + ox, y + cell + oy); ctx.lineTo(x + cell, y + cell);
+                    ctx.closePath(); ctx.fill();
+                    if (edge) { ctx.strokeStyle = edge; ctx.lineWidth = Math.max(0.5, cell * 0.04); ctx.stroke(); }
+                }
+                if (!has(col, row + 1)) {
+                    ctx.fillStyle = wallDark;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y + cell); ctx.lineTo(x + ox, y + cell + oy);
+                    ctx.lineTo(x + cell + ox, y + cell + oy); ctx.lineTo(x + cell, y + cell);
+                    ctx.closePath(); ctx.fill();
+                    if (edge) { ctx.strokeStyle = edge; ctx.lineWidth = Math.max(0.5, cell * 0.04); ctx.stroke(); }
+                }
+            }
+        }
+        return { ox, oy };
+    }
+
     // ----- B+W renderer -----
     // Monochromatic radial: each filled cell is a 3D-shaded sphere/disc.
     // Shade maps radially from logo center (darkest) to edges (lightest).
@@ -392,6 +429,10 @@ import { ROSTERS } from '../../data/rosters';
 
         ctx.fillStyle = opts.bg || '#ffffff';
         ctx.fillRect(0, 0, W, H);
+
+        // 3D: the stripe slab sits on the grid (sides extrude toward the viewer)
+        const has = (c, r) => c >= 0 && c < GRID && r >= 0 && r < GRID && set.has(r * GRID + c + 1);
+        extrudeSilhouette(ctx, has, cell, { wall: 'rgba(10,10,30,0.62)', wallDark: 'rgba(5,5,16,0.78)' });
 
         // Aurora/sunset palette stops
         const palette = [
@@ -493,7 +534,7 @@ import { ROSTERS } from '../../data/rosters';
 
         // 3D extrusion offset (depth scales with goals like the other 3D modes)
         const depth = cell * (0.35 + statParams().complexity * 0.35);
-        const dx = depth * 0.6, dy = -depth; // toward upper-right
+        const dx = depth * 0.6, dy = depth; // toward the viewer (down-right): back plane sits on the grid
 
         const _nsp = statParams();
         const sp = cell * (1.15 - _nsp.density * 0.55);  // more passes → tighter weave
@@ -703,10 +744,12 @@ import { ROSTERS } from '../../data/rosters';
             }
         }
 
-        // SINGLE shared extrusion — every piece sits on the same plane / same depth
+        // SINGLE shared extrusion — every piece sits on the same plane / same
+        // depth, extruded TOWARD the viewer (down-right) so the back plane sits
+        // on the grid and the slab rises out of it.
         const depth = cell * (0.28 + statParams().complexity * 0.45); // more goals → deeper 3D
         const ox = depth * 0.62;
-        const oy = -depth;
+        const oy = depth;
 
         function rgba(rgb, a) { return "rgba(" + rgb[0] + "," + rgb[1] + "," + rgb[2] + "," + a + ")"; }
         function rgbDark(rgb, f) { return "rgb(" + Math.round(rgb[0]*f) + "," + Math.round(rgb[1]*f) + "," + Math.round(rgb[2]*f) + ")"; }
@@ -728,18 +771,18 @@ import { ROSTERS } from '../../data/rosters';
                     ctx.lineTo(x + cell + ox, y + cell + oy);
                     ctx.lineTo(x + cell, y + cell);
                     ctx.closePath();
-                    if (!wire) { ctx.fillStyle = rgbDark(nc, 0.32); ctx.fill(); }
+                    if (!wire) { ctx.fillStyle = rgbDark(nc, 0.4); ctx.fill(); }
                     ctx.strokeStyle = wire ? wireC : rgba(nc, 0.5); ctx.lineWidth = wire ? 0.8 : 0.5; ctx.stroke();
                 }
-                // Top wall
-                if (!has(col, row - 1)) {
+                // Bottom wall (toward the viewer — in shadow, darkest face)
+                if (!has(col, row + 1)) {
                     ctx.beginPath();
-                    ctx.moveTo(x, y);
-                    ctx.lineTo(x + ox, y + oy);
-                    ctx.lineTo(x + cell + ox, y + oy);
-                    ctx.lineTo(x + cell, y);
+                    ctx.moveTo(x, y + cell);
+                    ctx.lineTo(x + ox, y + cell + oy);
+                    ctx.lineTo(x + cell + ox, y + cell + oy);
+                    ctx.lineTo(x + cell, y + cell);
                     ctx.closePath();
-                    if (!wire) { ctx.fillStyle = rgbDark(nc, 0.5); ctx.fill(); }
+                    if (!wire) { ctx.fillStyle = rgbDark(nc, 0.26); ctx.fill(); }
                     ctx.strokeStyle = wire ? wireC : rgba(nc, 0.5); ctx.lineWidth = wire ? 0.8 : 0.5; ctx.stroke();
                 }
             }
@@ -802,6 +845,31 @@ import { ROSTERS } from '../../data/rosters';
         return want ? ez(Math.min(1, t/1.6)) : 1;
     }
 
+    // The enclosed negative space *inside* a logo — the empty cells the mark
+    // wraps around (the hole in an O, A, B, the loops of an 8…). Flood-fill the
+    // exterior inward from the border; any empty cell it never reaches is an
+    // interior hole. Returns 1-based pids to match the pixel `set`.
+    function interiorHoleSet(set){
+        const empty = (c,r)=> c>=0&&c<GRID&&r>=0&&r<GRID && !set.has(r*GRID+c+1);
+        const exterior = new Set();
+        const stack = [];
+        for (let c=0;c<GRID;c++){ if (empty(c,0)) stack.push(c); if (empty(c,GRID-1)) stack.push((GRID-1)*GRID+c); }
+        for (let r=0;r<GRID;r++){ if (empty(0,r)) stack.push(r*GRID); if (empty(GRID-1,r)) stack.push(r*GRID+GRID-1); }
+        while (stack.length){
+            const idx = stack.pop();
+            if (exterior.has(idx)) continue;
+            exterior.add(idx);
+            const c=idx%GRID, r=Math.floor(idx/GRID);
+            if (empty(c-1,r)) stack.push(r*GRID+c-1);
+            if (empty(c+1,r)) stack.push(r*GRID+c+1);
+            if (empty(c,r-1)) stack.push((r-1)*GRID+c);
+            if (empty(c,r+1)) stack.push((r+1)*GRID+c);
+        }
+        const holes = new Set();
+        for (let pid=1; pid<=GRID*GRID; pid++) if (!set.has(pid) && !exterior.has(pid-1)) holes.add(pid);
+        return holes;
+    }
+
     // Deal one glyph per real unit of the box score, place each scorer's number
     // ONCE as a bright hero token, draw the glyphs. Returns the consumed cells.
     function drawStatGlyphs(ctx, pixels, opts){
@@ -817,28 +885,17 @@ import { ROSTERS } from '../../data/rosters';
         const sp2 = statParams();
 
         const S = opts.stats || matchStats;
-        const yellowN = S.yellowCards!=null?S.yellowCards:Math.max(0,S.cards||0);
-        const redN = S.redCards||0;
-        const sot = Math.max(0, Math.round(S.shotsOnTarget!=null?S.shotsOnTarget:0));
-        const shotsTotal = Math.max(0, Math.round(S.shots||0));
-        const shotsOff = Math.max(0, shotsTotal - sot);
-        const statCounts = [
-            ['goals',      Math.max(0, Math.round(S.goals||0))],
-            ['sot',        sot],
-            ['shots',      shotsOff],
-            ['corners',    Math.max(0, Math.round(S.corners||0))],
-            ['cardY',      Math.max(0, Math.round(yellowN))],
-            ['cardR',      Math.max(0, Math.round(redN))],
-            ['offsides',   Math.max(0, Math.round(S.offsides||0))],
-            ['fouls',      Math.max(0, Math.round(S.fouls||0))],
-            ['var',        Math.max(0, Math.round(S.var||0))],
-            ['possession', Math.max(0, Math.round((S.possession||0)/10))],
-            ['passes',     Math.max(0, Math.round((S.passes||0)/50))],
-        ];
+        const statCounts = statCountList(S);
         // placement: stats can live on the logo pixels (inside), the negative
-        // space around it (outside), or everywhere (both)
+        // space around it (outside), the enclosed negative space inside the
+        // mark (holes), or everywhere (both)
         const placement = opts.statPlacement || 'inside';
-        const wants = (pid) => { const inside = set.has(pid); return placement==='outside' ? !inside : placement==='both' ? true : inside; };
+        const holes = placement === 'holes' ? interiorHoleSet(set) : null;
+        const wants = (pid) => {
+            if (placement === 'holes') return holes.has(pid);
+            const inside = set.has(pid);
+            return placement==='outside' ? !inside : placement==='both' ? true : inside;
+        };
         const statCells = [];
         for (let pid=1; pid<=GRID*GRID; pid++) if (wants(pid)) statCells.push(pid-1);
         statCells.sort((a,b)=> (pseed(a,aSeed+7)%99991) - (pseed(b,aSeed+7)%99991));
@@ -869,22 +926,21 @@ import { ROSTERS } from '../../data/rosters';
                     if (used.has(idx)) continue;
                     const col=idx%GRID, row=Math.floor(idx/GRID);
                     if (!isRev(row-0.6)) continue;
-                    if (dbl){ if (col+1>=GRID) continue; const r2=row*GRID+(col+1); if (assigned.has(r2) || used.has(r2)) continue; }
                     const x=col*cell, y=row*cell;
-                    const bw=(dbl?2:1)*cell;
                     ctx.save();
                     ctx.shadowColor='rgba(255,255,255,0.95)'; ctx.shadowBlur=cell*0.6;
-                    ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(x,y,bw,cell);
+                    ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(x,y,cell,cell);
                     ctx.fillStyle='#ffffff';
                     ctx.textAlign='center'; ctx.textBaseline='middle';
                     ctx.font=`900 ${Math.round(cell*0.96)}px "Courier New", ui-monospace, monospace`;
                     ctx.shadowColor='rgba(255,255,255,0.98)'; ctx.shadowBlur=cell*0.7;
-                    for (let di=0; di<digits.length; di++){
-                        ctx.save(); ctx.translate(x+di*cell+cell/2, y+cell/2+cell*0.03); ctx.scale(1.3,1.12);
-                        ctx.fillText(digits[di],0,0); ctx.restore();
-                    }
+                    // the whole number sits dead-centre in ONE cell (double
+                    // digits squeezed horizontally so they read as a pair)
+                    ctx.translate(x+cell/2, y+cell/2+cell*0.03);
+                    ctx.scale(dbl?0.62:1.3, 1.12);
+                    ctx.fillText(digits,0,0);
                     ctx.restore();
-                    used.add(idx); if (dbl) used.add(row*GRID+(col+1));
+                    used.add(idx);
                     break;
                 }
                 gi += 3;
@@ -896,6 +952,37 @@ import { ROSTERS } from '../../data/rosters';
             const col=idx%GRID, row=Math.floor(idx/GRID);
             if (used.has(idx)) continue;
             if (!isRev(row-0.6)) continue;
+            drawStatSymbol(ctx, stat, col, row, cell, sp2, ink, animate, t, idx);
+        }
+        return { assigned, used };
+    }
+
+    // The 11 box-score quantities, in canonical order, derived from a stat line.
+    function statCountList(S){
+        const yellowN = S.yellowCards!=null?S.yellowCards:Math.max(0,S.cards||0);
+        const redN = S.redCards||0;
+        const sot = Math.max(0, Math.round(S.shotsOnTarget!=null?S.shotsOnTarget:0));
+        const shotsTotal = Math.max(0, Math.round(S.shots||0));
+        const shotsOff = Math.max(0, shotsTotal - sot);
+        return [
+            ['goals',      Math.max(0, Math.round(S.goals||0))],
+            ['sot',        sot],
+            ['shots',      shotsOff],
+            ['corners',    Math.max(0, Math.round(S.corners||0))],
+            ['cardY',      Math.max(0, Math.round(yellowN))],
+            ['cardR',      Math.max(0, Math.round(redN))],
+            ['offsides',   Math.max(0, Math.round(S.offsides||0))],
+            ['fouls',      Math.max(0, Math.round(S.fouls||0))],
+            ['var',        Math.max(0, Math.round(S.var||0))],
+            ['possession', Math.max(0, Math.round((S.possession||0)/10))],
+            ['passes',     Math.max(0, Math.round((S.passes||0)/50))],
+        ];
+    }
+
+    // One stat symbol, drawn dead-centre in cell (col,row). Shared by the
+    // overlay (drawStatGlyphs) and the sectors renderer so the iconography is
+    // identical everywhere.
+    function drawStatSymbol(ctx, stat, col, row, cell, sp2, ink, animate, t, idx){
             const x=col*cell, y=row*cell, cx=x+cell/2, cy=y+cell/2;
             const wob = animate?Math.sin(t*2+idx*0.2):0;
             const lw = Math.max(1, cell*(0.06 + sp2.thickness*0.06));
@@ -985,11 +1072,21 @@ import { ROSTERS } from '../../data/rosters';
                 ctx.fillRect(-cell*0.16, -cell*0.26, cell*0.32, cell*0.52);
                 ctx.restore();
             } else if (stat === 'offsides') {
-                ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1, cell*0.06);
-                ctx.setLineDash([cell*0.12, cell*0.1]);
-                ctx.beginPath(); ctx.moveTo(x + cell*0.15, y + cell*0.2); ctx.lineTo(x + cell*0.85, y + cell*0.8); ctx.stroke();
-                ctx.setLineDash([]);
-                ctx.fillStyle = '#f5d800'; ctx.beginPath(); ctx.arc(x + cell*0.78, y + cell*0.28, cell*0.08, 0, Math.PI*2); ctx.fill();
+                // offsides — assistant referee's checkered orange/yellow flag
+                const fx = x + cell*0.28, fy = y + cell*0.16, fw = cell*0.5, fh = cell*0.4;
+                const cols = 3, rows = 2, cw = fw/cols, ch = fh/rows;
+                const ORANGE = '#f47a1f', LIME = '#d6e000';
+                ctx.shadowColor = 'rgba(244,122,31,0.6)'; ctx.shadowBlur = cell*0.3;
+                for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+                    ctx.fillStyle = ((r + c) % 2 === 0) ? ORANGE : LIME;
+                    ctx.fillRect(fx + c*cw, fy + r*ch, cw + 0.5, ch + 0.5);
+                }
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'rgba(0,0,0,0.45)'; ctx.lineWidth = Math.max(0.5, cell*0.03);
+                ctx.strokeRect(fx, fy, fw, fh);
+                // pole down the left edge of the flag
+                ctx.strokeStyle = '#d8d8d8'; ctx.lineWidth = Math.max(1, cell*0.06);
+                ctx.beginPath(); ctx.moveTo(fx, fy - cell*0.02); ctx.lineTo(fx, y + cell*0.86); ctx.stroke();
             } else if (stat === 'var') {
                 // VAR — TV review screen with a check
                 ctx.fillStyle = '#1f2937';
@@ -1007,8 +1104,6 @@ import { ROSTERS } from '../../data/rosters';
                 ctx.beginPath(); ctx.arc(cx + cell*0.32, cy, cell*0.12, -0.7, 0.7); ctx.stroke();
             }
             ctx.restore();
-        }
-        return { assigned, used };
     }
 
     // Each player who played gets their shirt number ONCE — no repeats, no
@@ -1024,7 +1119,12 @@ import { ROSTERS } from '../../data/rosters';
         const reveal = statReveal(opts);
         const frontier = reveal*(GRID+3);
         const placement = opts.statPlacement || 'inside';
-        const wants = (pid) => { const inside = set.has(pid); return placement==='outside' ? !inside : placement==='both' ? true : inside; };
+        const holes = placement === 'holes' ? interiorHoleSet(set) : null;
+        const wants = (pid) => {
+            if (placement === 'holes') return holes.has(pid);
+            const inside = set.has(pid);
+            return placement==='outside' ? !inside : placement==='both' ? true : inside;
+        };
         // candidate cells (free of glyphs/tokens), spread deterministically
         const cand = [];
         for (let pid=1; pid<=GRID*GRID; pid++){ if (!wants(pid)) continue; const idx=pid-1; if (assigned.has(idx) || used.has(idx)) continue; cand.push(idx); }
@@ -1041,16 +1141,19 @@ import { ROSTERS } from '../../data/rosters';
                 if (taken.has(idx)) continue;
                 const col=idx%GRID, row=Math.floor(idx/GRID);
                 if (!(row < frontier - 1)) continue;
-                if (dbl){ if (col+1>=GRID) continue; const r2=row*GRID+(col+1); if (assigned.has(r2)||used.has(r2)||taken.has(r2)) continue; }
                 const inside = set.has(idx+1);
                 const x=col*cell, y=row*cell;
                 ctx.save();
                 ctx.font = font;
                 ctx.fillStyle = `rgba(230,255,238,${inside?0.62:0.42})`;
                 ctx.shadowColor = 'rgba(180,255,205,0.4)'; ctx.shadowBlur = cell*0.18;
-                for (let di=0; di<digits.length; di++) ctx.fillText(digits[di], x+di*cell+cell/2, y+cell/2+cell*0.03);
+                // centre the whole number in ONE cell — double digits squeezed
+                // so they read as a pair instead of straddling two grid squares
+                ctx.translate(x+cell/2, y+cell/2+cell*0.03);
+                if (dbl) ctx.scale(0.6, 1);
+                ctx.fillText(digits, 0, 0);
                 ctx.restore();
-                taken.add(idx); if (dbl) taken.add(row*GRID+col+1);
+                taken.add(idx);
                 ci += 7;
                 break;
             }
@@ -1075,6 +1178,9 @@ import { ROSTERS } from '../../data/rosters';
         const t = opts.time || 0;
         const animate = !!opts.animate;
         const has = (c, r) => c >= 0 && c < GRID && r >= 0 && r < GRID && set.has(r * GRID + c + 1);
+
+        // 3D: the glyph slab sits on the grid (sides extrude toward the viewer)
+        extrudeSilhouette(ctx, has, cell, { wall: 'rgba(6,40,22,0.6)', wallDark: 'rgba(3,22,12,0.76)' });
 
         // No background — only logo pixels
         const aSeed = fillSeed + (animate ? Math.floor(t * 0.25) : 0);
@@ -1139,6 +1245,116 @@ import { ROSTERS } from '../../data/rosters';
         }
 
         drawAsciiNumbers(ctx, pixels, opts, assigned, used);
+    }
+
+    // HSL→css rgb (h 0..360, s/l 0..100). Local so the engine stays dep-free.
+    function hslCss(h,s,l){
+        s/=100; l/=100;
+        const c=(1-Math.abs(2*l-1))*s, x=c*(1-Math.abs((h/60)%2-1)), m=l-c/2;
+        let r=0,g=0,b=0;
+        if (h<60){r=c;g=x;} else if(h<120){r=x;g=c;} else if(h<180){g=c;b=x;}
+        else if(h<240){g=x;b=c;} else if(h<300){r=x;b=c;} else {r=c;b=x;}
+        return `rgb(${Math.round((r+m)*255)},${Math.round((g+m)*255)},${Math.round((b+m)*255)})`;
+    }
+
+    // Partition the logo's filled pixels into k contiguous regions via
+    // farthest-point seeding + a few Lloyd (k-means) passes. Deterministic for
+    // a given mark. Returns pid → region index (0..k-1).
+    function regionAssign(filledPids, k){
+        const region = new Map();
+        const n = filledPids.length;
+        if (!n) return { region };
+        k = Math.min(k, n);
+        const pts = filledPids.map((pid)=>{ const i=pid-1; return [i%GRID, Math.floor(i/GRID)]; });
+        const d2 = (a,b)=>{ const dx=a[0]-b[0], dy=a[1]-b[1]; return dx*dx+dy*dy; };
+        // seed: farthest-point sampling from the centroid outward
+        let cx=0, cy=0; for (const p of pts){ cx+=p[0]; cy+=p[1]; } cx/=n; cy/=n;
+        let first=0, best=Infinity;
+        for (let i=0;i<n;i++){ const d=d2(pts[i],[cx,cy]); if (d<best){ best=d; first=i; } }
+        const cent=[[pts[first][0],pts[first][1]]];
+        const mind=pts.map((p)=>d2(p,cent[0]));
+        while (cent.length<k){
+            let fi=0, fb=-1;
+            for (let i=0;i<n;i++){ if (mind[i]>fb){ fb=mind[i]; fi=i; } }
+            cent.push([pts[fi][0],pts[fi][1]]);
+            for (let i=0;i<n;i++){ const d=d2(pts[i],pts[fi]); if (d<mind[i]) mind[i]=d; }
+        }
+        const assign=new Array(n).fill(0);
+        for (let iter=0; iter<12; iter++){
+            for (let i=0;i<n;i++){ let b=0,bd=Infinity; for (let j=0;j<k;j++){ const d=d2(pts[i],cent[j]); if (d<bd){ bd=d; b=j; } } assign[i]=b; }
+            const sx=new Array(k).fill(0), sy=new Array(k).fill(0), ct=new Array(k).fill(0);
+            for (let i=0;i<n;i++){ const a=assign[i]; sx[a]+=pts[i][0]; sy[a]+=pts[i][1]; ct[a]++; }
+            for (let j=0;j<k;j++) if (ct[j]){ cent[j]=[sx[j]/ct[j], sy[j]/ct[j]]; }
+        }
+        for (let i=0;i<n;i++) region.set(filledPids[i], assign[i]);
+        return { region };
+    }
+
+    // ----- Sectors renderer: the logo split into 11 colored regions, one per
+    // box-score quantity. Each region is filled a distinct hue and hosts that
+    // stat's glyphs (count = the real number), so the mark IS the stat sheet. -
+    function renderRegions(canvas, pixels, opts = {}) {
+        const cell = opts.cell || 16;
+        const dpr = opts.forExport ? 1 : Math.min(window.devicePixelRatio || 1, 3);
+        const W = GRID * cell, H = GRID * cell;
+        canvas.width = W * dpr; canvas.height = H * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        if (opts.bg && opts.bg !== 'rgba(0,0,0,0)') { ctx.fillStyle = opts.bg; ctx.fillRect(0, 0, W, H); }
+        const set = new Set(pixels);
+        const filled = [...set];
+        if (!filled.length) return;
+        const K = 11;
+        const { region } = regionAssign(filled, K);
+        const has = (c,r)=> c>=0&&c<GRID&&r>=0&&r<GRID&&set.has(r*GRID+c+1);
+        const regAt = (c,r)=> has(c,r) ? (region.get(r*GRID+c+1) ?? -1) : -1;
+        // 11 evenly-spread hues, rotated per team so marks differ
+        const hue0 = (fillSeed * 37) % 360;
+        const pal = []; for (let j=0;j<K;j++) pal.push(hslCss((hue0 + j*360/K)%360, 70, 52));
+        const edge = Math.max(1, cell*0.08);
+
+        // fill each cell its region color with a soft top/bottom bevel
+        for (const pid of filled){
+            const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
+            const j = region.get(pid) ?? 0;
+            const x=col*cell, y=row*cell;
+            ctx.fillStyle = pal[j]; ctx.fillRect(x,y,cell,cell);
+            ctx.fillStyle = 'rgba(255,255,255,0.14)'; ctx.fillRect(x,y,cell,edge);
+            ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(x,y+cell-edge,cell,edge);
+        }
+        // dark seams between adjacent sections so the 11 zones read clearly
+        ctx.strokeStyle='rgba(0,0,0,0.55)'; ctx.lineWidth=Math.max(1,cell*0.06);
+        for (let row=0;row<GRID;row++) for (let col=0;col<GRID;col++){
+            const j=regAt(col,row); if (j<0) continue;
+            const x=col*cell,y=row*cell;
+            if (regAt(col,row-1)!==j){ ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+cell,y); ctx.stroke(); }
+            if (regAt(col-1,row)!==j){ ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+cell); ctx.stroke(); }
+        }
+        // bright outer outline around the whole mark
+        ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=Math.max(1,cell*0.08);
+        for (let row=0;row<GRID;row++) for (let col=0;col<GRID;col++){
+            if (!has(col,row)) continue; const x=col*cell,y=row*cell;
+            if (!has(col,row-1)){ ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+cell,y); ctx.stroke(); }
+            if (!has(col,row+1)){ ctx.beginPath(); ctx.moveTo(x,y+cell); ctx.lineTo(x+cell,y+cell); ctx.stroke(); }
+            if (!has(col-1,row)){ ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y+cell); ctx.stroke(); }
+            if (!has(col+1,row)){ ctx.beginPath(); ctx.moveTo(x+cell,y); ctx.lineTo(x+cell,y+cell); ctx.stroke(); }
+        }
+
+        // each section hosts exactly one stat — spread `count` glyphs evenly
+        const statTypes = ['goals','sot','shots','corners','cardY','cardR','offsides','fouls','var','possession','passes'];
+        const counts = statCountList(opts.stats || matchStats).map(([,n])=>n);
+        const sp2 = statParams();
+        const byRegion = Array.from({length:K},()=>[]);
+        for (const pid of filled){ const idx=pid-1; byRegion[region.get(pid)??0].push(idx); }
+        for (let j=0;j<K;j++){
+            const cells = byRegion[j]; if (!cells.length) continue;
+            cells.sort((a,b)=> a-b);
+            const need = Math.min(counts[j], cells.length);
+            for (let m=0;m<need;m++){
+                const idx = cells[Math.floor((m+0.5)*cells.length/need)];
+                drawStatSymbol(ctx, statTypes[j], idx%GRID, Math.floor(idx/GRID), cell, sp2, '#0f3d1c', false, 0, idx);
+            }
+        }
     }
 
     // ----- Sweep renderer: Minesweeper style -----
@@ -1281,6 +1497,10 @@ import { ROSTERS } from '../../data/rosters';
 
         if (opts.bg && opts.bg !== 'transparent' && opts.bg !== 'rgba(0,0,0,0)') { ctx.fillStyle = opts.bg; ctx.fillRect(0, 0, W, H); }
 
+        // 3D: the op-art slab sits on the grid (sides extrude toward the viewer)
+        const has = (c, r) => c >= 0 && c < GRID && r >= 0 && r < GRID && set.has(r * GRID + c + 1);
+        extrudeSilhouette(ctx, has, cell, { wall: 'rgba(18,14,46,0.58)', wallDark: 'rgba(9,7,26,0.74)' });
+
         // Op-art color palettes (Cruz-Diez inspired)
         const palettes = [
             ['#1e3a8a', '#fbbf24', '#1e3a8a', '#f97316'],
@@ -1371,7 +1591,8 @@ import { ROSTERS } from '../../data/rosters';
         }
     }
 
-    // ----- Abstract renderer: editorial data-art composition -----
+    // ----- Abstract renderer: the roster IS the mark — player surnames tiled to
+    // fill the crest, scorers lit in a warm accent, on a 3D slab. -----
     function renderAbstract(canvas, pixels, opts = {}) {
         const cell = opts.cell || 16;
         const dpr = opts.forExport ? 1 : Math.min(window.devicePixelRatio || 1, 3);
@@ -1385,223 +1606,65 @@ import { ROSTERS } from '../../data/rosters';
         const dark = fillBgDark;
         const has = (c, r) => c >= 0 && c < GRID && r >= 0 && r < GRID && set.has(r * GRID + c + 1);
 
-        // No background — only logo pixels
-        const aSeed = fillSeed;
-        const tt = animate ? t : 0;
+        // 3D: the name slab sits on the grid (sides extrude toward the viewer)
+        extrudeSilhouette(ctx, has, cell, { wall: 'rgba(8,46,26,0.6)', wallDark: 'rgba(4,26,14,0.76)' });
 
-        // Bayer 4x4 ordered-dither threshold matrix (0..15)/16
-        const bayer = [
-            [0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]
-        ];
-
-        // Logo bounds for smooth field
-        let minX = W, minY = H, maxX = 0, maxY = 0, any=false;
+        // Logo bounds
+        let minX = GRID, minY = GRID, maxX = 0, maxY = 0, any = false;
         for (let pid = 1; pid <= GRID*GRID; pid++){ if(!set.has(pid))continue; const i=pid-1,c=i%GRID,r=Math.floor(i/GRID); minX=Math.min(minX,c);maxX=Math.max(maxX,c);minY=Math.min(minY,r);maxY=Math.max(maxY,r); any=true; }
         if(!any){minX=0;minY=0;maxX=GRID-1;maxY=GRID-1;}
-        const cxg=(minX+maxX)/2, cyg=(minY+maxY)/2, spanr=Math.max(4,(maxX-minX+maxY-minY)/2);
 
-        // neon green ink tones
-        const g0 = dark ? [20,120,60] : [60,200,110];    // faint neon
-        const g1 = dark ? [40,220,110] : [30,210,120];   // mid neon
-        const g2 = dark ? [80,255,150] : [0,230,120];    // bright neon
-        function mix(a,b,k){return [a[0]+(b[0]-a[0])*k, a[1]+(b[1]-a[1])*k, a[2]+(b[2]-a[2])*k];}
-        function rgb(c){return "rgb("+Math.round(c[0])+","+Math.round(c[1])+","+Math.round(c[2])+")";}
-
-        // Stat drivers: possession → blob coverage, passes → busier field, offsides → scatter
-        const _asp = statParams();
-        const cover = 0.4 + _asp.colorAmount * 0.45;
-        const busy = 0.5 + _asp.density * 1.2;
-        // Smooth value field — layered sines making soft blobs
-        function field(c, r){
-            const dx=(c-cxg)/spanr, dy=(r-cyg)/spanr;
-            const dist=Math.sqrt(dx*dx+dy*dy);
-            let v = cover - dist*0.5;
-            v += 0.28*busy*Math.sin(c*0.45 + tt*0.7) * Math.cos(r*0.4 - tt*0.5);
-            v += 0.18*busy*Math.sin((c+r)*0.3 - tt*0.9);
-            v += 0.14*Math.sin(c*0.9 + r*0.7 + tt);
-            return v;
+        // Roster -> tokens (surname, with shirt number on scorers). Falls back to
+        // a marquee pool when no lineup is available.
+        const roster = (opts.roster || []).filter((p) => p && (p.name || p.num != null));
+        let tokens;
+        if (roster.length) {
+            tokens = roster.map((p) => ({ label: p.name || ('#' + p.num), num: p.num, scored: !!p.scored }));
+        } else {
+            tokens = PLAYER_NAMES.map((n, i) => ({ label: n, num: null, scored: i % 7 === 0 }));
         }
 
-        // Per-pixel dithered green field — the threshold/blob look
-        for (let pid = 1; pid <= GRID*GRID; pid++){
-            if(!set.has(pid))continue;
-            const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
-            const x=col*cell, y=row*cell;
-            const v = field(col,row);                     // ~0..1
-            const thr = bayer[row&3][col&3]/16;           // ordered dither threshold
-            // density of sub-dots based on field strength
-            const level = Math.max(0, Math.min(1, v));
-
-            // Subtle base wash: low-opacity green that blends into bg
-            const baseTone = mix(g0, g1, level);
-            ctx.fillStyle = "rgba("+Math.round(baseTone[0])+","+Math.round(baseTone[1])+","+Math.round(baseTone[2])+","+(0.12+level*0.25).toFixed(3)+")";
-            ctx.fillRect(x,y,cell,cell);
-
-            // Dithered dots: render a small NxN matrix inside the cell, turning on dots where field>threshold
-            const n = 3; // 3x3 sub-grid dithering
-            const sub = cell/n;
-            for(let sy=0; sy<n; sy++){
-                for(let sx=0; sx<n; sx++){
-                    const subThr = bayer[(row*n+sy)&3][(col*n+sx)&3]/16;
-                    if(level > subThr*0.92 + 0.06){
-                        const dotTone = mix(g1,g2, Math.min(1, level + (subThr-0.5)*0.3));
-                        ctx.fillStyle = "rgba("+Math.round(dotTone[0])+","+Math.round(dotTone[1])+","+Math.round(dotTone[2])+","+(0.35+level*0.5).toFixed(3)+")";
-                        const r = sub*0.42 * (0.7+level*0.5);
-                        ctx.beginPath();
-                        ctx.arc(x+sx*sub+sub/2, y+sy*sub+sub/2, r, 0, Math.PI*2);
-                        ctx.fill();
-                    }
-                }
-            }
-        }
-
-        // --- SQUIGGLE LAYER: loose hand-drawn curves scattered inside the logo ---
-        // clip to the logo so squiggles stay inside the mark, then draw wandering
-        // multi-segment curves seeded deterministically (animated drift when playing).
+        // clip to the mark so the typography forms the crest
         ctx.save();
         ctx.beginPath();
-        for (let pid = 1; pid <= GRID*GRID; pid++) {
-            if (!set.has(pid)) continue;
-            const i = pid-1; ctx.rect((i%GRID)*cell, Math.floor(i/GRID)*cell, cell, cell);
-        }
+        for (let pid = 1; pid <= GRID*GRID; pid++) { if (!set.has(pid)) continue; const i = pid-1; ctx.rect((i%GRID)*cell, Math.floor(i/GRID)*cell, cell, cell); }
         ctx.clip();
-        const squiggleCount = 5 + Math.round(_asp.density * 8); // more passes → more squiggles
-        const sqInk = dark ? 'rgba(255,40,70,0.85)' : 'rgba(255,20,55,0.8)';   // neon red
-        const sqInk2 = dark ? 'rgba(255,90,120,0.7)' : 'rgba(230,0,50,0.7)';   // brighter/deeper red
-        ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-        for (let q = 0; q < squiggleCount; q++) {
-            const s0 = pseed(q*13+1, aSeed+777);
-            const s1 = pseed(q*13+5, aSeed+777);
-            let px = minX*cell + (s0 % Math.max(1,(maxX-minX)*cell));
-            let py = minY*cell + (s1 % Math.max(1,(maxY-minY)*cell));
-            const segs = 5 + (pseed(q, aSeed+9) % 6);
-            const step = cell * (1.2 + (pseed(q, aSeed+11)%3)*0.6);
-            let ang = (pseed(q, aSeed+13) % 628) / 100;
-            ctx.strokeStyle = (q % 4 === 0) ? sqInk2 : sqInk;
-            ctx.lineWidth = Math.max(1.2, cell * (0.12 + (pseed(q,aSeed+17)%3)*0.05));
-            ctx.beginPath(); ctx.moveTo(px, py);
-            for (let sgi = 0; sgi < segs; sgi++) {
-                // wander the angle; add gentle animated drift
-                ang += ((pseed(q*31+sgi, aSeed+19) % 200)/100 - 1) * 1.1 + Math.sin(tt*0.6 + q + sgi)*0.25;
-                const nx = px + Math.cos(ang) * step;
-                const ny = py + Math.sin(ang) * step;
-                const mxp = (px+nx)/2 + Math.cos(ang+1.57)*step*0.4;
-                const myp = (py+ny)/2 + Math.sin(ang+1.57)*step*0.4;
-                ctx.quadraticCurveTo(mxp, myp, nx, ny);
-                px = nx; py = ny;
-            }
-            ctx.stroke();
-            // occasional little loop/curl at the end
-            if (pseed(q, aSeed+23) % 3 === 0) {
-                ctx.beginPath(); ctx.arc(px, py, cell*0.3, 0, Math.PI*1.6); ctx.stroke();
+
+        // base wash — dark, so the names read as lit type on the slab
+        ctx.fillStyle = dark ? 'rgba(4,18,11,0.82)' : 'rgba(8,30,18,0.9)';
+        ctx.fillRect(minX*cell, minY*cell, (maxX-minX+1)*cell, (maxY-minY+1)*cell);
+
+        const ink = dark ? 'rgba(120,245,170,0.92)' : 'rgba(150,255,190,0.95)';
+        const inkDim = dark ? 'rgba(60,170,110,0.72)' : 'rgba(90,210,140,0.8)';
+        const warm = 'rgba(245,190,30,0.98)';
+        const fontPx = Math.max(7, cell * 0.92);
+        const rowH = fontPx * 1.18;
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'left';
+        ctx.font = `${Math.round(fontPx)}px "PP NeueBit", ui-monospace, "JetBrains Mono", monospace`;
+        const sepW = ctx.measureText('  ').width;
+        const drift = animate ? (t * 14) : 0;
+
+        let ti = 0, rowIdx = 0;
+        const left = minX * cell, right = (maxX + 1) * cell;
+        for (let yy = minY*cell + rowH*0.6; yy < (maxY+1)*cell; yy += rowH, rowIdx++) {
+            // stagger each row, and let the wall of names drift slowly when playing
+            let x = left - ((rowIdx * cell * 1.7 + drift) % (cell * 4));
+            let guard = 0;
+            while (x < right && guard++ < 240) {
+                const tok = tokens[ti % tokens.length]; ti++;
+                const label = (tok.scored && tok.num != null) ? (tok.num + ' ' + tok.label) : tok.label;
+                const w = ctx.measureText(label).width;
+                ctx.fillStyle = tok.scored ? warm : (ti % 3 === 0 ? inkDim : ink);
+                ctx.fillText(label, x, yy);
+                x += w + sepW;
             }
         }
         ctx.restore();
 
-
-        const _isp = statParams();
-        const glyphChance = 13 - Math.round(_isp.density * 8); // more passes → more glyphs
-        const ink = dark ? 'rgba(230,230,225,0.7)' : 'rgba(20,20,20,0.7)';
-        const orange = 'rgba(232,85,45,0.8)';
-        for (let pid = 1; pid <= GRID*GRID; pid++){
-            if(!set.has(pid))continue;
-            const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
-            const sd = pseed(idx, aSeed + 5 + (animate?Math.floor(t*0.2):0));
-            if (sd % Math.max(4, glyphChance) !== 0) continue; // sparse, density-driven
-            const x=col*cell, y=row*cell, mx=x+cell/2, my=y+cell/2;
-            const glyph = INTERNET_MOTIFS[(sd >> 5) % INTERNET_MOTIFS.length];
-            // occasional orange accent glyph (tied to cards / warm accent)
-            const warm = ((sd >> 9) % 10) < (1 + Math.round(_isp.warmAccent * 4));
-            ctx.fillStyle = warm ? orange : ink;
-            ctx.font = `700 ${Math.round(cell * (0.7 + ((sd>>3)%3)*0.12))}px "Geist Mono", ui-monospace, monospace`;
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText(glyph, mx, my + cell*0.04);
-        }
-
-        // --- PLAYER NAME LABELS: surnames on neon-blue backgrounds scattered in the mark ---
-        const neonBlue = dark ? 'rgba(0,90,255,0.95)' : 'rgba(0,70,235,0.95)';
-        const neonBlueGlow = 'rgba(40,140,255,0.5)';
-        const nameChance = 19 - Math.round(_isp.density * 6);
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        for (let pid = 1; pid <= GRID*GRID; pid++){
-            if(!set.has(pid))continue;
-            const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
-            const sd = pseed(idx, aSeed + 333 + (animate?Math.floor(t*0.12):0));
-            if (sd % Math.max(8, nameChance) !== 0) continue;
-            const name = PLAYER_NAMES[(sd >> 6) % PLAYER_NAMES.length];
-            // fit across consecutive logo cells to the right
-            let span = 1;
-            while (span < Math.ceil(name.length*0.5) && has(col+span, row)) span++;
-            const x=col*cell, y=row*cell, boxW = span*cell, my=y+cell/2;
-            const padY = cell*0.18;
-            // neon-blue glow + solid blue background bar behind the name
-            ctx.fillStyle = neonBlueGlow;
-            ctx.fillRect(x-1, y+padY-1.5, boxW+2, cell-padY*2+3);
-            ctx.fillStyle = neonBlue;
-            ctx.fillRect(x+1, y+padY, boxW-2, cell-padY*2);
-            // white player name text
-            ctx.fillStyle = '#ffffff';
-            const fs = Math.min(cell*0.5, (boxW*1.6)/Math.max(1,name.length));
-            ctx.font = `800 ${Math.round(fs)}px "Geist Mono", ui-monospace, monospace`;
-            ctx.fillText(name, x + boxW/2, my + cell*0.02);
-        }
-
-        // --- PARODY LAYER: trolls/comments the match outcome (drives tone from stats) ---
-        // Build a pool of taunts weighted by the actual stats so the "vibe" reflects the game.
-        const s = matchStats;
-        const taunts = [];
-        if (s.goals === 0) { taunts.push('0-0','BORING','SNOOZE','PARK THE BUS','ZZZ'); }
-        if (s.goals >= 4) { taunts.push('GOAL FEST','SCENES','LIMBS','GG EZ'); }
-        if (s.fouls >= 14) { taunts.push('DIRTY','RIGGED','VAR?','SOFT','CHEAT'); }
-        if (s.cards >= 4) { taunts.push('SENT OFF','RED!','OFF!','11 v 9'); }
-        if (s.offsides >= 5) { taunts.push('OFFSIDE','LINESMAN!','BY A HAIR','CHALK'); }
-        if (s.possession >= 65) { taunts.push('TIKI TAKA','ALL DAY','SIDEWAYS'); }
-        if (s.possession <= 40) { taunts.push('SMASH & GRAB','PARKED','LUCKY'); }
-        if (s.shots >= 12) { taunts.push('WASTEFUL','FINISH!','HOW?!'); }
-        // always-available trolls
-        taunts.push('L','GG','RATIO','MID','COPE','SEETHE','ABSOLUTE','SCENES','OOF','NPC','MEH','???','SKILL ISSUE','CLOWN');
-        const faces = ['\\u263A','\\u2639','\\u2620','\\u00BF','x_x','T_T','>:('];
-
-        const parodyChance = 17 - Math.round(_isp.contrast * 6); // more fouls(contrast) → more trolling
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        for (let pid = 1; pid <= GRID*GRID; pid++){
-            if(!set.has(pid))continue;
-            const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
-            // only roomy interior cells so words fit; need a few cells to the right
-            const sd = pseed(idx, aSeed + 99 + (animate?Math.floor(t*0.15):0));
-            if (sd % Math.max(6, parodyChance) !== 0) continue;
-            const word = taunts[(sd >> 4) % taunts.length];
-            const x=col*cell, y=row*cell, my=y+cell/2;
-            // fit the word across available consecutive logo cells to the right
-            let span = 1;
-            while (span < word.length && has(col+span, row)) span++;
-            const boxW = span * cell;
-            // red-card accent words get red, faces/troll get bright ink
-            const isRed = /RED|SENT|OFF|RIGGED|CHEAT|DIRTY/.test(word);
-            // draw a little sticker bg so it pops out of the dither (parody "stamp")
-            ctx.fillStyle = isRed ? 'rgba(220,40,30,0.92)' : (dark ? 'rgba(245,200,30,0.9)' : 'rgba(20,20,20,0.88)');
-            const padY = cell*0.16;
-            ctx.fillRect(x+1, y+padY, boxW-2, cell - padY*2);
-            // text
-            ctx.fillStyle = isRed ? '#ffffff' : (dark ? '#111111' : '#f5f0e6');
-            const fs = Math.min(cell*0.62, (boxW*1.5)/Math.max(1,word.length));
-            ctx.font = `800 ${Math.round(fs)}px "Geist Mono", ui-monospace, monospace`;
-            ctx.fillText(word, x + boxW/2, my + cell*0.02);
-        }
-        // a couple of sad/troll faces sprinkled (emoji-ish), tied to a losing/dull game
-        if (s.goals <= 1 || s.fouls >= 12) {
-            for (let pid = 1; pid <= GRID*GRID; pid++){
-                if(!set.has(pid))continue;
-                const idx=pid-1, col=idx%GRID, row=Math.floor(idx/GRID);
-                const sd = pseed(idx, aSeed + 222);
-                if (sd % 41 !== 0) continue;
-                const x=col*cell, y=row*cell;
-                ctx.fillStyle = dark ? 'rgba(245,200,30,0.95)' : 'rgba(20,20,20,0.9)';
-                ctx.font = `700 ${Math.round(cell*0.8)}px "Geist Mono", ui-monospace, monospace`;
-                ctx.fillText(faces[(sd>>5)%faces.length], x+cell/2, y+cell/2+cell*0.04);
-            }
-        }
-
+        // bold boundary outline so the mark stays crisp on the field
+        ctx.strokeStyle = dark ? 'rgba(120,245,170,0.85)' : 'rgba(20,90,55,0.9)';
+        ctx.lineWidth = Math.max(1, cell * 0.07);
         for (let row=0; row<GRID; row++){
             for(let col=0; col<GRID; col++){
                 if(!has(col,row))continue;
@@ -1634,6 +1697,9 @@ import { ROSTERS } from '../../data/rosters';
         const colors = [red, blue, yellow];
 
         const aSeed = fillSeed + (animate ? Math.floor(t * 0.35) : 0);
+
+        // 3D: the Bauhaus block slab sits on the grid (sides extrude toward the viewer)
+        extrudeSilhouette(ctx, has, cell, { wall: 'rgba(0,0,0,0.42)', wallDark: 'rgba(0,0,0,0.6)' });
 
         // Greedy rectangle decomposition — merge touching cells into blocks
         const assigned = new Uint8Array(GRID * GRID);
@@ -1794,9 +1860,11 @@ import { ROSTERS } from '../../data/rosters';
         if (!any) { minY = 0; maxY = H; minX = 0; maxX = W; }
         const span = Math.max(1, maxY - minY);
 
-        // Shared 3D extrusion (like the Tetris piece — single plane, consistent depth)
+        // Shared 3D extrusion (like the Tetris piece — single plane, consistent
+        // depth), extruded TOWARD the viewer (down-right): the back plane sits on
+        // the grid and the steel slab rises out of it.
         const depth = cell * 0.5;
-        const ox = depth * 0.6, oy = -depth;
+        const ox = depth * 0.6, oy = depth;
 
         const anim = animate ? t : 0;
 
@@ -1817,15 +1885,15 @@ import { ROSTERS } from '../../data/rosters';
                     ctx.lineTo(x + cell + ox, y + cell + oy); ctx.lineTo(x + cell, y + cell);
                     ctx.closePath(); ctx.fill();
                 }
-                // Top wall — lighter angled steel
-                if (!has(col, row - 1)) {
-                    const g = ctx.createLinearGradient(x, y, x + ox, y + oy);
-                    g.addColorStop(0, '#6a6f76');
-                    g.addColorStop(1, '#3a3d42');
+                // Bottom wall — darker angled steel (the face toward the viewer)
+                if (!has(col, row + 1)) {
+                    const g = ctx.createLinearGradient(x, y + cell, x + ox, y + cell + oy);
+                    g.addColorStop(0, '#3a3d42');
+                    g.addColorStop(1, '#1b1d20');
                     ctx.fillStyle = g;
                     ctx.beginPath();
-                    ctx.moveTo(x, y); ctx.lineTo(x + ox, y + oy);
-                    ctx.lineTo(x + cell + ox, y + oy); ctx.lineTo(x + cell, y);
+                    ctx.moveTo(x, y + cell); ctx.lineTo(x + ox, y + cell + oy);
+                    ctx.lineTo(x + cell + ox, y + cell + oy); ctx.lineTo(x + cell, y + cell);
                     ctx.closePath(); ctx.fill();
                 }
             }
@@ -1956,8 +2024,15 @@ import { ROSTERS } from '../../data/rosters';
         const t = opts.time || 0;
         const animate = !!opts.animate;
         const dark = fillBgDark;
+        const teamId = opts.teamId || '';
         const has = (c, r) => c >= 0 && c < GRID && r >= 0 && r < GRID && set.has(r * GRID + c + 1);
         const wire = shapeMode === 'outline' || shapeMode === 'pixels';
+
+        // 3D: the b&w slab sits on the grid (sides extrude toward the viewer)
+        if (!wire) extrudeSilhouette(ctx, has, cell, {
+            wall: dark ? 'rgba(120,120,120,0.55)' : 'rgba(55,55,55,0.5)',
+            wallDark: dark ? 'rgba(78,78,78,0.62)' : 'rgba(24,24,24,0.62)',
+        });
 
         const fg = dark ? 245 : 17;
         const bgL = dark ? 17 : 255;
@@ -2073,6 +2148,26 @@ import { ROSTERS } from '../../data/rosters';
                 if(!has(col+1,row)){ctx.beginPath();ctx.moveTo(x+cell,y);ctx.lineTo(x+cell,y+cell);ctx.stroke();}
             }
         }
+
+        // team colour: gradient-map the mono mark into the team's colour —
+        // luminance drives a ramp from a deep team shade (darks) to a bright
+        // team tint (lights), so the dither/gradient DETAIL survives as tone.
+        {
+            const teamHex = teamPaletteFor(teamId).find((c) => !['#050505', '#000000', '#111111'].includes(String(c).toLowerCase())) || '#3aa0ff';
+            const n = parseInt(teamHex.slice(1), 16);
+            let r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+            const k = 255 / Math.max(r, g, b, 1);
+            const br = Math.min(255, r * k), bg = Math.min(255, g * k), bb = Math.min(255, b * k); // bright end
+            const dr = r * 0.32, dg = g * 0.32, db = b * 0.32;                                       // deep end
+            const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d = img.data;
+            for (let i = 0; i < d.length; i += 4) {
+                if (d[i + 3] === 0) continue;
+                const L = (d[i] * 0.299 + d[i + 1] * 0.587 + d[i + 2] * 0.114) / 255;
+                d[i] = dr + (br - dr) * L; d[i + 1] = dg + (bg - dg) * L; d[i + 2] = db + (bb - db) * L;
+            }
+            ctx.putImageData(img, 0, 0);
+        }
     }
 
     // ===== LATEST treatment: Team 3D =====
@@ -2142,8 +2237,11 @@ import { ROSTERS } from '../../data/rosters';
             } else groupColor.push(palRgb[base]);
         }
 
+        // Extrude TOWARD the viewer (down-right): the block's back plane sits
+        // on the grid and the body rises out of it, so the mark reads as planted
+        // on the pitch rather than floating above it.
         const depth = cell * (0.32 + statParams().complexity * 0.4);
-        const ox = depth * 0.6, oy = -depth;
+        const ox = depth * 0.6, oy = depth;
 
         for (let row = 0; row < GRID; row++) {
             for (let col = 0; col < GRID; col++) {
@@ -2158,10 +2256,10 @@ import { ROSTERS } from '../../data/rosters';
                     if (!wire) { ctx.fillStyle = rgba(nc.map(v=>v*0.18), 1); ctx.fill(); }
                     ctx.strokeStyle = wire ? (dark?'#fff':'#111') : rgba(nc, 0.4); ctx.lineWidth = wire?0.8:0.5; ctx.stroke();
                 }
-                if (!has(col, row - 1)) {
+                if (!has(col, row + 1)) {
                     ctx.beginPath();
-                    ctx.moveTo(x, y); ctx.lineTo(x + ox, y + oy);
-                    ctx.lineTo(x + cell + ox, y + oy); ctx.lineTo(x + cell, y);
+                    ctx.moveTo(x, y + cell); ctx.lineTo(x + ox, y + cell + oy);
+                    ctx.lineTo(x + cell + ox, y + cell + oy); ctx.lineTo(x + cell, y + cell);
                     ctx.closePath();
                     if (!wire) { ctx.fillStyle = rgba(nc.map(v=>v*0.32), 1); ctx.fill(); }
                     ctx.strokeStyle = wire ? (dark?'#fff':'#111') : rgba(nc, 0.4); ctx.lineWidth = wire?0.8:0.5; ctx.stroke();
@@ -2226,14 +2324,74 @@ import { ROSTERS } from '../../data/rosters';
         }
     }
 
+    // ===== Internet treatment: white-outline 3D pixels whose faces are packed
+    // with the game's numbers — a dense text readout of the match woven through
+    // the logo (player numbers, every stat, score). No brackets, pure text. =====
+    function renderInternet(canvas, pixels, opts = {}) {
+        const cell = opts.cell || 16;
+        const dpr = opts.forExport ? 1 : Math.min(window.devicePixelRatio || 1, 3);
+        const W = GRID * cell, H = GRID * cell;
+        canvas.width = W * dpr; canvas.height = H * dpr;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(dpr, dpr);
+        if (opts.bg && opts.bg !== 'rgba(0,0,0,0)') { ctx.fillStyle = opts.bg; ctx.fillRect(0, 0, W, H); }
+        const set = new Set(pixels);
+        const has = (c, r) => c >= 0 && c < GRID && r >= 0 && r < GRID && set.has(r * GRID + c + 1);
+        const dark = fillBgDark;
+        const ink = dark ? '#ffffff' : '#111111';
+        const face = dark ? 'rgba(8,10,14,0.96)' : 'rgba(245,245,245,0.96)';
+
+        // dense match-overview string from the real data
+        const S = opts.stats || matchStats;
+        const r2 = (v) => Math.max(0, Math.round(v || 0));
+        const roster = opts.roster || [];
+        const scorers = roster.filter((p) => p.scored && p.num != null).map((p) => 'GOAL' + p.num);
+        const nums = roster.filter((p) => p.num != null && !p.scored).map((p) => '#' + p.num);
+        const stat = [
+            'G' + r2(S.goals), 'SH' + r2(S.shots), 'SOT' + r2(S.shotsOnTarget), 'COR' + r2(S.corners),
+            'FLS' + r2(S.fouls), 'OFF' + r2(S.offsides), 'YEL' + r2(S.yellowCards != null ? S.yellowCards : S.cards),
+            'RED' + r2(S.redCards), 'VAR' + r2(S.var), 'POS' + r2(S.possession), 'PAS' + r2(S.passes),
+        ];
+        let str = (scorers.join(' ') + ' ' + stat.join(' ') + ' ' + nums.join(' ') + ' ').toUpperCase();
+        if (!str.trim()) str = 'INTERNET FC ';
+        const chars = str.split('');
+
+        // extruded toward the viewer (down-right): the back plane sits on the grid
+        const depth = cell * 0.32, ox = depth * 0.6, oy = depth;
+        // extruded bottom/right faces (white outline, dark face) — the 3D
+        ctx.lineJoin = 'round';
+        for (let row = 0; row < GRID; row++) for (let col = 0; col < GRID; col++) {
+            if (!has(col, row)) continue; const x = col * cell, y = row * cell;
+            ctx.fillStyle = dark ? 'rgba(4,5,8,0.96)' : 'rgba(225,225,225,0.96)';
+            ctx.strokeStyle = ink; ctx.lineWidth = Math.max(0.4, cell * 0.03);
+            if (!has(col + 1, row)) { ctx.beginPath(); ctx.moveTo(x + cell, y); ctx.lineTo(x + cell + ox, y + oy); ctx.lineTo(x + cell + ox, y + cell + oy); ctx.lineTo(x + cell, y + cell); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+            if (!has(col, row + 1)) { ctx.beginPath(); ctx.moveTo(x, y + cell); ctx.lineTo(x + ox, y + cell + oy); ctx.lineTo(x + cell + ox, y + cell + oy); ctx.lineTo(x + cell, y + cell); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+        }
+        // front faces + one character each, in reading order — PP NeueBit (the
+        // iFC 8-bit pixel face) on a thin grid, so it reads as a dense readout.
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.font = `${Math.round(cell * 0.94)}px "PP NeueBit", ui-monospace, "JetBrains Mono", monospace`;
+        let ci = 0;
+        for (let row = 0; row < GRID; row++) for (let col = 0; col < GRID; col++) {
+            if (!has(col, row)) continue;
+            const x = col * cell, y = row * cell;
+            ctx.fillStyle = face; ctx.fillRect(x, y, cell, cell);
+            ctx.strokeStyle = ink; ctx.lineWidth = Math.max(0.4, cell * 0.03);
+            ctx.strokeRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
+            let ch = ' ';
+            for (let g = 0; g < chars.length; g++) { const cand = chars[ci % chars.length]; ci++; if (cand !== ' ') { ch = cand; break; } }
+            if (ch !== ' ') { ctx.fillStyle = ink; ctx.fillText(ch, x + cell / 2, y + cell / 2 + cell * 0.04); }
+        }
+    }
+
     function renderFlat(canvas, pixels, opts = {}) {
         const cell = opts.cell || 8;
         const off = opts.off || '#ffffff';
         // opts.statsOverlay: draw the game-stats overlay on top of whatever base
         // style ran (so e.g. the 3D neon crest also carries the box score).
         // The native 'stats' style draws its own overlay, so it's exempt.
-        const overlay = () => { if (opts.statsOverlay && activeFill !== 'stats') drawStatOverlay(canvas.getContext('2d'), pixels, opts); };
-        const RENDERERS = { bw: renderFluid, lines: renderLines, mesh: renderMesh, cube: renderCube, stats: renderStats, sweep: renderSweep, pattern: renderPattern, abstract: renderAbstract, bauhaus: renderBauhaus, chrome: renderChrome, solid: renderSolid, team3d: renderTeam3D };
+        const overlay = () => { if (opts.statsOverlay && activeFill !== 'stats' && activeFill !== 'regions') drawStatOverlay(canvas.getContext('2d'), pixels, opts); };
+        const RENDERERS = { bw: renderFluid, lines: renderLines, mesh: renderMesh, cube: renderCube, stats: renderStats, regions: renderRegions, sweep: renderSweep, pattern: renderPattern, abstract: renderAbstract, bauhaus: renderBauhaus, chrome: renderChrome, solid: renderSolid, team3d: renderTeam3D, internet: renderInternet };
         if (opts.applyFill && RENDERERS[activeFill]) { RENDERERS[activeFill](canvas, pixels, opts); overlay(); return; }
         const dpr = opts.forExport ? 1 : Math.min(window.devicePixelRatio || 1, 3);
         const W = GRID * cell, H = GRID * cell;
@@ -2377,6 +2535,9 @@ export function setMotifSeed(n){ fillSeed = n; }
 export function setMatchStats(s){ matchStats = { ...DEFAULT_STATS, ...(s || {}) }; }
 export function setScorers(list){ scorers = Array.isArray(list) ? list.slice() : []; }
 export function renderMotif(canvas, pixels, opts){ return renderFlat(canvas, pixels, opts); }
+// Does this logo enclose any negative space (a hole the stats could fill)?
+// Takes the site's 0-based grid indices and shifts to the engine's 1-based set.
+export function hasInteriorHoles(pixels){ return interiorHoleSet(new Set(pixels.map((v)=>v+1))).size > 0; }
 export const MOTIF_IDS = ["solid","lines","mesh","cube","teamColors","team3d","stats","pattern","abstract","internet","chrome","bauhaus"];
 // The same flag palette the team3d / teamColors motifs use (black stripped),
 // as 0–255 RGB triples — for the homepage Pixel Clash to match those colours.
